@@ -7,12 +7,15 @@ import { Link } from "react-router-dom";
 
 export const ReportAnalysis = () => {
   const { user } = useAuth();
-  const { trends } = useHealth();
+  const { trends, patients } = useHealth();
+  
+  const livePatientData = patients.find(p => p.id === user?.id);
+  const reports = livePatientData?.reports || user?.reports || [];
+  
   const [selectedReportId, setSelectedReportId] = useState(
-    user?.reports && user.reports.length > 0 ? user.reports[0].id : null
+    reports.length > 0 ? reports[0].id : null
   );
 
-  const reports = user?.reports || [];
   const activeReport = reports.find(r => r.id === selectedReportId) || reports[0];
 
   return (

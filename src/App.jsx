@@ -23,13 +23,14 @@ import { Consultation } from "./pages/Consultation";
 import { MedicationReminder } from "./pages/MedicationReminder";
 import { EmergencyAlerts } from "./pages/EmergencyAlerts";
 import { ProfileSettings } from "./pages/ProfileSettings";
+import { Onboarding } from "./pages/Onboarding";
 
 // Styling
 import "./styles/global.css";
 
 // Layout wrapper representing the app routing layout
 const AppLayout = () => {
-  const { user, loading } = useAuth();
+  const { user, profile, rawUser, loading } = useAuth();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
 
@@ -51,9 +52,19 @@ const AppLayout = () => {
   }
 
   // Check if current route is an auth page or homepage where full dashboard frame is NOT needed
-  const isAuthPage = location.pathname.includes("/auth");
+  const isAuthPage = location.pathname.includes("/auth") || location.pathname === "/onboarding";
   const isHomePage = location.pathname === "/";
   const showDashboardFrame = user && !isAuthPage && !isHomePage;
+
+  // Onboarding Guard: if user is logged in but profile is null, force to onboarding
+  if (rawUser && !profile && location.pathname !== "/onboarding" && location.pathname !== "/" && !isAuthPage) {
+    return <Navigate to="/onboarding" replace />;
+  }
+
+  // If user tries to go to onboarding but already has a profile, kick them to dashboard
+  if (profile && location.pathname === "/onboarding") {
+    return <Navigate to="/patient/dashboard" replace />;
+  }
 
   return (
     <div className="app-container">
@@ -95,6 +106,7 @@ const AppLayout = () => {
             <Route path="/" element={<Home />} />
             <Route path="/patient/auth" element={<PatientAuth />} />
             <Route path="/doctor/auth" element={<DoctorAuth />} />
+            <Route path="/onboarding" element={rawUser ? <Onboarding /> : <Navigate to="/patient/auth" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>

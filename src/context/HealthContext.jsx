@@ -11,7 +11,7 @@ import { useAuth } from "./AuthContext";
 const HealthContext = createContext(null);
 
 export const HealthProvider = ({ children }) => {
-  const { user, role } = useAuth();
+  const { user, role, updateUserProfile } = useAuth();
   
   // Data States
   const [patients, setPatients] = useState(mockPatients);
@@ -50,10 +50,10 @@ export const HealthProvider = ({ children }) => {
   const [trends, setTrends] = useState(mockReportTrends);
 
   // Sync state if user reports modify
-  const uploadReport = (patientId, reportTitle, reportType, metrics, summary) => {
+  const uploadReport = (patientId, reportTitle, reportType, metrics, summary, dbId, dbDate) => {
     const newReport = {
-      id: `rep_${Date.now()}`,
-      date: new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: '2-digit' }),
+      id: dbId || `rep_${Date.now()}`,
+      date: dbDate || new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: '2-digit' }),
       title: reportTitle,
       type: reportType,
       status: "Reviewed",
@@ -65,18 +65,37 @@ export const HealthProvider = ({ children }) => {
       ]
     };
 
-    setPatients(prevPatients => 
-      prevPatients.map(pat => {
+    let foundPatient = false;
+    setPatients(prevPatients => {
+      const newPatients = prevPatients.map(pat => {
         if (pat.id === patientId) {
+          foundPatient = true;
           return {
             ...pat,
-            reports: [newReport, ...pat.reports],
-            reportsCount: pat.reportsCount + 1
+            reports: [newReport, ...(pat.reports || [])],
+            reportsCount: (pat.reportsCount || 0) + 1
           };
         }
         return pat;
-      })
-    );
+      });
+      
+      if (!foundPatient) {
+        newPatients.push({
+          id: patientId,
+          reports: [newReport],
+          reportsCount: 1,
+          history: []
+        });
+      }
+      return newPatients;
+    });
+
+    if (user && user.id === patientId && updateUserProfile) {
+      updateUserProfile({
+        reports: [newReport, ...(user.reports || [])],
+        reportsCount: (user.reportsCount || 0) + 1
+      });
+    }
 
     // If report has systolic/diastolic or glucose metrics, append to trends for the demo!
     const sys = metrics?.find(m => m.name.includes("Systolic"))?.value || 120;

@@ -1,109 +1,159 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
+import { supabase } from "../config/supabase";
 import { mockPatients, mockDoctors } from "../data/mockData";
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
-  const [role, setRole] = useState("guest"); // guest, patient, doctor
+  const [profile, setProfile] = useState(null); // stores name, mobile, location, dob
+  const [role, setRole] = useState("guest");
   const [loading, setLoading] = useState(true);
 
-  // Initialize with a mock patient session for easy visual testing
   useEffect(() => {
-    const savedUser = localStorage.getItem("medtech_user");
-    const savedRole = localStorage.getItem("medtech_role");
-    
-    if (savedUser && savedRole) {
-      setUser(JSON.parse(savedUser));
-      setRole(savedRole);
-    } else {
-      // Auto-login Alex Mercer (Patient) on first load to speed up visual demo,
-      // but let users log out to test other pathways.
-      const defaultPatient = mockPatients[0];
-      setUser(defaultPatient);
-      setRole("patient");
-    }
-    setLoading(false);
+    // Check active session on load
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session) {
+        handleSession(session);
+      } else {
+        setLoading(false);
+      }
+    });
+
+    // Listen for auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      if (session) {
+        handleSession(session);
+      } else {
+        setUser(null);
+        setProfile(null);
+        setRole("guest");
+        setLoading(false);
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = (email, password, loginRole) => {
+  const handleSession = async (session) => {
     setLoading(true);
-    let authenticatedUser = null;
-
-    if (loginRole === "patient") {
-      authenticatedUser = mockPatients.find(p => p.email.toLowerCase() === email.toLowerCase()) || {
-        id: "pat_new",
-        name: email.split("@")[0].split(".").map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(" "),
-        email: email,
-        age: 30,
-        gender: "Not specified",
-        bloodGroup: "O+",
-        phone: "+1 (555) 123-4567",
-        condition: "Healthy",
-        avatar: "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150",
-        reports: [],
-        history: []
-      };
-    } else if (loginRole === "doctor") {
-      authenticatedUser = mockDoctors.find(d => d.image && d.about) || mockDoctors[0];
+    setUser(session.user);
+    setRole("patient"); // Default to patient for this demo
+    
+    // Fetch profile
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("id", session.user.id)
+      .single();
+      
+    if (data) {
+      // Merge with mock patient data so the UI doesn't crash expecting arrays
+      const basePatient = mockPatients[0];
+      setProfile({
+        ...basePatient,
+        id: session.user.id,
+        name: data.name,
+        email: session.user.email,
+        phone: data.mobile_number,
+        location: data.location,
+        dob: data.dob,
+        age: calculateAge(data.dob)
+      });
+    } else {
+      setProfile(null); // Needs onboarding
     }
+    setLoading(false);
+  };
 
-    if (authenticatedUser) {
-      setUser(authenticatedUser);
-      setRole(loginRole);
-      localStorage.setItem("medtech_user", JSON.stringify(authenticatedUser));
-      localStorage.setItem("medtech_role", loginRole);
-      setLoading(false);
+  const calculateAge = (dobString) => {
+    if (!dobString) return 30;
+    const today = new Date();
+    const birthDate = new Date(dobString);
+    let age = today.getFullYear() - birthDate.getFullYear();
+    const m = today.getMonth() - birthDate.getMonth();
+    if (m < 0 || (m === 0 && today.getDate() < birthDate.getDate())) {
+        age--;
+    }
+    return age;
+  };
+
+  const loginWithGoogle = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: 'google',
+      options: {
+        redirectTo: window.location.origin
+      }
+    });
+    if (error) console.error("Google login error:", error);
+    return !error;
+  };
+
+  const signup = async (email, password) => {
+    setLoading(true);
+    const { data, error } = await supabase.auth.signUp({
+      email,
+      password,
+    });
+    setLoading(false);
+    return { data, error };
+  };
+
+  const login = async (email, password) => {
+    setLoading(true);
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+    setLoading(false);
+    return { data, error };
+  };
+
+  const logout = async () => {
+    await supabase.auth.signOut();
+  };
+
+  const saveProfile = async (profileData) => {
+    setLoading(true);
+    const newProfile = {
+      id: user.id,
+      ...profileData
+    };
+    
+    const { data, error } = await supabase
+      .from("profiles")
+      .upsert(newProfile)
+      .select()
+      .single();
+      
+    if (!error) {
+      // Reload session to get merged mock data
+      await handleSession({ user });
       return true;
     }
+    console.error("Error saving profile:", error);
     setLoading(false);
     return false;
   };
 
-  const signup = (userData, signupRole) => {
-    setLoading(true);
-    const newUser = {
-      id: signupRole === "patient" ? `pat_${Date.now()}` : `doc_${Date.now()}`,
-      avatar: signupRole === "patient" 
-        ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"
-        : "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200",
-      reports: signupRole === "patient" ? [] : undefined,
-      history: signupRole === "patient" ? [] : undefined,
-      ...userData
-    };
-
-    setUser(newUser);
-    setRole(signupRole);
-    localStorage.setItem("medtech_user", JSON.stringify(newUser));
-    localStorage.setItem("medtech_role", signupRole);
-    setLoading(false);
-    return true;
-  };
-
-  const logout = () => {
-    setUser(null);
-    setRole("guest");
-    localStorage.removeItem("medtech_user");
-    localStorage.removeItem("medtech_role");
-  };
-
-  const updateUserProfile = (updatedData) => {
-    const updatedUser = { ...user, ...updatedData };
-    setUser(updatedUser);
-    localStorage.setItem("medtech_user", JSON.stringify(updatedUser));
-  };
-
+  // The UI expects `user` to hold the profile data (name, avatar, etc)
+  // So we pass `profile || user` as the `user` context variable so UI works seamlessly.
   return (
-    <AuthContext.Provider value={{ user, role, loading, login, signup, logout, updateUserProfile }}>
+    <AuthContext.Provider value={{ 
+      user: profile || user, 
+      profile, 
+      rawUser: user, 
+      role, 
+      loading, 
+      login, 
+      signup, 
+      loginWithGoogle, 
+      logout, 
+      saveProfile 
+    }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth must be used within an AuthProvider");
-  }
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);
