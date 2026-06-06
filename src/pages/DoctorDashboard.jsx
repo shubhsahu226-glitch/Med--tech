@@ -6,7 +6,7 @@ import {
   Calendar, Users, FileText, Activity, MessageSquare, 
   ChevronRight, ArrowRight, ShieldAlert, Sparkles, User 
 } from "lucide-react";
-import { AppointmentCard } from "../components/CardComponents";
+import { AppointmentCard } from "../components/cards";
 
 export const DoctorDashboard = () => {
   const { user } = useAuth();

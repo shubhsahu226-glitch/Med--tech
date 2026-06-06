@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useHealth } from "../context/HealthContext";
 import { Clock, Plus, CheckCircle2, AlertCircle, PlusCircle, Trash2 } from "lucide-react";
-import { ReminderCard } from "../components/CardComponents";
+import { ReminderCard } from "../components/cards";
 
 export const MedicationReminder = () => {
   const { reminders, addReminder, toggleReminder, deleteReminder } = useHealth();

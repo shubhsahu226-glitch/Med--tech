@@ -6,7 +6,7 @@ import {
   FileUp, Calendar, Search, Activity, Clock, ShieldAlert, Sparkles, 
   ChevronRight, ArrowUpRight, CheckCircle2, AlertCircle 
 } from "lucide-react";
-import { AppointmentCard, ReminderCard } from "../components/CardComponents";
+import { AppointmentCard, ReminderCard } from "../components/cards";
 
 export const PatientDashboard = () => {
   const { user } = useAuth();
