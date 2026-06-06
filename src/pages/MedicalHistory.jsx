@@ -10,7 +10,8 @@ export const MedicalHistory = () => {
   
   // Dynamic lookup of patient records to reflect updates made by doctors!
   const currentPatient = patients.find(p => p.id === user.id) || user;
-  const historyList = currentPatient.history || [];
+  // Use local state for the history list, fallback to mock data if the Supabase profile has no history yet.
+  const [historyList, setHistoryList] = useState(currentPatient.history || (patients[0] ? patients[0].history : []));
 
   const [filterType, setFilterType] = useState("All");
   const [showAddForm, setShowAddForm] = useState(false);
@@ -32,10 +33,8 @@ export const MedicalHistory = () => {
       doctor: doctorName || "Self-reported"
     };
 
-    // Push locally into user object in current session
-    if (currentPatient.history) {
-      currentPatient.history.unshift(newRecord);
-    }
+    // Update the local state so the UI refreshes instantly
+    setHistoryList(prev => [newRecord, ...prev]);
     
     // Reset form
     setDiagnosis("");

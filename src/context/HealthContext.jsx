@@ -7,6 +7,7 @@ import {
   mockReportTrends 
 } from "../data/mockData";
 import { useAuth } from "./AuthContext";
+import { supabase } from "../config/supabase";
 
 const HealthContext = createContext(null);
 
@@ -15,9 +16,61 @@ export const HealthProvider = ({ children }) => {
   
   // Data States
   const [patients, setPatients] = useState(mockPatients);
-  const [doctors, setDoctors] = useState(mockDoctors);
+  const [doctors, setDoctors] = useState([]);
   const [reminders, setReminders] = useState(mockMedicationReminders);
   const [alerts, setAlerts] = useState(mockEmergencyAlerts);
+
+  // Fetch doctors from Supabase on mount
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      const { data, error } = await supabase.from('doctors').select('*');
+      if (data && !error) {
+        setDoctors(data);
+      } else {
+        console.error("Failed to fetch doctors:", error);
+        setDoctors(mockDoctors);
+      }
+    };
+    fetchDoctors();
+  }, []);
+
+  // Fetch reports for the logged in user
+  useEffect(() => {
+    const fetchReports = async () => {
+      if (!user?.id) return;
+      
+      const { data, error } = await supabase
+        .from('reports')
+        .select('*')
+        .eq('patient_id', user.id)
+        .order('date', { ascending: false });
+        
+      if (data && !error) {
+        // Parse the metrics_json which was saved as a string by the backend
+        const parsedReports = data.map(r => ({
+          ...r,
+          metrics: r.metrics_json ? JSON.parse(r.metrics_json) : [],
+          aiSummary: r.ai_summary
+        }));
+        
+        // Push this into the patients state for the current user
+        setPatients(prev => {
+          const newPatients = [...prev];
+          const existingIdx = newPatients.findIndex(p => p.id === user.id);
+          
+          if (existingIdx >= 0) {
+            newPatients[existingIdx] = { ...newPatients[existingIdx], reports: parsedReports, reportsCount: parsedReports.length };
+          } else {
+            newPatients.push({ id: user.id, reports: parsedReports, reportsCount: parsedReports.length, history: [] });
+          }
+          return newPatients;
+        });
+      }
+    };
+    
+    fetchReports();
+  }, [user]);
+
   const [appointments, setAppointments] = useState([
     {
       id: "apt1",
