@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
-import { FileUp, Sparkles, AlertCircle, FileText, CheckCircle2 } from "lucide-react";
+import { FileUp, Sparkles, FileText, CheckCircle2, Shield } from "lucide-react";
 
 export const ReportUpload = () => {
   const { user } = useAuth();
@@ -18,9 +18,9 @@ export const ReportUpload = () => {
 
   const steps = [
     "Reading uploaded report document bytes...",
-    "OCR analysis in progress: scanning diagnostic lines...",
-    "Correlating biomaterial metrics to reference guides...",
-    "AI summary compiling: calculating clinical threshold warnings...",
+    "OCR analysis: scanning diagnostic lines...",
+    "Correlating biomarkers to reference guides...",
+    "AI summary: calculating threshold warnings...",
     "Finalizing medical summary insights..."
   ];
 
@@ -28,7 +28,6 @@ export const ReportUpload = () => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
       setFile(selectedFile);
-      // Autofill title if empty
       if (!reportTitle) {
         setReportTitle(selectedFile.name.split(".")[0].replace(/[-_]/g, " "));
       }
@@ -46,124 +45,103 @@ export const ReportUpload = () => {
     setUploadStep(0);
     setError("");
 
-    // Simulate AI loading steps sequentially
-    const interval = setInterval(() => {
-      setUploadStep(prevStep => {
-        if (prevStep < steps.length - 1) {
-          return prevStep + 1;
-        } else {
-          clearInterval(interval);
-          
-          // Generate realistic mock report metrics depending on selection
-          let metrics = [];
-          let summary = "";
-          
-          if (reportType === "Blood Test") {
-            metrics = [
-              { name: "Systolic BP", value: 120 + Math.floor(Math.random() * 20), unit: "mmHg", status: "Normal", min: 90, max: 129 },
-              { name: "Diastolic BP", value: 80 + Math.floor(Math.random() * 10), unit: "mmHg", status: "Normal", min: 60, max: 84 },
-              { name: "LDL Cholesterol", value: 110 + Math.floor(Math.random() * 40), unit: "mg/dL", status: "Borderline High", min: 50, max: 99 },
-              { name: "Fasting Glucose", value: 85 + Math.floor(Math.random() * 30), unit: "mg/dL", status: "Normal", min: 70, max: 99 }
-            ];
-            // Assess thresholds
-            metrics = metrics.map(m => {
-              if (m.name === "LDL Cholesterol" && m.value > 130) {
-                return { ...m, status: "Abnormal" };
-              }
-              if (m.name === "Fasting Glucose" && m.value > 100) {
-                return { ...m, status: "Abnormal" };
-              }
-              if (m.name === "Systolic BP" && m.value > 130) {
-                return { ...m, status: "High Borderline" };
-              }
-              return m;
-            });
-            
-            const abnormalCount = metrics.filter(m => m.status.includes("Abnormal")).length;
-            summary = `The AI diagnostics finished scan of Blood Panel "${reportTitle}". We identified ${abnormalCount} abnormal values. Fasting blood glucose and vital signs look satisfactory. However, LDL levels show a mild elevation which could benefit from dietary fiber increase and routine cardio activity.`;
-          } else {
-            metrics = [
-              { name: "Scan Clearance", value: 1.0, unit: "Index", status: "Normal", min: 0.9, max: 1.1 },
-              { name: "Structural Shift", value: 0.0, unit: "mm", status: "Normal", min: 0.0, max: 0.1 }
-            ];
-            summary = `We processed the digital imaging scan "${reportTitle}". Neural tissue and brain structures show symmetry. No sign of acute pathology, blockages, or intracranial lesions detected. The results appear clean.`;
-          }
-
-          // Save to context
-          uploadReport(user.id, reportTitle || file.name, reportType, metrics, summary);
-          setIsUploading(false);
-          navigate("/patient/analysis");
-          return prevStep;
+    const stepInterval = setInterval(() => {
+      setUploadStep(prev => {
+        if (prev >= steps.length - 1) {
+          clearInterval(stepInterval);
+          return prev;
         }
+        return prev + 1;
       });
-    }, 900);
+    }, 800);
+
+    const formData = new FormData();
+    formData.append("file", file || new Blob(["mock"], { type: "text/plain" }));
+
+    fetch("http://localhost:8000/api/upload-report", {
+      method: "POST",
+      body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+      clearInterval(stepInterval);
+      let summary = `AI Insights: ${data.insights.diet} | Reminders: ${data.insights.reminder}`;
+      if (data.insights.danger_flags && data.insights.danger_flags.length > 0) {
+         summary += ` | WARNING: ${data.insights.danger_flags.join(", ")}`;
+      }
+      
+      const titleToSave = reportTitle || (file ? file.name : "Report");
+      uploadReport(user ? user.id : 'guest', titleToSave, reportType, data.historical_data, summary);
+      
+      setIsUploading(false);
+      navigate("/patient/analysis");
+    })
+    .catch(err => {
+      clearInterval(stepInterval);
+      console.error(err);
+      setError("Failed to connect to backend AI Engine.");
+      setIsUploading(false);
+    });
   };
 
   return (
-    <div style={{ maxWidth: "680px", margin: "0 auto" }} className="flex-column gap-6">
-      <div>
-        <h1 style={{ fontSize: "1.75rem", margin: 0 }}>AI Laboratory Report Uploader</h1>
-        <p className="text-secondary-color" style={{ fontSize: "0.9rem" }}>Drag and drop clinical PDF records or medical images to generate summaries.</p>
+    <div style={{ maxWidth: "720px", margin: "0 auto" }} className="flex-column gap-6">
+      <div className="page-header" style={{ flexDirection: "column", alignItems: "flex-start" }}>
+        <div className="align-center gap-2" style={{ marginBottom: "0.5rem" }}>
+          <div style={{
+            width: 40, height: 40, borderRadius: "var(--radius-md)",
+            background: "var(--primary-light)", display: "flex",
+            alignItems: "center", justifyContent: "center", color: "var(--primary)"
+          }}>
+            <Sparkles size={20} />
+          </div>
+          <h1 style={{ fontSize: "1.75rem", margin: 0 }}>AI Report Uploader</h1>
+        </div>
+        <p className="text-secondary-color" style={{ fontSize: "0.9rem" }}>
+          Upload clinical PDFs or medical images to generate AI-powered summaries and trend analysis.
+        </p>
       </div>
 
       <div className="card">
         {isUploading ? (
-          <div className="flex-column flex-center text-center" style={{ padding: "3rem 0" }}>
-            {/* Spinning/pulsing animation mockup */}
-            <div 
-              style={{
-                width: "60px",
-                height: "60px",
-                borderRadius: "50%",
-                border: "4px solid var(--primary-light)",
-                borderTop: "4px solid var(--primary)",
-                animation: "spin 1s linear infinite",
-                marginBottom: "1.5rem"
-              }}
-            />
-            <style>
-              {`@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }`}
-            </style>
+          <div className="flex-column flex-center text-center" style={{ padding: "3rem 1.5rem" }}>
+            <div className="spinner" style={{ marginBottom: "1.5rem" }} />
             
             <h3 style={{ fontSize: "1.2rem", color: "var(--primary)" }}>AI Medical Agent Scanning</h3>
             <p className="text-secondary-color" style={{ fontSize: "0.9rem", marginTop: "0.5rem" }}>
               {steps[uploadStep]}
             </p>
             
-            <div className="w-full" style={{ background: "var(--border-color)", height: "4px", borderRadius: "2px", maxWidth: "300px", marginTop: "1.5rem", overflow: "hidden" }}>
+            <div className="progress-track">
               <div 
-                style={{ 
-                  height: "100%", 
-                  background: "var(--primary)", 
-                  width: `${((uploadStep + 1) / steps.length) * 100}%`,
-                  transition: "width 0.4s ease"
-                }}
+                className="progress-fill"
+                style={{ width: `${((uploadStep + 1) / steps.length) * 100}%` }}
               />
             </div>
-            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>
-              HIPAA compliant pipeline. Data is encrypted.
+
+            <div className="upload-steps">
+              {steps.map((step, i) => (
+                <div key={i} className={`upload-step ${i < uploadStep ? "done" : i === uploadStep ? "active" : ""}`}>
+                  <span className="upload-step-dot" />
+                  {step}
+                </div>
+              ))}
+            </div>
+
+            <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "1.25rem" }} className="align-center gap-1">
+              <Shield size={12} /> HIPAA compliant pipeline — data is encrypted
             </span>
           </div>
         ) : (
           <form onSubmit={handleUploadSubmit} className="flex-column gap-4">
-            
             {error && (
-              <div style={{ padding: "0.75rem", background: "var(--danger-light)", color: "var(--danger-dark)", borderRadius: "var(--radius-md)", fontSize: "0.85rem" }}>
+              <div style={{ padding: "0.75rem 1rem", background: "var(--danger-light)", color: "var(--danger)", borderRadius: "var(--radius-md)", fontSize: "0.85rem", border: "1px solid rgba(248, 113, 113, 0.25)" }}>
                 {error}
               </div>
             )}
 
-            {/* Drag and drop Area */}
             <div 
-              style={{
-                border: "2px dashed var(--border-color)",
-                borderRadius: "var(--radius-lg)",
-                padding: "3rem 1.5rem",
-                textAlign: "center",
-                backgroundColor: "var(--bg-secondary)",
-                cursor: "pointer",
-                transition: "border var(--transition-fast)"
-              }}
+              className={`upload-zone ${file ? "has-file" : ""}`}
               onClick={() => document.getElementById("file-upload-input").click()}
             >
               <input 
@@ -174,20 +152,25 @@ export const ReportUpload = () => {
                 onChange={handleFileChange}
               />
               
-              <div className="flex-column flex-center gap-2">
-                <FileUp size={44} style={{ color: "var(--primary)", marginBottom: "0.5rem" }} />
+              <div className="upload-zone-content flex-column flex-center gap-2">
+                <div className="upload-icon-wrap">
+                  {file ? <FileText size={28} /> : <FileUp size={28} />}
+                </div>
                 {file ? (
                   <>
                     <h4 style={{ margin: 0 }}>{file.name}</h4>
                     <p className="text-secondary-color" style={{ fontSize: "0.8rem" }}>
-                      {(file.size / 1024).toFixed(1)} KB | Click to swap file
+                      {(file.size / 1024).toFixed(1)} KB — click to change file
                     </p>
+                    <span className="badge badge-success" style={{ marginTop: "0.25rem" }}>
+                      <CheckCircle2 size={12} /> Ready to analyze
+                    </span>
                   </>
                 ) : (
                   <>
-                    <h4 style={{ margin: 0 }}>Select Clinical File</h4>
+                    <h4 style={{ margin: 0 }}>Drop your clinical file here</h4>
                     <p className="text-secondary-color" style={{ fontSize: "0.85rem" }}>
-                      Supports PDF, PNG, JPG files from lab networks
+                      Supports PDF, PNG, JPG from lab networks
                     </p>
                   </>
                 )}
@@ -221,26 +204,15 @@ export const ReportUpload = () => {
               </select>
             </div>
 
-            <div 
-              style={{
-                display: "flex",
-                gap: "0.5rem",
-                padding: "0.75rem",
-                backgroundColor: "var(--primary-light)",
-                borderRadius: "var(--radius-md)",
-                border: "1px solid rgba(59, 130, 246, 0.1)",
-                fontSize: "0.8rem",
-                color: "var(--text-secondary)"
-              }}
-            >
-              <Sparkles size={16} style={{ color: "var(--primary)", flexShrink: 0 }} />
+            <div className="info-banner">
+              <Sparkles size={16} />
               <div>
-                <strong>Intelligent OCR Extraction:</strong> Selecting a file and submitting initiates an automated diagnostic mapping, comparing result ranges against typical averages.
+                <strong style={{ color: "var(--text-primary)" }}>Intelligent OCR Extraction</strong> — automated diagnostic mapping comparing your results against clinical reference ranges.
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary w-full m-t-2" style={{ padding: "0.75rem" }}>
-              Upload and Analyze Report
+            <button type="submit" className="btn btn-primary w-full m-t-2" style={{ padding: "0.85rem" }}>
+              <Sparkles size={16} /> Upload and Analyze Report
             </button>
           </form>
         )}

@@ -8,24 +8,28 @@ import { Link } from "react-router-dom";
 // Feature Card - For Homepage and lists
 export const FeatureCard = ({ title, description, icon: Icon, color = "var(--primary)" }) => {
   return (
-    <div className="card flex-column gap-3" style={{ height: "100%" }}>
+    <div 
+      className="card feature-card-accent flex-column gap-3" 
+      style={{ height: "100%", "--accent-color": color }}
+    >
       <div 
         style={{
-          width: "48px",
-          height: "48px",
+          width: "52px",
+          height: "52px",
           borderRadius: "var(--radius-md)",
-          backgroundColor: `${color}15`,
+          backgroundColor: `${color}18`,
           color: color,
           display: "flex",
           alignItems: "center",
-          justifyContent: "center"
+          justifyContent: "center",
+          boxShadow: `0 0 20px ${color}15`
         }}
       >
         <Icon size={24} />
       </div>
       <div>
-        <h3 style={{ fontSize: "1.15rem", marginBottom: "0.5rem" }}>{title}</h3>
-        <p className="text-secondary-color" style={{ fontSize: "0.9rem" }}>{description}</p>
+        <h3 style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>{title}</h3>
+        <p className="text-secondary-color" style={{ fontSize: "0.88rem", lineHeight: 1.6 }}>{description}</p>
       </div>
     </div>
   );
@@ -34,16 +38,17 @@ export const FeatureCard = ({ title, description, icon: Icon, color = "var(--pri
 // Workflow Card - Steps explaining how the system works
 export const WorkflowCard = ({ step, title, description }) => {
   return (
-    <div className="card flex-column gap-2" style={{ position: "relative", overflow: "hidden" }}>
+    <div className="card flex-column gap-2" style={{ position: "relative", overflow: "hidden", padding: "1.75rem" }}>
       <div 
         style={{
           position: "absolute",
-          top: "-15px",
-          right: "-10px",
-          fontSize: "6rem",
+          top: "-10px",
+          right: "-5px",
+          fontSize: "5.5rem",
           fontWeight: "800",
-          color: "var(--bg-tertiary)",
-          opacity: 0.4,
+          background: "linear-gradient(180deg, rgba(56,189,248,0.08), transparent)",
+          WebkitBackgroundClip: "text",
+          WebkitTextFillColor: "transparent",
           lineHeight: 1,
           pointerEvents: "none"
         }}
@@ -51,8 +56,13 @@ export const WorkflowCard = ({ step, title, description }) => {
         {step}
       </div>
       <div style={{ position: "relative", zIndex: 1 }}>
-        <h3 style={{ fontSize: "1.1rem", marginBottom: "0.25rem" }}>{title}</h3>
-        <p className="text-secondary-color" style={{ fontSize: "0.875rem" }}>{description}</p>
+        <div style={{
+          width: 32, height: 3, borderRadius: 2,
+          background: "linear-gradient(90deg, var(--primary), transparent)",
+          marginBottom: "0.75rem"
+        }} />
+        <h3 style={{ fontSize: "1.05rem", marginBottom: "0.35rem" }}>{title}</h3>
+        <p className="text-secondary-color" style={{ fontSize: "0.85rem", lineHeight: 1.6 }}>{description}</p>
       </div>
     </div>
   );
@@ -216,7 +226,7 @@ export const AlertCard = ({ alert }) => {
         </span>
       </div>
       <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>{alert.description}</p>
-      <div style={{ padding: "0.75rem", background: "white", borderRadius: "var(--radius-sm)", border: "1px dashed var(--border-color)", fontSize: "0.8rem" }}>
+      <div className="action-box">
         <strong>Required Action:</strong> {alert.action}
       </div>
     </div>
@@ -226,7 +236,7 @@ export const AlertCard = ({ alert }) => {
 // Report Summary Card - AI Summary View
 export const ReportSummaryCard = ({ report }) => {
   return (
-    <div className="card flex-column gap-4" style={{ backgroundColor: "white" }}>
+    <div className="card flex-column gap-4">
       <div className="flex-between">
         <div className="align-center gap-2">
           <Sparkles size={18} style={{ color: "var(--primary)" }} />
@@ -341,7 +351,7 @@ export const GraphCard = ({ trendsData }) => {
                 padding: "0.4rem 0.75rem",
                 borderRadius: "var(--radius-sm)",
                 fontWeight: "600",
-                backgroundColor: metric === key ? "white" : "transparent",
+                backgroundColor: metric === key ? "rgba(56, 189, 248, 0.15)" : "transparent",
                 color: metric === key ? "var(--primary)" : "var(--text-secondary)",
                 boxShadow: metric === key ? "var(--shadow-sm)" : "none",
                 transition: "all var(--transition-fast)"

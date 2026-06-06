@@ -4,7 +4,7 @@ import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
 import { 
   FileUp, Calendar, Search, Activity, Clock, ShieldAlert, Sparkles, 
-  ChevronRight, ArrowUpRight, CheckCircle2, AlertCircle 
+  ChevronRight, ArrowUpRight
 } from "lucide-react";
 import { AppointmentCard, ReminderCard } from "../components/CardComponents";
 
@@ -13,35 +13,31 @@ export const PatientDashboard = () => {
   const { appointments, reminders, alerts } = useHealth();
   const navigate = useNavigate();
 
-  // Find next upcoming appointment
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? "Good morning" : hour < 17 ? "Good afternoon" : "Good evening";
+  const firstName = user.name.split(" ")[0];
+
   const nextAppointment = appointments
     .filter(apt => apt.patientId === user.id && apt.status === "Upcoming")
     .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
 
-  // Daily medication reminders checklist
   const todayReminders = reminders.slice(0, 3);
-
-  // Active critical alerts
   const criticalAlerts = alerts.filter(a => a.severity === "high").slice(0, 1);
-
-  // Fetch patient's latest uploaded report
   const latestReport = user.reports && user.reports[0];
-
-  const handleToggleReminder = (id) => {
-    // Toggled through context
-  };
 
   return (
     <div className="flex-column gap-6">
-      {/* Greeting Header */}
-      <div className="flex-between flex-wrap gap-4">
-        <div>
-          <h1 style={{ fontSize: "1.75rem", margin: 0 }}>Welcome back, {user.name}</h1>
-          <p className="text-secondary-color" style={{ fontSize: "0.9rem" }}>Here is your medical overview for today.</p>
+      <div className="page-header">
+        <div className="dashboard-greeting">
+          <p className="text-secondary-color" style={{ fontSize: "0.85rem", marginBottom: "0.25rem" }}>{greeting},</p>
+          <h1>{firstName}</h1>
+          <p className="text-secondary-color" style={{ fontSize: "0.9rem", marginTop: "0.35rem" }}>
+            Here's your medical overview for today.
+          </p>
         </div>
         <div className="align-center gap-3">
           <Link to="/patient/upload" className="btn btn-primary">
-            <FileUp size={16} /> Upload New Report
+            <FileUp size={16} /> Upload Report
           </Link>
           <Link to="/patient/doctors" className="btn btn-secondary">
             <Search size={16} /> Find Doctors
@@ -49,76 +45,78 @@ export const PatientDashboard = () => {
         </div>
       </div>
 
-      {/* Critical Alert banner if active */}
       {criticalAlerts.length > 0 && (
         <div 
           className="card" 
           style={{
-            borderLeft: "5px solid var(--danger)",
-            background: "var(--danger-light)",
+            borderLeft: "4px solid var(--danger)",
+            background: "linear-gradient(90deg, var(--danger-light), transparent)",
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
-            padding: "1rem 1.5rem"
+            padding: "1rem 1.5rem",
+            flexWrap: "wrap",
+            gap: "1rem"
           }}
         >
           <div className="align-center gap-3">
-            <ShieldAlert size={24} style={{ color: "var(--danger)" }} />
+            <div style={{
+              width: 44, height: 44, borderRadius: "var(--radius-md)",
+              background: "rgba(239, 68, 68, 0.2)", display: "flex",
+              alignItems: "center", justifyContent: "center", color: "var(--danger)"
+            }}>
+              <ShieldAlert size={22} />
+            </div>
             <div>
-              <h4 style={{ margin: 0, color: "var(--danger-dark)", fontSize: "0.95rem" }}>{criticalAlerts[0].title}</h4>
+              <h4 style={{ margin: 0, color: "var(--danger)", fontSize: "0.95rem" }}>{criticalAlerts[0].title}</h4>
               <p style={{ margin: 0, fontSize: "0.85rem", color: "var(--text-secondary)" }}>{criticalAlerts[0].action}</p>
             </div>
           </div>
-          <Link to="/patient/alerts" className="btn btn-secondary" style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", background: "white" }}>
+          <Link to="/patient/alerts" className="btn btn-danger" style={{ padding: "0.45rem 1rem", fontSize: "0.8rem" }}>
             View Guide
           </Link>
         </div>
       )}
 
-      {/* Grid Layout: Primary Metrics & Info */}
-      <div className="grid-3">
-        {/* Left Column: Quick Stats / Next Appointment / History */}
-        <div className="flex-column gap-6" style={{ gridColumn: "span 2" }}>
-          
-          {/* Quick Health Parameters */}
-          <div className="grid-3" style={{ gap: "1rem" }}>
-            <div className="card align-center gap-3" style={{ padding: "1rem" }}>
-              <div style={{ color: "var(--primary)", background: "var(--primary-light)", padding: "0.5rem", borderRadius: "var(--radius-md)" }}>
-                <Activity size={20} />
-              </div>
-              <div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Blood Group</div>
-                <div style={{ fontSize: "1.1rem", fontWeight: "700" }}>{user.bloodGroup || "O+"}</div>
-              </div>
-            </div>
-
-            <div className="card align-center gap-3" style={{ padding: "1rem" }}>
-              <div style={{ color: "var(--success)", background: "var(--success-light)", padding: "0.5rem", borderRadius: "var(--radius-md)" }}>
-                <Clock size={20} />
-              </div>
-              <div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Active Reminders</div>
-                <div style={{ fontSize: "1.1rem", fontWeight: "700" }}>{reminders.filter(r => !r.taken).length} / {reminders.length}</div>
-              </div>
-            </div>
-
-            <div className="card align-center gap-3" style={{ padding: "1rem" }}>
-              <div style={{ color: "var(--warning)", background: "var(--warning-light)", padding: "0.5rem", borderRadius: "var(--radius-md)" }}>
-                <FileUp size={20} />
-              </div>
-              <div>
-                <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Lab Reports</div>
-                <div style={{ fontSize: "1.1rem", fontWeight: "700" }}>{user.reportsCount || 0} Reviewed</div>
-              </div>
-            </div>
+      <div className="grid-3" style={{ gap: "1rem" }}>
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ color: "var(--primary)", background: "var(--primary-light)" }}>
+            <Activity size={22} />
           </div>
-
-          {/* Next Scheduled Appointment */}
           <div>
-            <div className="flex-between m-b-2">
-              <h3 style={{ fontSize: "1.15rem", margin: 0 }}>Upcoming Consultation</h3>
-              <Link to="/patient/consult" className="btn-text align-center gap-1" style={{ fontSize: "0.85rem", fontWeight: "500" }}>
-                Go to Telehealth Portal <ChevronRight size={14} />
+            <div className="stat-label">Blood Group</div>
+            <div className="stat-value">{user.bloodGroup || "O+"}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ color: "var(--success)", background: "var(--success-light)" }}>
+            <Clock size={22} />
+          </div>
+          <div>
+            <div className="stat-label">Active Reminders</div>
+            <div className="stat-value">{reminders.filter(r => !r.taken).length} / {reminders.length}</div>
+          </div>
+        </div>
+
+        <div className="card stat-card">
+          <div className="stat-icon" style={{ color: "var(--warning)", background: "var(--warning-light)" }}>
+            <FileUp size={22} />
+          </div>
+          <div>
+            <div className="stat-label">Lab Reports</div>
+            <div className="stat-value">{user.reportsCount || 0} Reviewed</div>
+          </div>
+        </div>
+      </div>
+
+      <div className="grid-3">
+        <div className="flex-column gap-6" style={{ gridColumn: "span 2" }}>
+          <div>
+            <div className="section-title-row">
+              <h3>Upcoming Consultation</h3>
+              <Link to="/patient/consult" className="btn-text align-center gap-1" style={{ fontSize: "0.82rem" }}>
+                Telehealth Portal <ChevronRight size={14} />
               </Link>
             </div>
             {nextAppointment ? (
@@ -127,21 +125,24 @@ export const PatientDashboard = () => {
                 onStartConsultation={() => navigate("/patient/consult")} 
               />
             ) : (
-              <div className="card text-center" style={{ padding: "2rem" }}>
-                <Calendar size={32} style={{ color: "var(--text-muted)", marginBottom: "0.5rem" }} />
+              <div className="card empty-state">
+                <div className="empty-state-icon"><Calendar size={28} /></div>
                 <h4 style={{ margin: 0, fontSize: "0.95rem" }}>No upcoming consultations</h4>
-                <p className="text-secondary-color" style={{ fontSize: "0.8rem", marginBottom: "1rem" }}>Schedule a routine checkup or discuss recent report logs.</p>
-                <Link to="/patient/book" className="btn btn-secondary" style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem" }}>Book Appointment</Link>
+                <p className="text-secondary-color" style={{ fontSize: "0.82rem", margin: "0.5rem 0 1rem" }}>
+                  Schedule a routine checkup or discuss recent report logs.
+                </p>
+                <Link to="/patient/book" className="btn btn-secondary" style={{ padding: "0.45rem 1rem", fontSize: "0.82rem" }}>
+                  Book Appointment
+                </Link>
               </div>
             )}
           </div>
 
-          {/* AI Insights & Latest Upload summary */}
           <div>
-            <div className="flex-between m-b-2">
-              <h3 style={{ fontSize: "1.15rem", margin: 0 }}>Latest Report Analysis</h3>
-              <Link to="/patient/analysis" className="btn-text align-center gap-1" style={{ fontSize: "0.85rem", fontWeight: "500" }}>
-                See Historical Trends <ChevronRight size={14} />
+            <div className="section-title-row">
+              <h3>Latest Report Analysis</h3>
+              <Link to="/patient/analysis" className="btn-text align-center gap-1" style={{ fontSize: "0.82rem" }}>
+                Historical Trends <ChevronRight size={14} />
               </Link>
             </div>
             {latestReport ? (
@@ -153,73 +154,63 @@ export const PatientDashboard = () => {
                   </div>
                   <span className="text-muted-color" style={{ fontSize: "0.75rem" }}>{latestReport.date}</span>
                 </div>
-                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.6 }}>
                   {latestReport.aiSummary.slice(0, 180)}...
                 </p>
-                <Link to="/patient/analysis" className="btn btn-secondary" style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem", alignSelf: "flex-start" }}>
+                <Link to="/patient/analysis" className="btn btn-secondary" style={{ padding: "0.45rem 1rem", fontSize: "0.82rem", alignSelf: "flex-start" }}>
                   View Full Diagnostics
                 </Link>
               </div>
             ) : (
-              <div className="card text-center" style={{ padding: "2rem" }}>
-                <Sparkles size={32} style={{ color: "var(--text-muted)", marginBottom: "0.5rem" }} />
-                <h4 style={{ margin: 0, fontSize: "0.95rem" }}>No diagnostic reports uploaded yet</h4>
-                <p className="text-secondary-color" style={{ fontSize: "0.8rem", marginBottom: "1rem" }}>Upload images or PDF charts to view automated AI highlights and health thresholds.</p>
-                <Link to="/patient/upload" className="btn btn-primary" style={{ padding: "0.4rem 0.8rem", fontSize: "0.8rem" }}>Upload Lab File</Link>
+              <div className="card empty-state">
+                <div className="empty-state-icon"><Sparkles size={28} /></div>
+                <h4 style={{ margin: 0, fontSize: "0.95rem" }}>No reports uploaded yet</h4>
+                <p className="text-secondary-color" style={{ fontSize: "0.82rem", margin: "0.5rem 0 1rem" }}>
+                  Upload PDF or image charts for AI-powered health insights.
+                </p>
+                <Link to="/patient/upload" className="btn btn-primary" style={{ padding: "0.45rem 1rem", fontSize: "0.82rem" }}>
+                  Upload Lab File
+                </Link>
               </div>
             )}
           </div>
-
         </div>
 
-        {/* Right Column: Medication Reminders & Quick Actions */}
         <div className="flex-column gap-6">
-          
-          {/* Medications Panel */}
           <div>
-            <div className="flex-between m-b-2">
-              <h3 style={{ fontSize: "1.15rem", margin: 0 }}>Pill Reminder</h3>
-              <Link to="/patient/reminders" className="btn-text align-center gap-1" style={{ fontSize: "0.85rem", fontWeight: "500" }}>
+            <div className="section-title-row">
+              <h3>Pill Reminder</h3>
+              <Link to="/patient/reminders" className="btn-text align-center gap-1" style={{ fontSize: "0.82rem" }}>
                 Full Schedule <ChevronRight size={14} />
               </Link>
             </div>
-            
             <div className="flex-column gap-3">
               {todayReminders.map(rem => (
-                <ReminderCard 
-                  key={rem.id} 
-                  reminder={rem} 
-                  onToggle={() => {}} // Done statically or handled in reminders page
-                />
+                <ReminderCard key={rem.id} reminder={rem} onToggle={() => {}} />
               ))}
               {todayReminders.length === 0 && (
-                <div className="card text-center" style={{ padding: "1.5rem" }}>
-                  <p className="text-secondary-color" style={{ fontSize: "0.8rem" }}>No active medication schedules.</p>
+                <div className="card empty-state" style={{ padding: "1.5rem" }}>
+                  <p className="text-secondary-color" style={{ fontSize: "0.82rem", margin: 0 }}>No active medication schedules.</p>
                 </div>
               )}
             </div>
           </div>
 
-          {/* Quick Action Navigation Buttons */}
           <div className="card flex-column gap-3">
-            <h3 style={{ fontSize: "1.1rem", margin: 0 }}>Quick Links</h3>
-            
-            <Link to="/patient/history" className="align-center flex-between p-2" style={{ padding: "0.6rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", fontSize: "0.85rem" }}>
+            <h3 style={{ fontSize: "1.05rem", margin: 0 }}>Quick Links</h3>
+            <Link to="/patient/history" className="quick-link">
               <span>Medical History Log</span>
-              <ArrowUpRight size={14} style={{ color: "var(--text-muted)" }} />
+              <ArrowUpRight size={14} />
             </Link>
-
-            <Link to="/patient/alerts" className="align-center flex-between p-2" style={{ padding: "0.6rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", fontSize: "0.85rem" }}>
-              <span>Emergency Alerts & Actions</span>
-              <ArrowUpRight size={14} style={{ color: "var(--text-muted)" }} />
+            <Link to="/patient/alerts" className="quick-link">
+              <span>Emergency Alerts</span>
+              <ArrowUpRight size={14} />
             </Link>
-
-            <Link to="/patient/settings" className="align-center flex-between p-2" style={{ padding: "0.6rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", fontSize: "0.85rem" }}>
-              <span>Profile Information</span>
-              <ArrowUpRight size={14} style={{ color: "var(--text-muted)" }} />
+            <Link to="/patient/settings" className="quick-link">
+              <span>Profile Settings</span>
+              <ArrowUpRight size={14} />
             </Link>
           </div>
-
         </div>
       </div>
     </div>
