@@ -33,9 +33,13 @@ export const PatientAuth = () => {
         setError(error.message || "Invalid credentials.");
       }
     } else {
-      const { error } = await signup(email, password);
+      const { data, error } = await signup(email, password);
       if (!error) {
-        navigate("/patient/dashboard");
+        if (data?.session) {
+          navigate("/patient/dashboard");
+        } else {
+          setError("Success! Please check your email to confirm your account before logging in. Or, disable 'Confirm Email' in your Supabase Auth settings to bypass this.");
+        }
       } else {
         setError(error.message || "Signup failed. Please try again.");
       }
