@@ -8,28 +8,24 @@ import { Link } from "react-router-dom";
 // Feature Card - For Homepage and lists
 export const FeatureCard = ({ title, description, icon: Icon, color = "var(--primary)" }) => {
   return (
-    <div 
-      className="card feature-card-accent flex-column gap-3" 
-      style={{ height: "100%", "--accent-color": color }}
-    >
+    <div className="card flex-column gap-3" style={{ height: "100%" }}>
       <div 
         style={{
-          width: "52px",
-          height: "52px",
+          width: "48px",
+          height: "48px",
           borderRadius: "var(--radius-md)",
-          backgroundColor: `${color}18`,
+          backgroundColor: `${color}15`,
           color: color,
           display: "flex",
           alignItems: "center",
-          justifyContent: "center",
-          boxShadow: `0 0 20px ${color}15`
+          justifyContent: "center"
         }}
       >
         <Icon size={24} />
       </div>
       <div>
-        <h3 style={{ fontSize: "1.1rem", marginBottom: "0.5rem" }}>{title}</h3>
-        <p className="text-secondary-color" style={{ fontSize: "0.88rem", lineHeight: 1.6 }}>{description}</p>
+        <h3 style={{ fontSize: "1.15rem", marginBottom: "0.5rem" }}>{title}</h3>
+        <p className="text-secondary-color" style={{ fontSize: "0.9rem" }}>{description}</p>
       </div>
     </div>
   );
@@ -38,17 +34,16 @@ export const FeatureCard = ({ title, description, icon: Icon, color = "var(--pri
 // Workflow Card - Steps explaining how the system works
 export const WorkflowCard = ({ step, title, description }) => {
   return (
-    <div className="card flex-column gap-2" style={{ position: "relative", overflow: "hidden", padding: "1.75rem" }}>
+    <div className="card flex-column gap-2" style={{ position: "relative", overflow: "hidden" }}>
       <div 
         style={{
           position: "absolute",
-          top: "-10px",
-          right: "-5px",
-          fontSize: "5.5rem",
+          top: "-15px",
+          right: "-10px",
+          fontSize: "6rem",
           fontWeight: "800",
-          background: "linear-gradient(180deg, rgba(56,189,248,0.08), transparent)",
-          WebkitBackgroundClip: "text",
-          WebkitTextFillColor: "transparent",
+          color: "var(--bg-tertiary)",
+          opacity: 0.4,
           lineHeight: 1,
           pointerEvents: "none"
         }}
@@ -56,13 +51,8 @@ export const WorkflowCard = ({ step, title, description }) => {
         {step}
       </div>
       <div style={{ position: "relative", zIndex: 1 }}>
-        <div style={{
-          width: 32, height: 3, borderRadius: 2,
-          background: "linear-gradient(90deg, var(--primary), transparent)",
-          marginBottom: "0.75rem"
-        }} />
-        <h3 style={{ fontSize: "1.05rem", marginBottom: "0.35rem" }}>{title}</h3>
-        <p className="text-secondary-color" style={{ fontSize: "0.85rem", lineHeight: 1.6 }}>{description}</p>
+        <h3 style={{ fontSize: "1.1rem", marginBottom: "0.25rem" }}>{title}</h3>
+        <p className="text-secondary-color" style={{ fontSize: "0.875rem" }}>{description}</p>
       </div>
     </div>
   );
@@ -226,7 +216,7 @@ export const AlertCard = ({ alert }) => {
         </span>
       </div>
       <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>{alert.description}</p>
-      <div className="action-box">
+      <div style={{ padding: "0.75rem", background: "white", borderRadius: "var(--radius-sm)", border: "1px dashed var(--border-color)", fontSize: "0.8rem" }}>
         <strong>Required Action:</strong> {alert.action}
       </div>
     </div>
@@ -236,7 +226,7 @@ export const AlertCard = ({ alert }) => {
 // Report Summary Card - AI Summary View
 export const ReportSummaryCard = ({ report }) => {
   return (
-    <div className="card flex-column gap-4">
+    <div className="card flex-column gap-4" style={{ backgroundColor: "white" }}>
       <div className="flex-between">
         <div className="align-center gap-2">
           <Sparkles size={18} style={{ color: "var(--primary)" }} />
@@ -252,30 +242,36 @@ export const ReportSummaryCard = ({ report }) => {
       <div>
         <h5 className="m-b-2" style={{ fontSize: "0.85rem", fontWeight: "600" }}>Biometric Metrics Checked:</h5>
         <div className="grid-2" style={{ gap: "0.75rem" }}>
-          {report.metrics.map((m, idx) => {
-            const isAbnormal = m.status.toLowerCase().includes("abnormal") || m.status.toLowerCase().includes("high") && !m.status.toLowerCase().includes("normal");
+          {report.metrics && report.metrics.map((m, idx) => {
+            const statusStr = m.status ? String(m.status).toLowerCase() : "unknown";
+            const isAbnormal = statusStr.includes("abnormal") || statusStr.includes("high") || statusStr.includes("low");
             return (
               <div 
                 key={idx} 
                 style={{ 
                   padding: "0.75rem", 
-                  borderRadius: "var(--radius-md)", 
-                  background: "var(--bg-secondary)",
-                  border: isAbnormal ? "1px solid var(--danger)" : "1px solid var(--border-color)"
+                  backgroundColor: isAbnormal ? "var(--danger-light)" : "var(--bg-secondary)", 
+                  borderRadius: "var(--radius-md)",
+                  border: `1px solid ${isAbnormal ? "var(--danger)" : "var(--border-color)"}`
                 }}
               >
                 <div className="flex-between m-b-1">
-                  <span style={{ fontSize: "0.75rem", color: "var(--text-secondary)" }}>{m.name}</span>
+                  <span style={{ fontSize: "0.8rem", fontWeight: "600", color: isAbnormal ? "var(--danger-dark)" : "var(--text-primary)" }}>
+                    {m.name || "Unknown Metric"}
+                  </span>
                   <span className={`badge ${isAbnormal ? "badge-danger" : "badge-success"}`} style={{ fontSize: "0.65rem" }}>
-                    {m.status}
+                    {m.status || "Unknown"}
                   </span>
                 </div>
-                <div style={{ fontSize: "1.1rem", fontWeight: "700" }}>
-                  {m.value} <span style={{ fontSize: "0.75rem", fontWeight: "500", color: "var(--text-muted)" }}>{m.unit}</span>
+                <div className="align-center gap-1">
+                  <span style={{ fontSize: "1.25rem", fontWeight: "700" }}>{m.value !== undefined ? m.value : "--"}</span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{m.unit || ""}</span>
                 </div>
-                <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginTop: "0.15rem" }}>
-                  Range: {m.min} - {m.max}
-                </div>
+                {(m.min !== undefined && m.max !== undefined) && (
+                  <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>
+                    Ref: {m.min} - {m.max}
+                  </div>
+                )}
               </div>
             );
           })}
@@ -351,7 +347,7 @@ export const GraphCard = ({ trendsData }) => {
                 padding: "0.4rem 0.75rem",
                 borderRadius: "var(--radius-sm)",
                 fontWeight: "600",
-                backgroundColor: metric === key ? "rgba(56, 189, 248, 0.15)" : "transparent",
+                backgroundColor: metric === key ? "white" : "transparent",
                 color: metric === key ? "var(--primary)" : "var(--text-secondary)",
                 boxShadow: metric === key ? "var(--shadow-sm)" : "none",
                 transition: "all var(--transition-fast)"
