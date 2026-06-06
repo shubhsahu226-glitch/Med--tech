@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useHealth } from "../context/HealthContext";
 import { ShieldAlert, AlertTriangle, PhoneCall, PlusCircle, Volume2 } from "lucide-react";
-import { AlertCard } from "../components/CardComponents";
+import { AlertCard } from "../components/cards";
 
 export const EmergencyAlerts = () => {
   const { alerts, triggerEmergencyAlert } = useHealth();
