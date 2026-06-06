@@ -4,7 +4,7 @@ import {
   Sparkles, Calendar, MessageSquare, Clock, 
   ShieldAlert, History, ArrowRight, ShieldCheck, Zap, HeartPulse 
 } from "lucide-react";
-import { FeatureCard, WorkflowCard } from "../components/CardComponents";
+import { FeatureCard, WorkflowCard } from "../components/cards";
 
 export const Home = () => {
   const features = [
