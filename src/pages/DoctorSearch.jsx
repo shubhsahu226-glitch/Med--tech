@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useHealth } from "../context/HealthContext";
 import { Search, MapPin, DollarSign, Calendar, Sparkles, Award, Star } from "lucide-react";
-import { DoctorCard } from "../components/CardComponents";
+import { DoctorCard } from "../components/cards";
 import { Modal } from "../components/Modal";
 
 export const DoctorSearch = () => {

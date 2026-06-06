@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
 import { Sparkles, FileText, CheckCircle2, ChevronRight, AlertCircle, ArrowLeft } from "lucide-react";
-import { ReportSummaryCard, GraphCard } from "../components/CardComponents";
+import { ReportSummaryCard, GraphCard } from "../components/cards";
 import { Link } from "react-router-dom";
 
 export const ReportAnalysis = () => {
