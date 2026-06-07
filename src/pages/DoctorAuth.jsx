@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Stethoscope, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
+import { supabase } from "../config/supabase";
 
 export const DoctorAuth = () => {
   const { login, signup } = useAuth();
@@ -20,7 +21,7 @@ export const DoctorAuth = () => {
   const [about, setAbout] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -29,8 +30,8 @@ export const DoctorAuth = () => {
         setError("Please enter your credentials.");
         return;
       }
-      const success = login(email, password, "doctor");
-      if (success) {
+      const { data, error } = await login(email, password);
+      if (!error && data?.user) {
         navigate("/doctor/dashboard");
       } else {
         setError("Login failed. Check your password or email.");
@@ -40,25 +41,56 @@ export const DoctorAuth = () => {
         setError("Please fill in all clinical credentials.");
         return;
       }
-      const success = signup({
-        name,
-        email,
-        specialty,
-        experience: `${experience} years`,
-        education,
-        location,
-        consultationFee: `$${consultationFee}`,
-        about: about || `Dr. ${name} is a certified ${specialty.toLowerCase()} dedicated to providing advanced care.`,
-        rating: 5.0,
-        reviews: 0,
-        availability: ["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"],
-        slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"]
-      }, "doctor");
+      
+      // 1. Sign up user in Supabase Auth
+      const { data, error } = await signup(email, password);
+      
+      if (error) {
+        setError(error.message || "Failed to create provider account.");
+        return;
+      }
 
-      if (success) {
-        navigate("/doctor/dashboard");
-      } else {
-        setError("Failed to create provider account.");
+      if (data?.user) {
+        const doctorId = data.user.id;
+        
+        // 2. Insert into doctors table so patients can find them
+        const { error: docError } = await supabase.from('doctors').insert({
+          id: doctorId,
+          name: `Dr. ${name.replace('Dr. ', '')}`,
+          specialty,
+          experience: `${experience} years`,
+          education,
+          rating: 5.0,
+          reviews: 0,
+          availability: '["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"]',
+          slots: '["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"]',
+          image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200",
+          about: about || `Dr. ${name.replace('Dr. ', '')} is a certified ${specialty.toLowerCase()} dedicated to providing advanced care.`,
+          location,
+          consultationFee: `$${consultationFee}`
+        });
+
+        if (docError) {
+          console.error("Failed to insert doctor:", docError);
+        }
+
+        // 3. Insert a basic profile so they don't get trapped in patient onboarding
+        const { error: profileError } = await supabase.from('profiles').insert({
+          id: doctorId,
+          name: `Dr. ${name.replace('Dr. ', '')}`,
+          mobile_number: "Doctor Account",
+          location: location,
+          dob: "1980-01-01" // dummy data for doctor profile
+        });
+
+        if (profileError) {
+          console.error("Failed to insert profile:", profileError);
+        }
+
+        // Wait a small moment to ensure role detection picks up the new row in doctors table
+        setTimeout(() => {
+           navigate("/doctor/dashboard");
+        }, 1000);
       }
     }
   };
