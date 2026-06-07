@@ -6,7 +6,7 @@ import { Calendar, Clock, Video, MessageSquare, HeartPulse, User } from "lucide-
 import { Link } from "react-router-dom";
 
 export const AppointmentBooking = () => {
-  const { user } = useAuth();
+  const { user, profile } = useAuth();
   const { doctors, addAppointment } = useHealth();
   const location = useLocation();
   const navigate = useNavigate();
@@ -42,7 +42,7 @@ export const AppointmentBooking = () => {
     // Call HealthContext action
     addAppointment({
       patientId: user.id,
-      patientName: user.name,
+      patientName: profile?.name || "Patient",
       doctorId: selectedDoctorId,
       doctorName: activeDoctor.name,
       doctorSpecialty: activeDoctor.specialty,

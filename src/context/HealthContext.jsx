@@ -25,7 +25,12 @@ export const HealthProvider = ({ children }) => {
     const fetchDoctors = async () => {
       const { data, error } = await supabase.from('doctors').select('*');
       if (data && !error) {
-        setDoctors(data);
+        const parsedDoctors = data.map(doc => ({
+          ...doc,
+          slots: typeof doc.slots === 'string' ? JSON.parse(doc.slots) : doc.slots || [],
+          availability: typeof doc.availability === 'string' ? JSON.parse(doc.availability) : doc.availability || []
+        }));
+        setDoctors(parsedDoctors);
       } else {
         console.error("Failed to fetch doctors:", error);
         setDoctors(mockDoctors);
