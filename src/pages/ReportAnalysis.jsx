@@ -41,8 +41,8 @@ export const ReportAnalysis = () => {
           <Link to="/patient/upload" className="btn btn-primary">Upload Now</Link>
         </div>
       ) : (
-        /* Grid Layout: Left sidebar selector, Right main details */
-        <div className="grid-3" style={{ gridTemplateColumns: "1fr 2fr" }}>
+        /* Split Layout: Left sidebar selector, Right main details */
+        <div className="split-layout split-layout-1-2">
           
           {/* Left: Report History Checklist */}
           <div className="flex-column gap-3">

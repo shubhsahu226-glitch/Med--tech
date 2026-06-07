@@ -35,8 +35,8 @@ export const DoctorDashboard = () => {
         <p className="text-secondary-color" style={{ fontSize: "0.9rem" }}>{user.specialty} | {user.education}</p>
       </div>
 
-      {/* Grid: Calendar, Appointments & Patient Directory */}
-      <div className="grid-3" style={{ gridTemplateColumns: "1.8fr 1.2fr" }}>
+      {/* Split Layout: Calendar, Appointments & Patient Directory */}
+      <div className="split-layout split-layout-18-12">
         
         {/* Left: Schedule and Connected Patients */}
         <div className="flex-column gap-6">
