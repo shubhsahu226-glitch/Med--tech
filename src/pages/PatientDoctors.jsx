@@ -11,7 +11,12 @@ import { DoctorCard } from "../components/cards";
 
 export const PatientDoctors = () => {
   const { user } = useAuth();
-  const { doctors, appointments, addAppointment } = useHealth();
+  const { doctors, appointments, addAppointment, refreshDoctors } = useHealth();
+  
+  // Refresh doctors list whenever this page is visited to ensure it's up to date
+  useEffect(() => {
+    if (refreshDoctors) refreshDoctors();
+  }, []);
   const location = useLocation();
 
   // Tab State: search, telehealth
