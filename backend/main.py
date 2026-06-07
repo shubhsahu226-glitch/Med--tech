@@ -9,7 +9,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from supabase import create_client, Client
 
-load_dotenv() # Load the API key from the .env file
+load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))  # Load the API key from backend/.env
 
 try:
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
