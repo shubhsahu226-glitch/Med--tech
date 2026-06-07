@@ -83,7 +83,19 @@ export const AuthProvider = ({ children }) => {
   const handleSession = async (session) => {
     setLoading(true);
     setUser(session.user);
-    setRole("patient"); // Default to patient for this demo
+    
+    // Check if user is a doctor by querying doctors table
+    const { data: doctorData } = await supabase
+      .from("doctors")
+      .select("id")
+      .eq("id", session.user.id)
+      .maybeSingle();
+
+    if (doctorData) {
+      setRole("doctor");
+    } else {
+      setRole("patient");
+    }
     
     // Fetch profile
     const { data, error } = await supabase
