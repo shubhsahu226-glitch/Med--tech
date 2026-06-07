@@ -5,7 +5,7 @@ import { Stethoscope, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const DoctorAuth = () => {
-  const { login, signup } = useAuth();
+  const { login, signup, loginGuest } = useAuth();
   const navigate = useNavigate();
 
   const [isLogin, setIsLogin] = useState(true);
@@ -20,7 +20,12 @@ export const DoctorAuth = () => {
   const [about, setAbout] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (e) => {
+  const handleGuestLogin = () => {
+    loginGuest("doctor");
+    navigate("/doctor/dashboard");
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
 
@@ -29,36 +34,39 @@ export const DoctorAuth = () => {
         setError("Please enter your credentials.");
         return;
       }
-      const success = login(email, password, "doctor");
-      if (success) {
+      const { data, error } = await login(email, password, "doctor");
+      if (!error && data) {
         navigate("/doctor/dashboard");
       } else {
-        setError("Login failed. Check your password or email.");
+        setError(error?.message || "Login failed. Check your password or email.");
       }
     } else {
       if (!email || !password || !name || !experience || !education || !location || !consultationFee) {
         setError("Please fill in all clinical credentials.");
         return;
       }
-      const success = signup({
-        name,
-        email,
-        specialty,
-        experience: `${experience} years`,
-        education,
-        location,
-        consultationFee: `$${consultationFee}`,
-        about: about || `Dr. ${name} is a certified ${specialty.toLowerCase()} dedicated to providing advanced care.`,
-        rating: 5.0,
-        reviews: 0,
-        availability: ["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"],
-        slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"]
-      }, "doctor");
+      const { data, error } = await signup(
+        {
+          name,
+          email,
+          specialty,
+          experience: `${experience} years`,
+          education,
+          location,
+          consultationFee: `$${consultationFee}`,
+          about: about || `Dr. ${name} is a certified ${specialty.toLowerCase()} dedicated to providing advanced care.`,
+          rating: 5.0,
+          reviews: 0,
+          availability: ["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"],
+          slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"],
+        },
+        "doctor"
+      );
 
-      if (success) {
+      if (!error && data) {
         navigate("/doctor/dashboard");
       } else {
-        setError("Failed to create provider account.");
+        setError(error?.message || "Failed to create provider account.");
       }
     }
   };
@@ -214,6 +222,17 @@ export const DoctorAuth = () => {
             <button type="submit" className="btn btn-primary w-full m-t-4" style={{ padding: "0.75rem" }}>
               {isLogin ? "Provider Sign In" : "Register Credentials"}
             </button>
+
+            {isLogin && (
+              <button 
+                type="button" 
+                onClick={handleGuestLogin} 
+                className="btn btn-secondary w-full m-t-2" 
+                style={{ padding: "0.75rem", borderColor: "var(--primary)", color: "var(--primary)" }}
+              >
+                Guest Doctor Login (Demo bypass)
+              </button>
+            )}
           </form>
 
           <div className="text-center m-t-6" style={{ borderTop: "1px solid var(--border-color)", paddingTop: "1.25rem" }}>

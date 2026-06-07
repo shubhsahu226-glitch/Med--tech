@@ -1,37 +1,34 @@
-import React, { useState } from "react";
+import React from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 
 // Components
 import { Navbar } from "../components/Navbar";
-import { Sidebar } from "../components/Sidebar";
-import { Footer } from "../components/Footer";
 
 // Pages
 import { Home } from "../pages/Home";
 import { PatientAuth } from "../pages/PatientAuth";
 import { DoctorAuth } from "../pages/DoctorAuth";
-import { PatientDashboard } from "../pages/PatientDashboard";
-import { DoctorDashboard } from "../pages/DoctorDashboard";
-import { ReportUpload } from "../pages/ReportUpload";
-import { ReportAnalysis } from "../pages/ReportAnalysis";
-import { MedicalHistory } from "../pages/MedicalHistory";
-import { DoctorSearch } from "../pages/DoctorSearch";
-import { AppointmentBooking } from "../pages/AppointmentBooking";
-import { Consultation } from "../pages/Consultation";
-import { MedicationReminder } from "../pages/MedicationReminder";
-import { EmergencyAlerts } from "../pages/EmergencyAlerts";
-import { ProfileSettings } from "../pages/ProfileSettings";
 import { Onboarding } from "../pages/Onboarding";
 
+// Consolidated Patient Pages
+import { PatientDashboard } from "../pages/PatientDashboard";
+import { PatientReports } from "../pages/PatientReports";
+import { PatientCare } from "../pages/PatientCare";
+import { PatientDoctors } from "../pages/PatientDoctors";
+import { ProfileSettings } from "../pages/ProfileSettings";
+
+// Consolidated Doctor Pages
+import { DoctorDashboard } from "../pages/DoctorDashboard";
+import { DoctorWorkspace } from "../pages/DoctorWorkspace";
+
 export const DashboardLayout = () => {
-  const { user, profile, rawUser, loading } = useAuth();
-  const [sidebarOpen, setSidebarOpen] = useState(false);
+  const { user, profile, rawUser, role, loading } = useAuth();
   const location = useLocation();
 
   if (loading) {
     return (
-      <div className="flex-center" style={{ height: "100vh", backgroundColor: "var(--bg-secondary)" }}>
+      <div className="flex-center" style={{ height: "100vh", backgroundColor: "var(--bg-primary)" }}>
         <div 
           style={{
             width: "40px",
@@ -51,8 +48,8 @@ export const DashboardLayout = () => {
   const isHomePage = location.pathname === "/";
   const showDashboardFrame = user && !isAuthPage && !isHomePage;
 
-  // Onboarding Guard: if user is logged in but profile is null, force to onboarding
-  if (rawUser && !profile && location.pathname !== "/onboarding" && location.pathname !== "/" && !isAuthPage) {
+  // Onboarding Guard: if patient user is logged in but profile is null, force to onboarding
+  if (role === "patient" && rawUser && !profile && location.pathname !== "/onboarding" && location.pathname !== "/" && !isAuthPage) {
     return <Navigate to="/onboarding" replace />;
   }
 
@@ -64,31 +61,23 @@ export const DashboardLayout = () => {
   return (
     <div className="app-container">
       {/* Show Navbar on all routes except isolated auth pages */}
-      {!isAuthPage && (
-        <Navbar toggleSidebar={() => setSidebarOpen(!sidebarOpen)} />
-      )}
+      {!isAuthPage && <Navbar />}
 
       {showDashboardFrame ? (
         <div className="dashboard-layout">
-          <Sidebar isOpen={sidebarOpen} closeSidebar={() => setSidebarOpen(false)} />
           <main className="main-content">
             <Routes>
-              {/* Patient Protected Routes */}
+              {/* Patient Routes */}
               <Route path="/patient/dashboard" element={<PatientDashboard />} />
-              <Route path="/patient/upload" element={<ReportUpload />} />
-              <Route path="/patient/analysis" element={<ReportAnalysis />} />
-              <Route path="/patient/history" element={<MedicalHistory />} />
-              <Route path="/patient/doctors" element={<DoctorSearch />} />
-              <Route path="/patient/book" element={<AppointmentBooking />} />
-              <Route path="/patient/consult" element={<Consultation />} />
-              <Route path="/patient/reminders" element={<MedicationReminder />} />
-              <Route path="/patient/alerts" element={<EmergencyAlerts />} />
-              <Route path="/patient/settings" element={<ProfileSettings />} />
+              <Route path="/patient/reports" element={<PatientReports />} />
+              <Route path="/patient/care" element={<PatientCare />} />
+              <Route path="/patient/doctors" element={<PatientDoctors />} />
+              <Route path="/patient/profile" element={<ProfileSettings />} />
 
-              {/* Doctor Protected Routes */}
+              {/* Doctor Routes */}
               <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-              <Route path="/doctor/consult" element={<Consultation />} />
-              <Route path="/doctor/settings" element={<ProfileSettings />} />
+              <Route path="/doctor/workspace" element={<DoctorWorkspace />} />
+              <Route path="/doctor/profile" element={<ProfileSettings />} />
 
               {/* Fallback inside dashboard frame */}
               <Route path="*" element={<Navigate to="/" replace />} />
@@ -106,9 +95,6 @@ export const DashboardLayout = () => {
           </Routes>
         </main>
       )}
-
-      {/* Footer on Homepage only */}
-      {isHomePage && <Footer />}
     </div>
   );
 };

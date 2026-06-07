@@ -5,7 +5,7 @@ import { HeartPulse, ArrowLeft } from "lucide-react";
 import { Link } from "react-router-dom";
 
 export const PatientAuth = () => {
-  const { login, signup, loginWithGoogle } = useAuth();
+  const { login, signup, loginWithGoogle, loginGuest } = useAuth();
   const navigate = useNavigate();
   
   const [isLogin, setIsLogin] = useState(true);
@@ -13,6 +13,13 @@ export const PatientAuth = () => {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+
+  const handleGuestLogin = () => {
+    setIsLoading(true);
+    loginGuest("patient");
+    navigate("/patient/dashboard");
+    setIsLoading(false);
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -108,6 +115,17 @@ export const PatientAuth = () => {
             <button type="submit" disabled={isLoading} className="btn btn-primary w-full m-t-4" style={{ padding: "0.75rem" }}>
               {isLoading ? "Processing..." : (isLogin ? "Sign In" : "Register with Email")}
             </button>
+            
+            {isLogin && (
+              <button 
+                type="button" 
+                onClick={handleGuestLogin} 
+                className="btn btn-secondary w-full m-t-2" 
+                style={{ padding: "0.75rem", borderColor: "var(--primary)", color: "var(--primary)" }}
+              >
+                Guest Patient Login (Demo bypass)
+              </button>
+            )}
           </form>
 
           <div style={{ margin: "1.5rem 0", display: "flex", alignItems: "center", gap: "1rem" }}>
