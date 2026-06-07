@@ -9,7 +9,6 @@ import { Navbar } from "../components/Navbar";
 import { Home } from "../pages/Home";
 import { PatientAuth } from "../pages/PatientAuth";
 import { DoctorAuth } from "../pages/DoctorAuth";
-import { Onboarding } from "../pages/Onboarding";
 
 // Consolidated Patient Pages
 import { PatientDashboard } from "../pages/PatientDashboard";
@@ -44,26 +43,9 @@ export const DashboardLayout = () => {
   }
 
   // Check if current route is an auth page or homepage where full dashboard frame is NOT needed
-  const isAuthPage = location.pathname.includes("/auth") || location.pathname === "/onboarding";
+  const isAuthPage = location.pathname.includes("/auth");
   const isHomePage = location.pathname === "/";
   const showDashboardFrame = user && !isAuthPage && !isHomePage;
-
-  // Onboarding Guard: if a logged-in patient has no profile, redirect them to onboarding.
-  if (
-    role === "patient" &&
-    rawUser &&
-    !profile &&
-    location.pathname !== "/onboarding" &&
-    location.pathname !== "/" &&
-    !isAuthPage
-  ) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  // Prevent showing onboarding once the profile is complete.
-  if (profile && location.pathname === "/onboarding") {
-    return <Navigate to="/patient/dashboard" replace />;
-  }
 
   return (
     <div className="app-container">
@@ -97,7 +79,6 @@ export const DashboardLayout = () => {
             <Route path="/" element={<Home />} />
             <Route path="/patient/auth" element={<PatientAuth />} />
             <Route path="/doctor/auth" element={<DoctorAuth />} />
-            <Route path="/onboarding" element={rawUser ? <Onboarding /> : <Navigate to="/patient/auth" replace />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
