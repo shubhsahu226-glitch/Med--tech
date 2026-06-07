@@ -60,8 +60,8 @@ export const EmergencyAlerts = () => {
         </button>
       </div>
 
-      {/* Grid: Alerts list vs Hotlines */}
-      <div className="grid-3" style={{ gridTemplateColumns: "2fr 1fr" }}>
+      {/* Split Layout: Alerts list vs Hotlines */}
+      <div className="split-layout split-layout-2-1">
         
         {/* Left Column: Active Advisories */}
         <div className="flex-column gap-6">

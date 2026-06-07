@@ -215,7 +215,7 @@ export const Consultation = () => {
       </div>
 
       {/* Split Panel */}
-      <div style={{ display: "grid", gridTemplateColumns: "1.8fr 1.2fr", gap: "1.5rem", flex: 1, minHeight: 0 }}>
+      <div className="split-layout split-layout-18-12 telehealth-room-container" style={{ flex: 1, minHeight: 0 }}>
         
         {/* Left Side: Call Stream or Chat Module */}
         <div className="card flex-column" style={{ padding: 0, overflow: "hidden", height: "100%" }}>

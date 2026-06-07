@@ -28,8 +28,7 @@ export const Navbar = ({ toggleSidebar }) => {
       <div className="align-center gap-3">
         {user && (
           <button 
-            className="btn-icon" 
-            style={{ display: "none" }} // Show via css on media query
+            className="btn-icon sidebar-toggle-btn" 
             id="sidebar-toggle-btn"
             onClick={toggleSidebar}
             aria-label="Toggle Sidebar"

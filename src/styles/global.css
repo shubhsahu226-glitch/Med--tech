@@ -81,7 +81,7 @@ button {
   background: none;
 }
 
-/* Typography Hierarchy */
+/* Typography Hierarchy - Mobile First */
 h1, h2, h3, h4, h5, h6 {
   font-weight: 600;
   line-height: 1.25;
@@ -89,10 +89,17 @@ h1, h2, h3, h4, h5, h6 {
   margin-bottom: 0.5rem;
 }
 
-h1 { font-size: 2.25rem; letter-spacing: -0.025em; }
-h2 { font-size: 1.75rem; letter-spacing: -0.02em; }
-h3 { font-size: 1.35rem; }
-h4 { font-size: 1.125rem; }
+h1 { font-size: 1.65rem; letter-spacing: -0.02em; }
+h2 { font-size: 1.35rem; letter-spacing: -0.015em; }
+h3 { font-size: 1.15rem; }
+h4 { font-size: 1.0rem; }
+
+@media (min-width: 768px) {
+  h1 { font-size: 2.25rem; letter-spacing: -0.025em; }
+  h2 { font-size: 1.75rem; letter-spacing: -0.02em; }
+  h3 { font-size: 1.35rem; }
+  h4 { font-size: 1.125rem; }
+}
 
 /* Main Layout Wrapper */
 .app-container {
@@ -111,14 +118,14 @@ h4 { font-size: 1.125rem; }
 .main-content {
   flex: 1;
   background-color: var(--bg-secondary);
-  padding: 2rem;
+  padding: 1rem;
   overflow-y: auto;
   transition: padding var(--transition-normal);
 }
 
-@media (max-width: 768px) {
+@media (min-width: 768px) {
   .main-content {
-    padding: 1.25rem;
+    padding: 2rem;
   }
 }
 
@@ -133,22 +140,40 @@ h4 { font-size: 1.125rem; }
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 2rem;
+  padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+  .navbar {
+    padding: 0 2rem;
+  }
 }
 
 .nav-brand {
   display: flex;
   align-items: center;
   gap: 0.75rem;
-  font-size: 1.25rem;
+  font-size: 1.2rem;
   font-weight: 700;
   color: var(--primary);
+}
+
+@media (min-width: 768px) {
+  .nav-brand {
+    font-size: 1.25rem;
+  }
 }
 
 .nav-links {
   display: flex;
   align-items: center;
   gap: 1.5rem;
+}
+
+@media (max-width: 640px) {
+  .nav-links {
+    display: none;
+  }
 }
 
 .nav-item {
@@ -167,7 +192,20 @@ h4 { font-size: 1.125rem; }
 .nav-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
+}
+
+@media (min-width: 768px) {
+  .nav-actions {
+    gap: 1rem;
+  }
+}
+
+/* Hide username text on small screens to prevent navbar overcrowding */
+@media (max-width: 640px) {
+  .sidebar-link-text {
+    display: none !important;
+  }
 }
 
 /* Responsive Collapsible Sidebar */
@@ -217,6 +255,17 @@ h4 { font-size: 1.125rem; }
   
   .sidebar.open {
     transform: translateX(0);
+  }
+}
+
+/* Sidebar toggle menu button */
+.sidebar-toggle-btn {
+  display: none !important;
+}
+
+@media (max-width: 1024px) {
+  .sidebar-toggle-btn {
+    display: flex !important;
   }
 }
 
@@ -320,16 +369,62 @@ h4 { font-size: 1.125rem; }
   box-shadow: var(--shadow-md);
 }
 
-.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
-.grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1.5rem; }
-.grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
-
-@media (max-width: 1024px) {
-  .grid-3, .grid-4 { grid-template-columns: repeat(2, 1fr); }
+/* Premium Grid Cards - Mobile First */
+.grid-2, .grid-3, .grid-4 {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
 }
 
-@media (max-width: 640px) {
-  .grid-2, .grid-3, .grid-4 { grid-template-columns: 1fr; }
+@media (min-width: 640px) {
+  .grid-2, .grid-3, .grid-4 {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .grid-3 {
+    grid-template-columns: repeat(3, 1fr);
+  }
+  .grid-4 {
+    grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+/* Mobile-First Responsive Split Layouts */
+.split-layout {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1.5rem;
+}
+
+@media (min-width: 1024px) {
+  .split-layout-1-2 {
+    grid-template-columns: 1fr 2fr;
+  }
+  .split-layout-2-1 {
+    grid-template-columns: 2fr 1fr;
+  }
+  .split-layout-18-12 {
+    grid-template-columns: 1.8fr 1.2fr;
+  }
+}
+
+/* Telehealth Room Container */
+.telehealth-room-container {
+  height: 100%;
+}
+
+@media (max-width: 1024px) {
+  .telehealth-room-container {
+    height: auto;
+    display: flex;
+    flex-direction: column;
+  }
+  /* Ensure the video panels stack nicely and occupy a fixed readable height on mobile */
+  .telehealth-room-container > div {
+    min-height: 350px !important;
+  }
 }
 
 /* Beautiful Forms */

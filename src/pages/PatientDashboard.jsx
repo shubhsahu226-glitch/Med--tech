@@ -75,10 +75,10 @@ export const PatientDashboard = () => {
         </div>
       )}
 
-      {/* Grid Layout: Primary Metrics & Info */}
-      <div className="grid-3">
+      {/* Split Layout: Primary Metrics & Info */}
+      <div className="split-layout split-layout-18-12">
         {/* Left Column: Quick Stats / Next Appointment / History */}
-        <div className="flex-column gap-6" style={{ gridColumn: "span 2" }}>
+        <div className="flex-column gap-6">
           
           {/* Quick Health Parameters */}
           <div className="grid-3" style={{ gap: "1rem" }}>
