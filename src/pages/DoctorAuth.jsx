@@ -118,7 +118,7 @@ export const DoctorAuth = () => {
   };
 
   return (
-    <div style={{ minHeight: "100vh", backgroundColor: "var(--bg-secondary)", display: "flex", flexDirection: "column" }}>
+    <div className="auth-page-container" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
       <div style={{ padding: "1.5rem" }}>
         <Link to="/" className="btn btn-secondary" style={{ display: "inline-flex", gap: "0.5rem" }}>
           <ArrowLeft size={16} /> Back to Home
