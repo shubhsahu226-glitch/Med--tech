@@ -20,6 +20,8 @@ export const DoctorAuth = () => {
   const [consultationFee, setConsultationFee] = useState("");
   const [about, setAbout] = useState("");
   const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMsg, setSuccessMsg] = useState("");
 
   const handleGuestLogin = () => {
     loginGuest("doctor");
@@ -29,10 +31,13 @@ export const DoctorAuth = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setSuccessMsg("");
+    setIsLoading(true);
 
     if (isLogin) {
       if (!email || !password) {
         setError("Please enter your credentials.");
+        setIsLoading(false);
         return;
       }
 
@@ -41,10 +46,12 @@ export const DoctorAuth = () => {
         navigate("/doctor/dashboard");
       } else {
         setError(error?.message || "Login failed. Check your password or email.");
+        setIsLoading(false);
       }
     } else {
       if (!email || !password || !name || !experience || !education || !location || !consultationFee) {
         setError("Please fill in all clinical credentials.");
+        setIsLoading(false);
         return;
       }
 
@@ -53,6 +60,7 @@ export const DoctorAuth = () => {
 
       if (error) {
         setError(error.message || "Failed to create provider account.");
+        setIsLoading(false);
         return;
       }
 
@@ -94,12 +102,17 @@ export const DoctorAuth = () => {
         }
 
         if (data.session) {
+          setSuccessMsg("Account Created! Logging you in...");
           setTimeout(() => {
             navigate("/doctor/dashboard");
           }, 1000);
         } else {
-          setError("Account Created! Please check your email to confirm your account, or disable 'Confirm Email' in Supabase Auth settings.");
+          setSuccessMsg("Account Created successfully!");
+          setError("Important: Please check your email inbox to confirm your account before logging in. (If testing, disable 'Confirm Email' in Supabase settings).");
+          setIsLoading(false);
         }
+      } else {
+        setIsLoading(false);
       }
     }
   };
@@ -125,8 +138,14 @@ export const DoctorAuth = () => {
           </div>
 
           {error && (
-            <div style={{ padding: "0.75rem", background: "var(--danger-light)", color: "var(--danger-dark)", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem" }}>
-              {error}
+            <div style={{ padding: "1rem", background: "var(--danger-light)", color: "var(--danger-dark)", borderRadius: "var(--radius-md)", fontSize: "0.9rem", marginBottom: "1.25rem", borderLeft: "4px solid var(--danger)" }}>
+              <strong>Notice:</strong> {error}
+            </div>
+          )}
+          
+          {successMsg && (
+            <div style={{ padding: "1rem", background: "var(--success-light)", color: "var(--success-dark)", borderRadius: "var(--radius-md)", fontSize: "0.9rem", marginBottom: "1.25rem", borderLeft: "4px solid var(--success)" }}>
+              {successMsg}
             </div>
           )}
 
@@ -252,8 +271,8 @@ export const DoctorAuth = () => {
               </>
             )}
 
-            <button type="submit" className="btn btn-primary w-full m-t-4" style={{ padding: "0.75rem" }}>
-              {isLogin ? "Provider Sign In" : "Register Credentials"}
+            <button type="submit" className="btn btn-primary w-full m-t-4" style={{ padding: "0.75rem" }} disabled={isLoading}>
+              {isLoading ? "Processing..." : (isLogin ? "Provider Sign In" : "Register Credentials")}
             </button>
 
             {isLogin && (
