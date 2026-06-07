@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+﻿import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
 import { mockPatients, mockDoctors } from "../data/mockData";
 
@@ -52,10 +52,21 @@ export const AuthProvider = ({ children }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (session?.user) {
-        await handleSession(session);
-      } else {
+      try {
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error) {
+          console.error("Failed to read auth session:", error);
+          restoreLocalUser();
+          return;
+        }
+
+        if (session?.user) {
+          await handleSession(session);
+        } else {
+          restoreLocalUser();
+        }
+      } catch (err) {
+        console.error("Auth initialization error:", err);
         restoreLocalUser();
       }
     };
@@ -95,7 +106,23 @@ export const AuthProvider = ({ children }) => {
   const handleSession = async (session) => {
     setLoading(true);
     setUser(session.user);
-    setRole("patient");
+
+    let resolvedRole = "patient";
+    try {
+      const { data: doctorData, error: doctorError } = await supabase
+        .from("doctors")
+        .select("id")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (!doctorError && doctorData?.id) {
+        resolvedRole = "doctor";
+      }
+    } catch (err) {
+      console.error("Doctor role lookup failed:", err);
+    }
+
+    setRole(resolvedRole);
 
     const { data, error } = await supabase
       .from("profiles")
@@ -118,6 +145,7 @@ export const AuthProvider = ({ children }) => {
     } else {
       setProfile(null);
     }
+
     setLoading(false);
   };
 
@@ -132,50 +160,29 @@ export const AuthProvider = ({ children }) => {
     return !error;
   };
 
-  const login = async (email, password, loginRole = "patient") => {
-    if (loginRole === "doctor") {
-      const doctor = mockDoctors[0];
-      setUser(doctor);
-      setRole("doctor");
-      safeSetItem("medtech_user", JSON.stringify(doctor));
-      safeSetItem("medtech_role", "doctor");
-      return { data: { user: doctor }, error: null };
-    }
-
+  const login = async (email, password) => {
     setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
-    setLoading(false);
+
+    if (data?.session) {
+      await handleSession(data.session);
+    } else if (data?.user) {
+      setUser(data.user);
+      setRole("patient");
+      setLoading(false);
+    }
+
+    if (error) {
+      setLoading(false);
+    }
+
     return { data, error };
   };
 
-  const signup = async (emailOrUserData, passwordOrRole, signupRole = "patient") => {
-    if (typeof emailOrUserData === "object") {
-      const userData = emailOrUserData;
-      const role = passwordOrRole || "doctor";
-      const newUser = {
-        id: role === "patient" ? `pat_${Date.now()}` : `doc_${Date.now()}`,
-        avatar:
-          role === "patient"
-            ? "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"
-            : "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=200",
-        reports: role === "patient" ? [] : undefined,
-        history: role === "patient" ? [] : undefined,
-        ...userData,
-      };
-
-      setUser(newUser);
-      setRole(role);
-      safeSetItem("medtech_user", JSON.stringify(newUser));
-      safeSetItem("medtech_role", role);
-      setLoading(false);
-      return { data: { user: newUser }, error: null };
-    }
-
-    const email = emailOrUserData;
-    const password = passwordOrRole;
+  const signup = async (email, password) => {
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
@@ -222,6 +229,7 @@ export const AuthProvider = ({ children }) => {
 
   const loginGuest = (loginRole = "patient") => {
     setLoading(true);
+
     if (loginRole === "doctor") {
       const doctor = mockDoctors[0];
       setUser(doctor);
@@ -235,6 +243,7 @@ export const AuthProvider = ({ children }) => {
       safeSetItem("medtech_user", JSON.stringify(patient));
       safeSetItem("medtech_role", "patient");
     }
+
     setLoading(false);
     return { error: null };
   };

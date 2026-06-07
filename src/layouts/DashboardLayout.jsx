@@ -48,12 +48,19 @@ export const DashboardLayout = () => {
   const isHomePage = location.pathname === "/";
   const showDashboardFrame = user && !isAuthPage && !isHomePage;
 
-  // Onboarding Guard: if patient user is logged in but profile is null, force to onboarding
-  if (role === "patient" && rawUser && !profile && location.pathname !== "/onboarding" && location.pathname !== "/" && !isAuthPage) {
+  // Onboarding Guard: if a logged-in patient has no profile, redirect them to onboarding.
+  if (
+    role === "patient" &&
+    rawUser &&
+    !profile &&
+    location.pathname !== "/onboarding" &&
+    location.pathname !== "/" &&
+    !isAuthPage
+  ) {
     return <Navigate to="/onboarding" replace />;
   }
 
-  // If user tries to go to onboarding but already has a profile, kick them to dashboard
+  // Prevent showing onboarding once the profile is complete.
   if (profile && location.pathname === "/onboarding") {
     return <Navigate to="/patient/dashboard" replace />;
   }
