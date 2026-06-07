@@ -20,24 +20,25 @@ export const HealthProvider = ({ children }) => {
   const [reminders, setReminders] = useState(mockMedicationReminders);
   const [alerts, setAlerts] = useState(mockEmergencyAlerts);
 
-  // Fetch doctors from Supabase on mount
+  const fetchDoctors = async () => {
+    const { data, error } = await supabase.from('doctors').select('*');
+    if (data && !error) {
+      const parsedDoctors = data.map(doc => ({
+        ...doc,
+        slots: typeof doc.slots === 'string' ? JSON.parse(doc.slots) : doc.slots || [],
+        availability: typeof doc.availability === 'string' ? JSON.parse(doc.availability) : doc.availability || []
+      }));
+      setDoctors(parsedDoctors);
+    } else {
+      console.error("Failed to fetch doctors:", error);
+      setDoctors(mockDoctors);
+    }
+  };
+
+  // Fetch doctors on mount and when user changes
   useEffect(() => {
-    const fetchDoctors = async () => {
-      const { data, error } = await supabase.from('doctors').select('*');
-      if (data && !error) {
-        const parsedDoctors = data.map(doc => ({
-          ...doc,
-          slots: typeof doc.slots === 'string' ? JSON.parse(doc.slots) : doc.slots || [],
-          availability: typeof doc.availability === 'string' ? JSON.parse(doc.availability) : doc.availability || []
-        }));
-        setDoctors(parsedDoctors);
-      } else {
-        console.error("Failed to fetch doctors:", error);
-        setDoctors(mockDoctors);
-      }
-    };
     fetchDoctors();
-  }, []);
+  }, [user]);
 
   // Fetch reports for the logged in user
   useEffect(() => {
@@ -269,6 +270,7 @@ export const HealthProvider = ({ children }) => {
       trends,
       consultations,
       uploadReport,
+      refreshDoctors: fetchDoctors,
       addAppointment,
       updateAppointmentStatus,
       addReminder,
