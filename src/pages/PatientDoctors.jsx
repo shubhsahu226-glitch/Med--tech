@@ -1,4 +1,5 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
+import Peer from "peerjs";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
@@ -34,7 +35,74 @@ export const PatientDoctors = () => {
     { sender: "doctor", text: "Hello! How can I assist you today?", time: "10:02 AM" }
   ]);
   const [newMessage, setNewMessage] = useState("");
-  const [callActive, setCallActive] = useState(true);
+  const [callActive, setCallActive] = useState(false);
+  const [peerInstance, setPeerInstance] = useState(null);
+
+  // Video Refs
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
+
+  // Initialize PeerJS
+  useEffect(() => {
+    if (activeTab === "telehealth" && !peerInstance) {
+      const peer = new Peer(`pat_${user.id}`);
+      
+      peer.on("open", (id) => {
+        console.log("Patient Peer initialized with ID:", id);
+      });
+
+      peer.on("call", (call) => {
+        // Answer incoming call
+        navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+          .then((stream) => {
+            if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+            call.answer(stream);
+            setCallActive(true);
+            call.on("stream", (remoteStream) => {
+              if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
+            });
+          })
+          .catch(err => console.error("Failed to get local stream", err));
+      });
+
+      setPeerInstance(peer);
+    }
+    
+    return () => {
+      if (peerInstance && activeTab !== "telehealth") {
+        peerInstance.destroy();
+        setPeerInstance(null);
+        setCallActive(false);
+      }
+    };
+  }, [activeTab, user.id]);
+
+  const initiateCall = () => {
+    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+      .then((stream) => {
+        if (localVideoRef.current) localVideoRef.current.srcObject = stream;
+        setCallActive(true);
+        
+        if (peerInstance && activeDoctor) {
+          const call = peerInstance.call(`doc_${activeDoctor.id}`, stream);
+          if (call) {
+            call.on("stream", (remoteStream) => {
+              if (remoteVideoRef.current) remoteVideoRef.current.srcObject = remoteStream;
+            });
+          }
+        }
+      })
+      .catch(err => console.error("Failed to get local stream", err));
+  };
+
+  const endCall = () => {
+    setCallActive(false);
+    if (localVideoRef.current && localVideoRef.current.srcObject) {
+      localVideoRef.current.srcObject.getTracks().forEach(track => track.stop());
+      localVideoRef.current.srcObject = null;
+    }
+    if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
+  };
 
   // Sync pre-selected doctor if passed in route state
   useEffect(() => {
@@ -370,10 +438,11 @@ export const PatientDoctors = () => {
                 >
                   {callActive ? (
                     <>
-                      <img 
-                        src={activeDoctor.image} 
-                        alt={activeDoctor.name} 
-                        style={{ width: "100%", height: "100%", objectFit: "cover", opacity: 0.8 }}
+                      <video 
+                        ref={remoteVideoRef}
+                        autoPlay
+                        playsInline
+                        style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#000" }}
                       />
                       <div style={{ position: "absolute", bottom: "8px", left: "8px", color: "white", fontSize: "0.75rem", background: "rgba(0,0,0,0.5)", padding: "0.2rem 0.5rem", borderRadius: "3px" }}>
                         {activeDoctor.name} (Live Video)
@@ -393,15 +462,17 @@ export const PatientDoctors = () => {
                           overflow: "hidden"
                         }}
                       >
-                        <img 
-                          src={user.avatar || user.image} 
-                          alt="Patient" 
+                        <video 
+                          ref={localVideoRef}
+                          autoPlay
+                          playsInline
+                          muted
                           style={{ width: "100%", height: "100%", objectFit: "cover" }}
                         />
                       </div>
                       
                       <button 
-                        onClick={() => setCallActive(false)}
+                        onClick={endCall}
                         className="btn btn-danger" 
                         style={{ position: "absolute", top: "8px", right: "8px", padding: "0.3rem", borderRadius: "50%", width: "26px", height: "26px" }}
                         title="Disconnect Call"
@@ -413,7 +484,7 @@ export const PatientDoctors = () => {
                     <div className="text-center" style={{ color: "#94a3b8" }}>
                       <Video size={20} />
                       <p style={{ fontSize: "0.75rem", marginTop: "0.25rem" }}>Video stream offline</p>
-                      <button onClick={() => setCallActive(true)} className="btn btn-primary" style={{ padding: "0.25rem 0.5rem", fontSize: "0.7rem", marginTop: "0.5rem" }}>
+                      <button onClick={initiateCall} className="btn btn-primary" style={{ padding: "0.25rem 0.5rem", fontSize: "0.7rem", marginTop: "0.5rem" }}>
                         Connect Video Feed
                       </button>
                     </div>
