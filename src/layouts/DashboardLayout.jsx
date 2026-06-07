@@ -51,15 +51,7 @@ export const DashboardLayout = () => {
   const isHomePage = location.pathname === "/";
   const showDashboardFrame = user && !isAuthPage && !isHomePage;
 
-  // Onboarding Guard: if user is logged in but profile is null, force to onboarding
-  if (rawUser && !profile && location.pathname !== "/onboarding" && location.pathname !== "/" && !isAuthPage) {
-    return <Navigate to="/onboarding" replace />;
-  }
-
-  // If user tries to go to onboarding but already has a profile, kick them to dashboard
-  if (profile && location.pathname === "/onboarding") {
-    return <Navigate to="/patient/dashboard" replace />;
-  }
+  // Removed onboarding guard as requested.
 
   return (
     <div className="app-container">

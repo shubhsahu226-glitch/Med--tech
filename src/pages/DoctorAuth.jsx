@@ -87,10 +87,14 @@ export const DoctorAuth = () => {
           console.error("Failed to insert profile:", profileError);
         }
 
-        // Wait a small moment to ensure role detection picks up the new row in doctors table
-        setTimeout(() => {
-           navigate("/doctor/dashboard");
-        }, 1000);
+        if (data.session) {
+          setTimeout(() => {
+             navigate("/doctor/dashboard");
+          }, 1000);
+        } else {
+          // If no session is returned, Supabase requires email confirmation!
+          setError("Account Created! Please check your email to confirm your account, or disable 'Confirm Email' in Supabase Auth settings.");
+        }
       }
     }
   };
