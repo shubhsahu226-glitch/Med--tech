@@ -73,12 +73,18 @@ export const AuthProvider = ({ children }) => {
         age: calculateAge(data.dob)
       });
     } else {
-      setProfile(null); // Needs onboarding
+      // Fallback profile if onboarding is bypassed
+      const basePatient = mockPatients[0];
+      setProfile({
+        ...basePatient,
+        id: session.user.id,
+        name: session.user.email ? session.user.email.split("@")[0] : "User",
+        email: session.user.email,
+      });
     }
     setLoading(false);
   };
 
-<<<<<<< Updated upstream
   const calculateAge = (dobString) => {
     if (!dobString) return 30;
     const today = new Date();
