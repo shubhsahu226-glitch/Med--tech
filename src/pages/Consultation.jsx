@@ -87,8 +87,8 @@ export const Consultation = () => {
     return () => { if (peerInstance.current) peerInstance.current.destroy(); };
   }, []);
 
-  const callPatient = () => {
-    const remoteId = prompt("Enter Patient Connection ID:", "");
+  const connectToPeer = () => {
+    const remoteId = prompt("Enter the Connection ID of the person you want to call:", "");
     if (!remoteId) return;
 
     // Connect Data (Text Chat)
@@ -323,11 +323,9 @@ export const Consultation = () => {
                   {isAudioOn ? <Mic size={18} /> : <MicOff size={18} />}
                 </button>
 
-                {role === "doctor" && (
-                  <button className="btn btn-primary" style={{ padding: "0.5rem 1rem", fontSize: "0.85rem" }} onClick={callPatient}>
-                    Start Call
-                  </button>
-                )}
+                <button className="btn btn-primary" style={{ padding: "0.5rem 1rem", fontSize: "0.85rem", display: "flex", gap: "0.5rem", alignItems: "center" }} onClick={connectToPeer}>
+                  <PhoneCall size={16} /> Connect Call
+                </button>
 
                 <button 
                   className="btn btn-danger" 
