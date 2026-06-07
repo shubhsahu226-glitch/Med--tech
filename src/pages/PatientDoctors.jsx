@@ -114,8 +114,17 @@ export const PatientDoctors = () => {
     }
   }, [location.state, doctors, selectedDoctorId]);
 
-  const activeDoctor = doctors.find(d => d.id === selectedDoctorId) || doctors[0];
+  const activeDoctor = doctors.length > 0 ? (doctors.find(d => d.id === selectedDoctorId) || doctors[0]) : null;
   const patientApts = appointments.filter(apt => apt.patientId === user.id);
+
+  if (!activeDoctor) {
+    return (
+      <div className="flex-center" style={{ height: "60vh", flexDirection: "column", gap: "1rem" }}>
+        <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "3px solid var(--border-color)", borderTop: "3px solid var(--primary)", animation: "spin 1s linear infinite" }} />
+        <p className="text-secondary-color">Loading available specialists...</p>
+      </div>
+    );
+  }
 
   // Filter Doctors list
   const filteredDoctors = doctors.filter(doc => {
