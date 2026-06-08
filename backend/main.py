@@ -51,7 +51,7 @@ def get_reports(patient_id):
 
 @app.route("/")
 def read_root():
-    return jsonify({"message": "Welcome to the PulseAI API"})
+    return jsonify({"message": "Welcome to the Virtual Vaidya API"})
 
 @app.route("/api/upload-report", methods=["POST"])
 def upload_report():
