@@ -60,7 +60,7 @@ export const Navbar = () => {
           
           <Link to="/" className="nav-brand" onClick={() => setMobileMenuOpen(false)} style={{ color: "var(--primary)", fontWeight: "700" }}>
             <Heart fill="currentColor" size={22} style={{ color: "var(--primary)" }} />
-            <span>MedTech</span>
+            <span>Virtual Vaidya</span>
           </Link>
         </div>
 
