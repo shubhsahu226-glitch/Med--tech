@@ -1,6 +1,6 @@
-# MedTech AI - Telehealth & Health Intelligence Platform
+# Virtual vaidya AI - Telehealth & Health Intelligence Platform
 
-MedTech AI is a complete, premium, responsive React-based frontend designed to connect patients and clinical doctors through AI-driven insights. Built with a clean, high-contrast, minimalistic white aesthetic, this dashboard platform prioritizes readability, data accessibility, and clear medical hierarchy.
+Virtual vaidya AI is a complete, premium, responsive React-based frontend designed to connect patients and clinical doctors through AI-driven insights. Built with a clean, high-contrast, minimalistic white aesthetic, this dashboard platform prioritizes readability, data accessibility, and clear medical hierarchy.
 
 ## Key Features
 

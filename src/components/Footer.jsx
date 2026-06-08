@@ -27,7 +27,7 @@ export const Footer = () => {
       >
         <div className="align-center gap-2">
           <Heart fill="currentColor" size={16} style={{ color: "var(--primary)" }} />
-          <span style={{ fontWeight: "700" }}>MedTech AI</span>
+          <span style={{ fontWeight: "700" }}>Virtual vaidya AI</span>
           <span>© {new Date().getFullYear()} All Rights Reserved.</span>
         </div>
         
