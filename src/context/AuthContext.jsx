@@ -36,8 +36,8 @@ export const AuthProvider = ({ children }) => {
   };
 
   const restoreLocalUser = () => {
-    const savedUser = safeGetItem("medtech_user");
-    const savedRole = safeGetItem("medtech_role");
+    const savedUser = safeGetItem("virtualvaidya_user");
+    const savedRole = safeGetItem("virtualvaidya_role");
 
     if (savedUser && savedRole) {
       setUser(JSON.parse(savedUser));
@@ -197,8 +197,8 @@ export const AuthProvider = ({ children }) => {
     setUser(null);
     setProfile(null);
     setRole("guest");
-    safeRemoveItem("medtech_user");
-    safeRemoveItem("medtech_role");
+    safeRemoveItem("virtualvaidya_user");
+    safeRemoveItem("virtualvaidya_role");
   };
 
   const saveProfile = async (profileData) => {
@@ -224,7 +224,7 @@ export const AuthProvider = ({ children }) => {
     if (!user) return;
     const updatedUser = { ...user, ...updatedData };
     setUser(updatedUser);
-    safeSetItem("medtech_user", JSON.stringify(updatedUser));
+    safeSetItem("virtualvaidya_user", JSON.stringify(updatedUser));
   };
 
   const loginGuest = (loginRole = "patient") => {
@@ -234,14 +234,14 @@ export const AuthProvider = ({ children }) => {
       const doctor = mockDoctors[0];
       setUser(doctor);
       setRole("doctor");
-      safeSetItem("medtech_user", JSON.stringify(doctor));
-      safeSetItem("medtech_role", "doctor");
+      safeSetItem("virtualvaidya_user", JSON.stringify(doctor));
+      safeSetItem("virtualvaidya_role", "doctor");
     } else {
       const patient = mockPatients[0];
       setUser(patient);
       setRole("patient");
-      safeSetItem("medtech_user", JSON.stringify(patient));
-      safeSetItem("medtech_role", "patient");
+      safeSetItem("virtualvaidya_user", JSON.stringify(patient));
+      safeSetItem("virtualvaidya_role", "patient");
     }
 
     setLoading(false);
