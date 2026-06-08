@@ -1,88 +1,176 @@
-# MedTech AI - Telehealth & Health Intelligence Platform
-
-MedTech AI is a complete, premium, responsive React-based frontend designed to connect patients and clinical doctors through AI-driven insights. Built with a clean, high-contrast, minimalistic white aesthetic, this dashboard platform prioritizes readability, data accessibility, and clear medical hierarchy.
-
-## Key Features
-
-### For Patients
-- **AI Report Upload & Processing:** Drag and drop laboratory sheets (PDFs, images) to trigger simulated OCR diagnostic scans.
-- **Biometric Trend Charts:** View interactive SVG graphs tracking Fasting Glucose, Cholesterol, and Blood Pressure history with node-by-node inspection logs.
-- **Consultation Scheduler:** Search specialized medical practitioners by department and book consultation slots.
-- **Integrated Reminders:** A daily medication checklist synchronized with prescriptions written by attending physicians.
-- **Emergency Notifications:** Banners reflecting pollution hazards, influenza notices, and local clinic advisories.
-
-### For Clinical Doctors
-- **Interactive Schedule:** Check calendars and start telehealth video/chat consultations with a single click.
-- **Patient Directory:** View connected patients, expand clinical profiles, and inspect historical trend files.
-- **Prescription & Diagnostic Console:** Log findings, write Rx prescriptions (which auto-populate in patient checklists), and schedule follow-ups.
+# 🩺 Virtual Vaidya
+> **Telehealth & AI-Powered Health Intelligence Platform**
+> 
+> *A unified, premium clinical ecosystem connecting patients and medical practitioners with instant AI report diagnostics, biometric trend lines, and secure video consultation rooms.*
 
 ---
 
-## Folder Structure
+## 👥 Hackathon Team (Team [Your Team Name])
+Please fill in your team details below:
 
-Our codebase strictly adheres to the requested folder architecture:
+| Name | Role | GitHub / LinkedIn |
+
+| :--- | :--- | :--- |
+| **[Team Member 1 Name]** | Frontend Lead & UI Developer | [GitHub](https://github.com/) / [LinkedIn](https://linkedin.com/) |
+| **[Team Member 2 Name]** | Backend Engineer & Database Architect | [GitHub](https://github.com/) / [LinkedIn](https://linkedin.com/) |
+| **[Team Member 3 Name]** | AI & OCR Specialist | [GitHub](https://github.com/) / [LinkedIn](https://linkedin.com/) |
+| **[Team Member 4 Name]** | Product Design & QA Engineer | [GitHub](https://github.com/) / [LinkedIn](https://linkedin.com/) |
+
+---
+
+## 💡 The Problem
+Healthcare access remains highly fragmented:
+1. **Uninterpretable Lab Reports:** Patients receive laboratory test sheets (PDFs/images) containing complex chemical abbreviations and numbers without clear context, leading to anxiety or missed warning signs.
+2. **Disconnected Doctor Consultations:** Telehealth services often lack direct synchronization. Doctors consult on one app, prescribe on another, and patients must track their medical instructions manually.
+3. **Information Silos:** Biometric charts, previous diagnostic panels, emergency advisories, and daily medication checklists rarely talk to each other.
+
+---
+
+## 🚀 Our Solution: Virtual Vaidya
+**Virtual Vaidya** bridges the gap between patient diagnostics and professional medical care by building a double-sided portal (for Patients and Doctors) driven by AI analysis. 
+
+### 1. For Patients:
+* **Instant AI Report Scanning (OCR + LLM):** Drag and drop standard laboratory PDFs or image scans. The app parses the file, extracts medical metrics (such as Fasting Glucose, Cholesterol, BP), flags danger levels, and explains them in layman's terms.
+* **Interactive Biometric Trends:** No external charting libraries that bloat the client. An inline, responsive, custom SVG graphing module plots blood sugar, lipid panels, and blood pressure trends over time.
+* **Smart Care Regimen:** A synchronized daily checklist for upcoming medications, diet tips, and clinical treatments.
+* **Practitioner Search & Scheduling:** Filter doctors by specialty, view availability slots, and book video/chat consultations.
+* **Emergency Alert System:** Instant visual alerts for regional health hazards (such as air pollution or local virus outbreaks) with simulated SOS location broadcasts.
+
+### 2. For Doctors:
+* **Interactive Workspace:** View upcoming consultations, start instant video calls, and access connected patients' entire medical histories on a single panel.
+* **Rx Prescribing & Diagnostic Portal:** Log medical findings and write prescriptions that auto-populate the patient's daily checklist in real-time.
+
+---
+
+## 🛠️ Technology Stack
+* **Frontend:** React 19 (SPA), Vite 8, Vanilla CSS (designed for high-contrast accessibility), Lucide React (icons), Recharts / Custom SVGs.
+* **Backend:** Python (Flask), PyPDF2 (PDF scraping), OpenAI API (structured GPT-4o-mini diagnostics).
+* **Database & Auth:** Supabase (PostgreSQL client for real-time user session sync, profile configuration, and secure medical report storage).
+
+---
+
+## 📂 Project Architecture
 
 ```text
-src/
-├── components/          # Reusable UI widgets
-│   ├── CardComponents.jsx # Features, Doctors, Reminders, and Custom SVG Graphs
-│   ├── Navbar.jsx         # Header & notification drawer
-│   ├── Sidebar.jsx        # Navigation drawers for Doctor/Patient
-│   └── Modal.jsx          # Overlay portals
-├── context/             # Dynamic global state handlers
-│   ├── AuthContext.jsx    # User session, login, and profile updates
-│   └── HealthContext.jsx  # Mock DB updates (appointments, reports, reminders)
-├── data/                # Initial seed data
-│   └── mockData.js        # Doctor credentials, medical logs, and laboratory ranges
-├── pages/               # Full screen routes
-│   ├── Home.jsx           # Landing page
-│   ├── PatientAuth.jsx    # Patient login & sign up forms
-│   ├── DoctorAuth.jsx     # Doctor registration & clinical details
-│   ├── PatientDashboard.jsx # Patient home overview
-│   ├── DoctorDashboard.jsx  # Doctor workspace
-│   ├── ReportUpload.jsx   # OCR loading simulator
-│   ├── ReportAnalysis.jsx # AI Diagnostic summaries
-│   ├── MedicalHistory.jsx # Clinical timelines
-│   ├── DoctorSearch.jsx   # Practitioner filter searches
-│   ├── AppointmentBooking.jsx # Scheduling calendars
-│   ├── Consultation.jsx   # Telehealth video & chat room
-│   ├── MedicationReminder.jsx # Daily medication tracking
-│   ├── EmergencyAlerts.jsx # Weather alerts & clinic warning trigger simulations
-│   └── ProfileSettings.jsx # Profile updates
-├── styles/              # Design tokens and custom stylesheets
-│   └── global.css         # Premium spacing, minimalistic layout cards, and layout variables
-├── App.jsx              # Main routing hub
-└── main.jsx             # DOM mounting coordinates
+├── backend/                   # Python Flask Server
+│   ├── main.py                # Main API endpoints (Upload, SOS, Reports query)
+│   ├── requirements.txt       # Python dependencies
+│   ├── services/              # Business logic helpers
+│   │   ├── ocr_service.py     # PDF parser integration
+│   │   ├── nlp_service.py     # LLM parsing pipeline
+│   │   └── twilio_service.py  # Notification integrations
+│   └── virtual_vaidya.db      # Local mock SQLite DB
+│
+├── src/                       # Frontend React Application
+│   ├── components/            # Reusable UI widgets
+│   │   ├── cards/             # Specialized widgets (Alerts, Reminders, Custom Charts)
+│   │   ├── Navbar.jsx         # Header and notification drawer
+│   │   ├── Sidebar.jsx        # Navigation sidebar for Patients & Doctors
+│   │   └── Modal.jsx          # Overlay portals
+│   ├── context/               # Global state contexts
+│   │   ├── AuthContext.jsx    # Session management (Supabase / Guest credentials)
+│   │   └── HealthContext.jsx  # Syncs medical records, reminders, and alerts
+│   ├── pages/                 # Full Page Routes
+│   │   ├── Home.jsx           # Landing page
+│   │   ├── PatientAuth.jsx    # Patient login & sign up forms
+│   │   ├── DoctorAuth.jsx     # Doctor registration portal
+│   │   ├── PatientDashboard.jsx# Unified patient workspace
+│   │   ├── DoctorDashboard.jsx# Attending physician desk
+│   │   ├── PatientReports.jsx # Lab report upload & trends
+│   │   ├── Consultation.jsx   # Telehealth video room
+│   │   └── ProfileSettings.jsx# User settings
+│   ├── styles/                # Styling variables and design system
+│   │   └── global.css         # Typography, light/dark modes, premium glassmorphism variables
+│   ├── App.jsx                # Router & Provider wrapper
+│   └── main.jsx               # Entry mountpoint
 ```
 
 ---
 
-## How to Run & Build
+## ⚙️ Installation & Setup
 
-Ensure you have [Node.js](https://nodejs.org/) installed (v20+ recommended).
+### Prerequisites
+* [Node.js](https://nodejs.org/) (v20+)
+* [Python 3.10+](https://www.python.org/)
 
-### 1. Installation
-To install project dependencies (including `react-router-dom` and `lucide-react`):
-```bash
-npm install
+---
+
+### Step 1: Clone and Configure Environment
+
+Create a `.env` file in the `backend/` directory:
+```env
+OPENAI_API_KEY=your_openai_api_key
+SUPABASE_URL=your_supabase_project_url
+SUPABASE_KEY=your_supabase_anon_key
 ```
 
-### 2. Development Server
-To launch the hot-reloading development server locally:
-```bash
-npm run dev
-```
-By default, the application will mount on [http://localhost:5173](http://localhost:5173).
-
-### 3. Production Build
-To verify the React compiler output and bundle static files for deployment:
-```bash
-npm run build
+Create a `.env` file in the root directory (for the React frontend):
+```env
+VITE_SUPABASE_URL=your_supabase_project_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
 ```
 
 ---
 
-## Technical Details
+### Step 2: Running the Backend (Python Flask API)
 
-- **Custom SVG Charting:** Our biometric trend lines are generated entirely with inline SVG math. This ensures maximum responsiveness and guarantees that builds will never fail due to node-canvas or library version mismatches.
-- **Dynamic Session Cache:** The authentication session and settings forms sync with your browser's `localStorage` in real-time, preserving newly uploaded reports and booking slots across tab reloads.
+1. Navigate to the backend folder:
+   ```bash
+   cd backend
+   ```
+2. Create and activate a virtual environment:
+   ```bash
+   python -m venv venv
+   # On Windows:
+   venv\Scripts\activate
+   # On macOS/Linux:
+   source venv/bin/activate
+   ```
+3. Install dependencies:
+   ```bash
+   pip install -r requirements.txt
+   ```
+4. Start the backend server:
+   ```bash
+   python main.py
+   ```
+   *The Flask API will run on [http://localhost:8000](http://localhost:8000).*
+
+---
+
+### Step 3: Running the Frontend (React + Vite)
+
+1. Open a new terminal in the root directory:
+   ```bash
+   npm install
+   ```
+2. Launch the development server:
+   ```bash
+   npm run dev
+   ```
+   *The web application will open on [http://localhost:5173](http://localhost:5173).*
+
+---
+
+## 🔍 Hackathon Evaluation Points & Walkthrough
+To evaluate our project, judges can follow this user flow:
+
+1. **Quick Guest Login:**
+   * Go to the login page and click **"Login as Guest"** for either the **Patient** or the **Doctor**.
+2. **Uploading a Lab Report (AI Diagnostic Extraction):**
+   * As a Patient, navigate to **Reports** and upload a lab sheet PDF (e.g. `sample_report.txt` in the root).
+   * The backend triggers a structured GPT-4o-mini parser, returning parsed biometric values (such as Blood Sugar, Blood Pressure) and generating an easy-to-read health summary.
+3. **Inspect Interactive Charts:**
+   * View the biometric graph updates instantly in your profile after the report is saved. Hover over data nodes to inspect historical vitals.
+4. **Trigger Doctor Appointment:**
+   * Search for a practitioner, schedule a consultation slot, and enter the **Telehealth Room** for live chat/video simulations.
+5. **Doctor Workspace Integration:**
+   * Log in as a Doctor, click on the appointment to start the video session, write clinical treatment notes, and enter prescriptions.
+   * Log back in as a Patient to see the prescribed medications automatically added to your daily compliance check-list!
+
+---
+
+## 🔮 Future Roadmap
+* **Wearable Integration:** Direct sync with Apple HealthKit, Google Fit, and continuous glucose monitors (CGMs) for real-time alerts.
+* **LLM Agent Diagnostics:** Advanced multi-agent diagnostics comparing new lab reports to five-year historical records for early detection of chronic diseases.
+* **Encrypted Medical Sharing:** Decentralized, patient-controlled sharing of health records to third-party practitioners.

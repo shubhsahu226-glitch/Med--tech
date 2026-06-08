@@ -39,7 +39,7 @@ export const Navbar = ({ toggleSidebar }) => {
         )}
         <Link to="/" className="nav-brand">
           <Heart fill="currentColor" size={24} style={{ color: "var(--primary)" }} />
-          <span>MedTech AI</span>
+          <span>Virtual Vaidya</span>
         </Link>
       </div>
 

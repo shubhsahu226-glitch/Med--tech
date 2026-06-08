@@ -74,7 +74,7 @@ export const Sidebar = ({ isOpen, closeSidebar }) => {
         
         <div className="sidebar-footer">
           <div style={{ padding: "0.5rem", borderRadius: "var(--radius-sm)", background: "var(--bg-secondary)", fontSize: "0.75rem", border: "1px solid var(--border-color)" }}>
-            <p className="font-semibold text-secondary-color">MedTech Support</p>
+            <p className="font-semibold text-secondary-color">Virtual Vaidya Support</p>
             <p className="text-muted-color">Emergency Call: 911</p>
           </div>
         </div>

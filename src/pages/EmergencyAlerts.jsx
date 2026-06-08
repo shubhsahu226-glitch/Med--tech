@@ -38,7 +38,7 @@ export const EmergencyAlerts = () => {
 
   const emergencyContacts = [
     { title: "National Emergency Line", number: "911", desc: "For life-threatening situations" },
-    { title: "MedTech Support Desk", number: "+1 (800) 555-0199", desc: "For clinical portal account assist" },
+    { title: "Virtual Vaidya Support Desk", number: "+1 (800) 555-0199", desc: "For clinical portal account assist" },
     { title: "Poison Control Center", number: "+1 (800) 222-1222", desc: "Chemical or pill ingestion emergencies" },
     { title: "Crisis Counseling Helpline", number: "988", desc: "24/7 mental health and wellness support" }
   ];
