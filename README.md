@@ -1,88 +1,83 @@
-# Virtual Vaidya - Telehealth & Health Intelligence Platform
+# Virtual Vaidya 🩺
+**A Next-Generation Telehealth & Healthcare Intelligence Platform**
 
-Virtual Vaidya is a complete, premium, responsive React-based frontend designed to connect patients and clinical doctors through AI-driven insights. Built with a clean, high-contrast, minimalistic white aesthetic, this dashboard platform prioritizes readability, data accessibility, and clear medical hierarchy.
+Virtual Vaidya is a comprehensive, responsive, and highly secure telemedicine platform designed to bridge the gap between patients and medical practitioners. Built with a premium, minimalist UI and robust architecture, the platform offers seamless appointment booking, real-time video consultations, health trend analytics, and intelligent report management.
 
-## Key Features
+![Virtual Vaidya Concept](https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=1200)
+
+---
+
+## 🌟 Key Features
 
 ### For Patients
-- **AI Report Upload & Processing:** Drag and drop laboratory sheets (PDFs, images) to trigger simulated OCR diagnostic scans.
-- **Biometric Trend Charts:** View interactive SVG graphs tracking Fasting Glucose, Cholesterol, and Blood Pressure history with node-by-node inspection logs.
-- **Consultation Scheduler:** Search specialized medical practitioners by department and book consultation slots.
-- **Integrated Reminders:** A daily medication checklist synchronized with prescriptions written by attending physicians.
-- **Emergency Notifications:** Banners reflecting pollution hazards, influenza notices, and local clinic advisories.
+- **Unified Authentication:** Seamless single-form sign-up and login powered by Supabase Auth.
+- **Smart Dashboard:** Track upcoming appointments, health trends, and real-time alerts.
+- **Find Specialists:** Browse a directory of verified doctors, filter by specialty, and book consultation slots instantly.
+- **Live Telehealth:** Secure, browser-based WebRTC video and chat rooms for virtual consultations.
+- **Health Analytics:** Visual charts tracking vital signs (Glucose, Blood Pressure, Cholesterol).
+- **Report Management:** Upload and manage lab reports and prescriptions securely.
 
 ### For Clinical Doctors
-- **Interactive Schedule:** Check calendars and start telehealth video/chat consultations with a single click.
-- **Patient Directory:** View connected patients, expand clinical profiles, and inspect historical trend files.
-- **Prescription & Diagnostic Console:** Log findings, write Rx prescriptions (which auto-populate in patient checklists), and schedule follow-ups.
+- **Doctor Workspace:** A dedicated portal to manage daily schedules and patient queues.
+- **Patient Directory:** Access comprehensive medical histories and past consultation logs of assigned patients.
+- **Virtual Clinic:** Initiate secure video calls with scheduled patients directly from the dashboard.
+- **Prescription Console:** Log clinical findings and manage patient prescriptions digitally.
 
 ---
 
-## Folder Structure
+## 🛠️ Technology Stack
 
-Our codebase strictly adheres to the requested folder architecture:
-
-```text
-src/
-├── components/          # Reusable UI widgets
-│   ├── CardComponents.jsx # Features, Doctors, Reminders, and Custom SVG Graphs
-│   ├── Navbar.jsx         # Header & notification drawer
-│   ├── Sidebar.jsx        # Navigation drawers for Doctor/Patient
-│   └── Modal.jsx          # Overlay portals
-├── context/             # Dynamic global state handlers
-│   ├── AuthContext.jsx    # User session, login, and profile updates
-│   └── HealthContext.jsx  # Mock DB updates (appointments, reports, reminders)
-├── data/                # Initial seed data
-│   └── mockData.js        # Doctor credentials, medical logs, and laboratory ranges
-├── pages/               # Full screen routes
-│   ├── Home.jsx           # Landing page
-│   ├── PatientAuth.jsx    # Patient login & sign up forms
-│   ├── DoctorAuth.jsx     # Doctor registration & clinical details
-│   ├── PatientDashboard.jsx # Patient home overview
-│   ├── DoctorDashboard.jsx  # Doctor workspace
-│   ├── ReportUpload.jsx   # OCR loading simulator
-│   ├── ReportAnalysis.jsx # AI Diagnostic summaries
-│   ├── MedicalHistory.jsx # Clinical timelines
-│   ├── DoctorSearch.jsx   # Practitioner filter searches
-│   ├── AppointmentBooking.jsx # Scheduling calendars
-│   ├── Consultation.jsx   # Telehealth video & chat room
-│   ├── MedicationReminder.jsx # Daily medication tracking
-│   ├── EmergencyAlerts.jsx # Weather alerts & clinic warning trigger simulations
-│   └── ProfileSettings.jsx # Profile updates
-├── styles/              # Design tokens and custom stylesheets
-│   └── global.css         # Premium spacing, minimalistic layout cards, and layout variables
-├── App.jsx              # Main routing hub
-└── main.jsx             # DOM mounting coordinates
-```
+- **Frontend Framework:** React.js (Bootstrapped with Vite for high-speed HMR)
+- **Routing:** React Router v6 (SPA Navigation)
+- **Styling:** Custom CSS3 with Premium Glassmorphism UI tokens, Lucide-React Icons
+- **Backend & Database:** Supabase (PostgreSQL, Row Level Security)
+- **Authentication:** Supabase Auth (JWT-based secure sessions)
+- **Real-Time Video/Audio:** PeerJS (WebRTC protocol for P2P connection)
+- **Deployment & CI/CD:** Vercel
 
 ---
 
-## How to Run & Build
+## 👥 Meet the Team
 
-Ensure you have [Node.js](https://nodejs.org/) installed (v20+ recommended).
+This project was built and architected by a dedicated team of developers and visionaries:
 
-### 1. Installation
-To install project dependencies (including `react-router-dom` and `lucide-react`):
-```bash
-npm install
-```
-
-### 2. Development Server
-To launch the hot-reloading development server locally:
-```bash
-npm run dev
-```
-By default, the application will mount on [http://localhost:5173](http://localhost:5173).
-
-### 3. Production Build
-To verify the React compiler output and bundle static files for deployment:
-```bash
-npm run build
-```
+- **Shaket Raj** — *Team Leader & Full Stack Developer*
+- **Shreya Pardhi** — *Core Contributor & UI/UX*
+- **Shubh Sahu** — *Core Contributor & Integration*
+- **Siddharth Saurabh** — *Core Contributor & Architecture*
 
 ---
 
-## Technical Details
+## 🚀 Getting Started (Local Development)
 
-- **Custom SVG Charting:** Our biometric trend lines are generated entirely with inline SVG math. This ensures maximum responsiveness and guarantees that builds will never fail due to node-canvas or library version mismatches.
-- **Dynamic Session Cache:** The authentication session and settings forms sync with your browser's `localStorage` in real-time, preserving newly uploaded reports and booking slots across tab reloads.
+1. **Clone the repository:**
+   ```bash
+   git clone https://github.com/shaketraj156-ops/med-tech.git
+   cd med-tech
+   ```
+
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
+
+3. **Configure Environment Variables:**
+   Create a `.env` file in the root directory and add your Supabase credentials:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_project_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   ```
+
+4. **Run the development server:**
+   ```bash
+   npm run dev
+   ```
+
+5. **Build for production:**
+   ```bash
+   npm run build
+   ```
+
+---
+
+*Built with ❤️ for a healthier tomorrow.*
