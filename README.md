@@ -3,7 +3,9 @@
 
 Virtual Vaidya is a comprehensive, responsive, and highly secure telemedicine platform designed to bridge the gap between patients and medical practitioners. Built with a premium, minimalist UI and robust architecture, the platform offers seamless appointment booking, real-time video consultations, health trend analytics, and intelligent report management.
 
-![Virtual Vaidya Concept](https://images.unsplash.com/photo-1576091160399-112ba8d25d1d?auto=format&fit=crop&q=80&w=1200)
+<div align="center">
+  <img src="./public/banner.png" alt="Virtual Vaidya Banner" width="800" />
+</div>
 
 ---
 
