@@ -426,7 +426,6 @@ export const PatientDoctors = () => {
               <div className="card flex-column gap-3" style={{ padding: "1rem", overflow: "hidden" }}>
                 
                 {/* Mock Video Stream Panel */}
-                <div 
                 <VideoCall 
                   myPeerId={activeTab === "telehealth" ? `pat_${user.id}` : null} 
                   targetPeerId={activeDoctor ? `doc_${activeDoctor.id}` : null} 
