@@ -77,34 +77,7 @@ export const HealthProvider = ({ children }) => {
     fetchReports();
   }, [user]);
 
-  const [appointments, setAppointments] = useState([
-    {
-      id: "apt1",
-      patientId: "pat1",
-      patientName: "Alex Mercer",
-      doctorId: "doc1",
-      doctorName: "Dr. Sarah Jenkins",
-      doctorSpecialty: "Cardiologist",
-      date: "2026-06-12",
-      time: "10:00 AM",
-      status: "Upcoming",
-      reason: "Quarterly hypertension checkup",
-      meetingType: "Video"
-    },
-    {
-      id: "apt2",
-      patientId: "pat2",
-      patientName: "Emily Watson",
-      doctorId: "doc2",
-      doctorName: "Dr. Marcus Chen",
-      doctorSpecialty: "Neurologist",
-      date: "2026-06-15",
-      time: "11:00 AM",
-      status: "Upcoming",
-      reason: "Chronic migraine follow-up",
-      meetingType: "Chat"
-    }
-  ]);
+  const [appointments, setAppointments] = useState([]);
   const [consultations, setConsultations] = useState([]);
   const [trends, setTrends] = useState(mockReportTrends);
 
@@ -175,20 +148,67 @@ export const HealthProvider = ({ children }) => {
     return newReport;
   };
 
-  const addAppointment = (appointmentData) => {
-    const newApt = {
-      id: `apt_${Date.now()}`,
-      status: "Upcoming",
-      ...appointmentData
-    };
-    setAppointments(prev => [newApt, ...prev]);
-    return newApt;
+  const fetchAppointments = async () => {
+    if (!user?.id) return;
+    const isDoctor = role === 'doctor';
+    const column = isDoctor ? 'doctor_id' : 'patient_id';
+    
+    const { data, error } = await supabase
+      .from('appointments')
+      .select('*')
+      .eq(column, user.id)
+      .order('created_at', { ascending: false });
+
+    if (data && !error) {
+      // Map to frontend model
+      setAppointments(data.map(d => ({
+        ...d,
+        patientId: d.patient_id,
+        doctorId: d.doctor_id,
+        patientName: d.patient_name,
+        doctorName: d.doctor_name
+      })));
+    }
   };
 
-  const updateAppointmentStatus = (aptId, status) => {
-    setAppointments(prev => 
-      prev.map(apt => apt.id === aptId ? { ...apt, status } : apt)
-    );
+  useEffect(() => {
+    fetchAppointments();
+  }, [user, role]);
+
+  const addAppointment = async (appointmentData) => {
+    const { patientId, doctorId, patientName, doctorName, date, time, reason } = appointmentData;
+    const { data, error } = await supabase.from('appointments').insert([{
+      patient_id: patientId,
+      doctor_id: doctorId,
+      patient_name: patientName,
+      doctor_name: doctorName,
+      date,
+      time,
+      reason,
+      status: 'Upcoming'
+    }]).select();
+
+    if (data && data.length > 0) {
+      const newApt = {
+        ...data[0],
+        patientId: data[0].patient_id,
+        doctorId: data[0].doctor_id,
+        patientName: data[0].patient_name,
+        doctorName: data[0].doctor_name
+      };
+      setAppointments(prev => [newApt, ...prev]);
+      return newApt;
+    }
+    return null;
+  };
+
+  const updateAppointmentStatus = async (aptId, status) => {
+    const { error } = await supabase.from('appointments').update({ status }).eq('id', aptId);
+    if (!error) {
+      setAppointments(prev => 
+        prev.map(apt => apt.id === aptId ? { ...apt, status } : apt)
+      );
+    }
   };
 
   const addReminder = (name, dosage, frequency, time) => {

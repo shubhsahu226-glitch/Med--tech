@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react";
 import Peer from "peerjs";
+import { supabase } from "../config/supabase";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
@@ -162,22 +163,79 @@ export const PatientDoctors = () => {
     setTimeout(() => setBookingStatus(""), 3000);
   };
 
-  const handleSendMessage = (e) => {
-    e.preventDefault();
-    if (!newMessage.trim()) return;
+  // Chat Integration with Supabase
+  const activeApt = patientApts.find(apt => apt.doctorId === activeDoctor?.id);
 
-    const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    setChatMessages(prev => [...prev, { sender: "patient", text: newMessage, time: timeString }]);
+  useEffect(() => {
+    if (!activeApt?.id) return;
+    
+    // Fetch initial messages
+    const fetchMessages = async () => {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .eq('appointment_id', activeApt.id)
+        .order('created_at', { ascending: true });
+        
+      if (data && !error) {
+        setChatMessages(data.map(m => ({
+          id: m.id,
+          sender: m.sender_role,
+          text: m.text,
+          time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+        })));
+      }
+    };
+    
+    fetchMessages();
+
+    // Subscribe to new messages
+    const channel = supabase
+      .channel(`chat_${activeApt.id}`)
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `appointment_id=eq.${activeApt.id}` }, payload => {
+        const m = payload.new;
+        setChatMessages(prev => {
+          // Prevent duplicates if we just sent it
+          if (prev.find(msg => msg.id === m.id)) return prev;
+          return [...prev, {
+            id: m.id,
+            sender: m.sender_role,
+            text: m.text,
+            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }];
+        });
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeApt?.id]);
+
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !activeApt?.id) return;
+
+    const msgText = newMessage;
     setNewMessage("");
 
-    // Simple reply simulation
-    setTimeout(() => {
-      setChatMessages(prev => [...prev, {
-        sender: "doctor",
-        text: "I am reviewing your symptoms details in the chart log now.",
-        time: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      }]);
-    }, 1500);
+    const tempId = `temp_${Date.now()}`;
+    const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    setChatMessages(prev => [...prev, { id: tempId, sender: "patient", text: msgText, time: timeString }]);
+
+    // Insert to DB
+    const { data, error } = await supabase.from('messages').insert([{
+      appointment_id: activeApt.id,
+      sender_id: user.id,
+      sender_role: 'patient',
+      text: msgText
+    }]).select();
+
+    if (data && !error) {
+      setChatMessages(prev => prev.map(m => m.id === tempId ? {
+        id: data[0].id, sender: data[0].sender_role, text: data[0].text, time: new Date(data[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+      } : m));
+    }
   };
 
   return (
