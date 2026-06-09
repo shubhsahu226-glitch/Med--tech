@@ -27,17 +27,37 @@ export const PatientAuth = () => {
     setIsLoading(false);
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccessMsg("");
+    setIsLoading(true);
 
-    if (!email || !password || !name || !dob || !mobile || !location) {
-      setError("Please fill in all details (Name, DOB, Mobile, Location, Email, Password).");
+    if (!name && !dob && !mobile && !location) {
+      // User is trying to login
+      const { data: loginData, error: loginError } = await login(email, password);
+      if (loginError) {
+        setError(loginError.message || "Invalid login credentials. If you are new, please fill all fields to sign up.");
+      } else {
+        navigate("/patient/dashboard");
+      }
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
+    // User is trying to sign up
+    if (!email || !password || !name || !dob || !mobile || !location) {
+      setError("Please fill in all details to create a new account, or just Email & Password to login.");
+      setIsLoading(false);
+      return;
+    }
 
     // 1. Try to sign up the user
     const { data: signupData, error: signupError } = await signup(email, password);
@@ -150,12 +170,12 @@ export const PatientAuth = () => {
 
             <div className="form-group">
               <label className="form-label" htmlFor="patient-email">Email Address</label>
-              <input type="email" id="patient-email" className="form-input" placeholder="email@example.com" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input type="email" id="patient-email" className="form-input" placeholder="email@example.com" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={handleKeyDown} />
             </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="patient-password">Password</label>
-              <input type="password" id="patient-password" className="form-input" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <input type="password" id="patient-password" className="form-input" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} />
             </div>
 
             <button type="submit" disabled={isLoading} className="btn btn-primary w-full m-t-4" style={{ padding: "0.75rem" }}>

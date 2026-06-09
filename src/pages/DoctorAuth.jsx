@@ -26,17 +26,37 @@ export const DoctorAuth = () => {
     navigate("/doctor/dashboard");
   };
 
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      e.preventDefault();
+      handleSubmit(e);
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccessMsg("");
+    setIsLoading(true);
 
-    if (!email || !password || !name || !experience || !location || !consultationFee) {
-      setError("Please fill in all clinical credentials.");
+    if (!name && !experience && !location && !consultationFee) {
+      // User is trying to login
+      const { data: loginData, error: loginError } = await login(email, password);
+      if (loginError) {
+        setError(loginError.message || "Invalid login credentials. If you are new, please fill all fields to sign up.");
+      } else {
+        navigate("/doctor/dashboard");
+      }
+      setIsLoading(false);
       return;
     }
 
-    setIsLoading(true);
+    // User is trying to sign up
+    if (!email || !password || !name || !experience || !location || !consultationFee) {
+      setError("Please fill in all clinical credentials to create a new account, or just Email & Password to login.");
+      setIsLoading(false);
+      return;
+    }
 
     // 1. Try to sign up user in Supabase Auth
     const { data: signupData, error: signupError } = await signup(email, password);
@@ -185,12 +205,12 @@ export const DoctorAuth = () => {
 
             <div className="form-group">
               <label className="form-label" htmlFor="doctor-email">Clinical Email Address</label>
-              <input type="email" id="doctor-email" className="form-input" placeholder="sarah.jenkins@hospital.org" value={email} onChange={(e) => setEmail(e.target.value)} />
+              <input type="email" id="doctor-email" className="form-input" placeholder="sarah.jenkins@hospital.org" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={handleKeyDown} />
             </div>
 
             <div className="form-group">
               <label className="form-label" htmlFor="doctor-password">Password</label>
-              <input type="password" id="doctor-password" className="form-input" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} />
+              <input type="password" id="doctor-password" className="form-input" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} />
             </div>
 
             <button type="submit" className="btn btn-primary w-full m-t-4" style={{ padding: "0.75rem" }} disabled={isLoading}>

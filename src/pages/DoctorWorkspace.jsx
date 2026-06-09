@@ -261,6 +261,15 @@ export const DoctorWorkspace = () => {
 
         {/* TAB 2: ACTIVE CONSULTATION ROOM */}
         {activeTab === "consult" && (
+          !activeApt ? (
+            <div className="card text-center flex-column align-center justify-center gap-3" style={{ padding: "4rem 2rem", margin: "2rem auto", maxWidth: "600px", minHeight: "400px" }}>
+               <h3 style={{ fontSize: "1.5rem", fontWeight: "600", margin: 0 }}>No Active Consultation</h3>
+               <p className="text-secondary-color">There are no patient sessions currently active or scheduled.</p>
+               <button className="btn btn-primary m-t-4" onClick={() => setActiveTab("schedule")}>
+                 Return to Schedule
+               </button>
+            </div>
+          ) : (
           <div className="split-layout split-layout-1-2" style={{ gap: "2.5rem" }}>
             
             {/* Left Column: Patient Feed, Video, Chat */}
@@ -398,8 +407,8 @@ export const DoctorWorkspace = () => {
             </div>
 
           </div>
+          )
         )}
-
       </div>
     </div>
   );
