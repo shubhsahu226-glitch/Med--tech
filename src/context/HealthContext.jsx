@@ -56,9 +56,9 @@ export const HealthProvider = ({ children }) => {
         const profile = profilesMap[doc.id] || {};
         return {
           ...doc,
-          name: profile.name || "Doctor",
-          specialty: doc.specialization || "General Physician",
-          location: profile.location || doc.hospital || "City Central Clinic",
+          name: profile.name || doc.name || "Doctor",
+          specialty: doc.specialty || doc.specialization || "General Physician",
+          location: profile.location || doc.location || doc.hospital || "City Central Clinic",
           slots: typeof doc.slots === 'string' ? JSON.parse(doc.slots) : doc.slots || [],
           availability: typeof doc.availability === 'string' ? JSON.parse(doc.availability) : doc.availability || []
         };

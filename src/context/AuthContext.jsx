@@ -191,16 +191,16 @@ export const AuthProvider = ({ children }) => {
           name: data.name,
           email: session.user.email,
           phone: data.mobile_number,
-          location: data.location || doctorDetails?.hospital,
-          specialty: doctorDetails?.specialization || "General Physician",
-          experience: doctorDetails?.license_number ? "5 years" : "Unknown",
-          hospital: doctorDetails?.hospital || "City Central Clinic",
-          licenseNumber: doctorDetails?.license_number,
+          location: data.location || doctorDetails?.location || "City Central Clinic",
+          specialty: doctorDetails?.specialty || "General Physician",
+          experience: doctorDetails?.experience || "5 years",
           slots: typeof doctorDetails?.slots === "string" ? JSON.parse(doctorDetails.slots) : doctorDetails?.slots || [],
           availability: typeof doctorDetails?.availability === "string" ? JSON.parse(doctorDetails.availability) : doctorDetails?.availability || [],
           rating: doctorDetails?.rating || 5.0,
-          reviews_count: doctorDetails?.reviews_count || 0,
-          image: doctorDetails?.image || "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200"
+          reviews: doctorDetails?.reviews || 0,
+          image: doctorDetails?.image || "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200",
+          about: doctorDetails?.about || "",
+          consultationFee: doctorDetails?.consultationFee || ""
         });
       } else {
         let patientDetails = null;
@@ -357,11 +357,13 @@ export const AuthProvider = ({ children }) => {
     if (role === "doctor") {
       const doctorFields = {
         id: user.id,
-        specialization: profileData.specialty || profileData.specialization || "General Physician",
-        hospital: profileData.hospital || profileData.location || "City Central Clinic",
-        license_number: profileData.licenseNumber || profileData.license_number || null,
-        slots: profileData.slots ? JSON.stringify(profileData.slots) : undefined,
-        availability: profileData.availability ? JSON.stringify(profileData.availability) : undefined
+        name: profileData.name,
+        specialty: profileData.specialty || "General Physician",
+        location: profileData.location || "City Central Clinic",
+        experience: profileData.experience || "5 years",
+        consultationFee: profileData.consultationFee || null,
+        slots: profileData.slots || undefined,
+        availability: profileData.availability || undefined
       };
 
       // Remove undefined keys
