@@ -4,9 +4,17 @@ import { useHealth } from "../context/HealthContext";
 import { uploadReportApi } from "../services/api";
 import { 
   FileUp, History, Sparkles, PlusCircle, Calendar, User, 
-  CheckCircle2, FileText, ChevronRight, Activity, Download, Save, RefreshCw, AlertTriangle
+  CheckCircle2, FileText, ChevronRight, Activity, Download, Save, RefreshCw, AlertTriangle, Info
 } from "lucide-react";
-import { ReportSummaryCard, GraphCard } from "../components/cards";
+import { ReportSummaryCard } from "../components/cards";
+
+// New Report Analyzer features imports
+import { ReportSections } from "../features/reports/components/ReportSections";
+import { TrendGraphs } from "../features/reports/components/TrendGraphs";
+import { fetchParameterHistoryTrends, fetchPatientAlerts } from "../features/reports/services";
+
+const API_BASE_URL =
+  import.meta.env.VITE_API_URL || (import.meta.env.DEV ? "http://localhost:8000" : "");
 
 export const PatientReports = () => {
   const { user } = useAuth();
@@ -21,12 +29,35 @@ export const PatientReports = () => {
     reports.length > 0 ? reports[0].id : null
   );
 
+  // Database state for structured sections, trends, and alerts
+  const [dbTrends, setDbTrends] = useState([]);
+  const [dbAlerts, setDbAlerts] = useState([]);
+
+  // Load database records for history graphs and warning flags
+  const loadDatabaseRecords = async () => {
+    if (user?.id) {
+      try {
+        const trData = await fetchParameterHistoryTrends(user.id);
+        const alData = await fetchPatientAlerts(user.id);
+        if (trData && trData.length > 0) setDbTrends(trData);
+        if (alData && alData.length > 0) setDbAlerts(alData);
+      } catch (err) {
+        console.error("Error loading database records:", err);
+      }
+    }
+  };
+
   // Sync selected report when reports list updates
   useEffect(() => {
     if (reports.length > 0 && !selectedReportId) {
       setSelectedReportId(reports[0].id);
     }
   }, [reports, selectedReportId]);
+
+  // Load database records when user updates or active tab changes
+  useEffect(() => {
+    loadDatabaseRecords();
+  }, [user, activeTab]);
 
   const activeReport = reports.find(r => r.id === selectedReportId) || reports[0];
 
@@ -44,6 +75,7 @@ export const PatientReports = () => {
   const [manualMetricUnit, setManualMetricUnit] = useState("mg/dL");
   const [manualMetricMin, setManualMetricMin] = useState("70");
   const [manualMetricMax, setManualMetricMax] = useState("120");
+  const [manualMetricDate, setManualMetricDate] = useState(new Date().toISOString().split('T')[0]);
   const [manualStatus, setManualStatus] = useState("");
 
   // Update Report Summary State
@@ -74,7 +106,15 @@ export const PatientReports = () => {
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];
     if (selectedFile) {
+      // Validate file size (e.g. 5MB)
+      if (selectedFile.size > 5 * 1024 * 1024) {
+        setUploadError("The uploaded file exceeds the maximum supported size of 5MB.");
+        setFile(null);
+        return;
+      }
+      
       setFile(selectedFile);
+      setUploadError("");
       if (!reportTitle) {
         setReportTitle(selectedFile.name.split(".")[0].replace(/[-_]/g, " "));
       }
@@ -117,6 +157,7 @@ export const PatientReports = () => {
           data.report.date
         );
         setSelectedReportId(newRep.id);
+        await loadDatabaseRecords(); // reload trends & alerts
       }
       
       setIsUploading(false);
@@ -126,16 +167,23 @@ export const PatientReports = () => {
     } catch (err) {
       clearInterval(progressInterval);
       console.error(err);
-      setUploadError("Failed to connect to backend engine.");
+      
+      // Map general TypeError (Fetch failed) to a detailed local guidance message
+      let errorMsg = err.message || "Failed to connect to backend engine.";
+      if (errorMsg.toLowerCase().includes("fetch") || errorMsg.toLowerCase().includes("failed to upload")) {
+        errorMsg = "Failed to connect to backend server. Please verify that the Flask backend is running on http://localhost:8000. Run 'python main.py' inside your backend directory.";
+      }
+      
+      setUploadError(errorMsg);
       setIsUploading(false);
     }
   };
 
-  const handleManualEntrySubmit = (e) => {
+  const handleManualEntrySubmit = async (e) => {
     e.preventDefault();
     if (!manualMetricName || !manualMetricVal) return;
 
-    // Build new metric object
+    // Build local biomarker values
     const valNum = parseFloat(manualMetricVal);
     const minNum = parseFloat(manualMetricMin);
     const maxNum = parseFloat(manualMetricMax);
@@ -152,23 +200,68 @@ export const PatientReports = () => {
       max: maxNum
     };
 
-    // If report exists, append the metric. Otherwise, create a new manual report
-    if (activeReport) {
-      activeReport.metrics = [...(activeReport.metrics || []), newMetric];
-      setManualStatus("Metric appended to active report successfully!");
-    } else {
-      // Create fresh report
+    // Format dates for saving
+    const parsedDate = new Date(manualMetricDate);
+    const dateString = parsedDate.toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: '2-digit' });
+
+    // Request payload
+    const requestData = {
+      patient_id: user ? user.id : 'guest',
+      name: manualMetricName,
+      value: valNum,
+      unit: manualMetricUnit,
+      min: manualMetricMin ? parseFloat(manualMetricMin) : null,
+      max: manualMetricMax ? parseFloat(manualMetricMax) : null,
+      date: manualMetricDate
+    };
+
+    try {
+      const response = await fetch(`${API_BASE_URL}/api/manual-entry`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify(requestData)
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to save manual log to database.");
+      }
+      
+      const resJson = await response.json();
+      
+      if (resJson.report) {
+        const newRep = uploadReport(
+          user ? user.id : 'guest',
+          resJson.report.title,
+          resJson.report.type,
+          resJson.report.metrics,
+          resJson.report.aiSummary,
+          resJson.report.id,
+          resJson.report.date
+        );
+        setSelectedReportId(newRep.id);
+        setManualStatus("Biomarker logged successfully to database!");
+      }
+    } catch (err) {
+      console.error(err);
+      
+      // Fallback local saving if backend is unreachable
       const newRep = uploadReport(
         user ? user.id : 'guest',
         "Manual Record Entry",
         "Blood Test",
         [newMetric],
         `Manual entry: ${manualMetricName} recorded.`,
-        `rep_man_${Date.now()}`
+        `rep_man_${Date.now()}`,
+        dateString
       );
       setSelectedReportId(newRep.id);
-      setManualStatus("New manual record created!");
+      setManualStatus("Biomarker logged locally (Backend server offline).");
     }
+
+    // Refresh database parameters for graphs
+    await loadDatabaseRecords();
 
     // Reset entry fields
     setManualMetricName("");
@@ -230,7 +323,7 @@ export const PatientReports = () => {
           onClick={() => setActiveTab("graphs")} 
           className={`subnav-tab ${activeTab === "graphs" ? "active" : ""}`}
         >
-          Trend Graphs & Alerts ({reportAlerts.length})
+          Trend Graphs & Alerts ({dbAlerts.length || reportAlerts.length})
         </button>
       </div>
 
@@ -248,7 +341,10 @@ export const PatientReports = () => {
                 {reports.map(rep => (
                   <button
                     key={rep.id}
-                    onClick={() => setSelectedReportId(rep.id)}
+                    onClick={() => {
+                      setSelectedReportId(rep.id);
+                      setActiveTab("analysis");
+                    }}
                     className="card text-left"
                     style={{
                       padding: "1rem",
@@ -325,8 +421,8 @@ export const PatientReports = () => {
           <div className="split-layout split-layout-1-1" style={{ gap: "2.5rem" }}>
             
             {/* Upload Area */}
-            <div className="card">
-              <h3 style={{ fontSize: "1.1rem", marginBottom: "1.25rem", fontWeight: "600" }}>AI Laboratory Document Scanner</h3>
+            <div className="card flex-column gap-4">
+              <h3 style={{ fontSize: "1.1rem", marginBottom: "0.25rem", fontWeight: "600" }}>AI Laboratory Document Scanner</h3>
               
               {isUploading ? (
                 <div className="flex-column flex-center text-center" style={{ padding: "3rem 0" }}>
@@ -341,7 +437,7 @@ export const PatientReports = () => {
                       marginBottom: "1.5rem"
                     }}
                   />
-                  <h3 style={{ fontSize: "1.1rem", color: "var(--primary)" }}>AI Agent Processing</h3>
+                  <h3 style={{ fontSize: "1.1rem", color: "var(--primary)" }}>AI Agent Scanning</h3>
                   <p className="text-secondary-color" style={{ fontSize: "0.8rem", marginTop: "0.25rem" }}>
                     {uploadSteps[uploadStep]}
                   </p>
@@ -383,12 +479,25 @@ export const PatientReports = () => {
                         </>
                       ) : (
                         <>
-                          <h4 style={{ margin: 0, fontSize: "0.9rem", fontWeight: "500" }}>Upload Laboratory PDF</h4>
+                          <h4 style={{ margin: 0, fontSize: "0.9rem", fontWeight: "500" }}>Upload Laboratory PDF or Image</h4>
                           <p className="text-secondary-color" style={{ fontSize: "0.75rem" }}>
-                            OCR maps ranges to standard criteria automatically
+                            OCR parses ranges and normalizes metrics automatically
                           </p>
                         </>
                       )}
+                    </div>
+                  </div>
+
+                  {/* Upload Guidelines Card */}
+                  <div style={{ padding: "0.75rem 1rem", background: "var(--bg-tertiary)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", fontSize: "0.75rem", color: "var(--text-secondary)", display: "flex", gap: "0.5rem" }}>
+                    <Info size={16} style={{ color: "var(--primary)", flexShrink: 0, marginTop: "2px" }} />
+                    <div>
+                      <strong>Upload Guidelines:</strong>
+                      <ul style={{ margin: "0.25rem 0 0", paddingLeft: "1.1rem", lineHeight: "1.4" }}>
+                        <li>Maximum supported file size: <strong>5 MB</strong></li>
+                        <li>Supported formats: <strong>PDF, PNG, JPG, JPEG</strong></li>
+                        <li>Requirement: Ensure the <strong>report date</strong> is clearly visible in the document so history trends chart correctly.</li>
+                      </ul>
                     </div>
                   </div>
 
@@ -415,6 +524,8 @@ export const PatientReports = () => {
                       <option>Blood Test</option>
                       <option>Cardiogram (ECG)</option>
                       <option>MRI Scan</option>
+                      <option>Lipid Checkup</option>
+                      <option>Renal Panel</option>
                     </select>
                   </div>
 
@@ -442,9 +553,21 @@ export const PatientReports = () => {
                     type="text"
                     id="manual-name"
                     className="form-input"
-                    placeholder="e.g., Blood Glucose, Uric Acid"
+                    placeholder="e.g., Blood Glucose, LDL Cholesterol, Creatinine"
                     value={manualMetricName}
                     onChange={(e) => setManualMetricName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="manual-date">Record Date</label>
+                  <input
+                    type="date"
+                    id="manual-date"
+                    className="form-input"
+                    value={manualMetricDate}
+                    onChange={(e) => setManualMetricDate(e.target.value)}
                     required
                   />
                 </div>
@@ -522,6 +645,12 @@ export const PatientReports = () => {
                   {/* Latest Report Data Panel */}
                   <ReportSummaryCard report={activeReport} />
                   
+                  {/* Separate sections for different report types (Blood, Sugar, Lipid, Kidney, etc.) */}
+                  <div style={{ marginTop: "1rem" }}>
+                    <h3 style={{ fontSize: "1.1rem", marginBottom: "1rem", fontWeight: "600" }}>Categorized Laboratory Biomarkers</h3>
+                    <ReportSections report={activeReport} trendsData={dbTrends} />
+                  </div>
+
                   {/* Update Report Section */}
                   <div className="card flex-column gap-3">
                     <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Update Clinical Summary Notes</h3>
@@ -570,7 +699,7 @@ export const PatientReports = () => {
             {/* Left: Recharts Graphs */}
             <div className="card">
               <h3 style={{ fontSize: "1.1rem", marginBottom: "1.5rem", fontWeight: "600" }}>Laboratory Metric Trends</h3>
-              <GraphCard trendsData={trends} />
+              <TrendGraphs trendsData={dbTrends.length > 0 ? dbTrends : trends} />
             </div>
 
             {/* Right: Out-of-range alerts */}
@@ -578,27 +707,47 @@ export const PatientReports = () => {
               <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Abnormal Threshold Alerts</h3>
               
               <div className="flex-column gap-3">
-                {reportAlerts.slice(0, 2).map((alert, idx) => (
-                  <div 
-                    key={idx}
-                    className="card flex-column gap-2"
-                    style={{
-                      padding: "1rem",
-                      borderLeft: "4px solid var(--primary)",
-                      backgroundColor: "var(--primary-light)"
-                    }}
-                  >
-                    <div className="flex-between">
-                      <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "var(--warning-dark)" }}>{alert.name} Flagged</span>
-                      <span className="badge badge-danger" style={{ fontSize: "0.6rem", background: "var(--primary)", color: "white" }}>{alert.status}</span>
+                {dbAlerts.length > 0 ? (
+                  dbAlerts.map((alert, idx) => (
+                    <div 
+                      key={idx}
+                      className="card flex-column gap-2"
+                      style={{
+                        padding: "1rem",
+                        borderLeft: "4px solid var(--danger)",
+                        backgroundColor: "var(--danger-light)"
+                      }}
+                    >
+                      <div className="flex-between">
+                        <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "var(--danger-dark)" }}>{alert.title}</span>
+                        <span className="badge badge-danger" style={{ fontSize: "0.65rem" }}>{alert.severity}</span>
+                      </div>
+                      <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0 }}>
+                        {alert.description}
+                      </p>
                     </div>
-                    <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
-                      Recorded value: <strong>{alert.value} {alert.unit}</strong>. Reference range is {alert.min} - {alert.max} {alert.unit}.
-                    </p>
-                  </div>
-                ))}
-
-                {reportAlerts.length === 0 && (
+                  ))
+                ) : reportAlerts.length > 0 ? (
+                  reportAlerts.slice(0, 3).map((alert, idx) => (
+                    <div 
+                      key={idx}
+                      className="card flex-column gap-2"
+                      style={{
+                        padding: "1rem",
+                        borderLeft: "4px solid var(--primary)",
+                        backgroundColor: "var(--primary-light)"
+                      }}
+                    >
+                      <div className="flex-between">
+                        <span style={{ fontWeight: "600", fontSize: "0.85rem", color: "var(--warning-dark)" }}>{alert.name} Flagged</span>
+                        <span className="badge badge-danger" style={{ fontSize: "0.6rem", background: "var(--primary)", color: "white" }}>{alert.status}</span>
+                      </div>
+                      <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>
+                        Recorded value: <strong>{alert.value} {alert.unit}</strong>. Reference range is {alert.min} - {alert.max} {alert.unit}.
+                      </p>
+                    </div>
+                  ))
+                ) : (
                   <div className="card text-center" style={{ padding: "2rem 1rem" }}>
                     <CheckCircle2 size={24} style={{ color: "var(--success)", marginBottom: "0.5rem" }} />
                     <p className="text-secondary-color" style={{ fontSize: "0.8rem" }}>All biomarkers are within normal reference limits.</p>

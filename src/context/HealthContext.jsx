@@ -21,10 +21,16 @@ export const HealthProvider = ({ children }) => {
   const [alerts, setAlerts] = useState(mockEmergencyAlerts);
 
   const fetchDoctors = async () => {
-    const { data, error } = await supabase.from('doctors').select('*');
+    const { data, error } = await supabase
+      .from('doctors')
+      .select('*, profiles(name, mobile_number, location)');
+      
     if (data && !error) {
       const parsedDoctors = data.map(doc => ({
         ...doc,
+        name: doc.profiles?.name || "Doctor",
+        specialty: doc.specialization || "General Physician",
+        location: doc.profiles?.location || doc.hospital || "City Central Clinic",
         slots: typeof doc.slots === 'string' ? JSON.parse(doc.slots) : doc.slots || [],
         availability: typeof doc.availability === 'string' ? JSON.parse(doc.availability) : doc.availability || []
       }));

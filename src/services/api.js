@@ -13,7 +13,14 @@ export const uploadReportApi = async (formData) => {
   });
 
   if (!response.ok) {
-    throw new Error("Failed to upload laboratory report. Please check backend connection.");
+    let errMsg = "Failed to upload laboratory report. Please check backend connection.";
+    try {
+      const errData = await response.json();
+      if (errData && errData.error) {
+        errMsg = errData.error;
+      }
+    } catch (e) {}
+    throw new Error(errMsg);
   }
 
   return response.json();

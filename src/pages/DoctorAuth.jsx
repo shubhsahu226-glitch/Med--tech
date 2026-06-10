@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { Stethoscope, ArrowLeft } from "lucide-react";
+import { Stethoscope, ArrowLeft, Mail, Lock, User, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "../config/supabase";
 
@@ -9,11 +9,8 @@ export const DoctorAuth = () => {
   const { login, signup, loginGuest } = useAuth();
   const navigate = useNavigate();
 
+  const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState("");
-  const [specialty, setSpecialty] = useState("Cardiologist");
-  const [experience, setExperience] = useState("");
-  const [location, setLocation] = useState("");
-  const [consultationFee, setConsultationFee] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   
@@ -22,8 +19,10 @@ export const DoctorAuth = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleGuestLogin = () => {
+    setIsLoading(true);
     loginGuest("doctor");
     navigate("/doctor/dashboard");
+    setIsLoading(false);
   };
 
   const handleKeyDown = (e) => {
@@ -39,26 +38,32 @@ export const DoctorAuth = () => {
     setSuccessMsg("");
     setIsLoading(true);
 
-    if (!name && !experience && !location && !consultationFee) {
-      // User is trying to login
+    if (!email || !password) {
+      setError("Please enter both email and password.");
+      setIsLoading(false);
+      return;
+    }
+
+    if (!isSignUp) {
+      // 1. Sign In Flow
       const { data: loginData, error: loginError } = await login(email, password);
       if (loginError) {
-        setError(loginError.message || "Invalid login credentials. If you are new, please fill all fields to sign up.");
+        setError(loginError.message || "Invalid clinical email or password.");
+        setIsLoading(false);
       } else {
         navigate("/doctor/dashboard");
       }
+      return;
+    }
+
+    // 2. Sign Up Flow
+    if (!name) {
+      setError("Please enter your name.");
       setIsLoading(false);
       return;
     }
 
-    // User is trying to sign up
-    if (!email || !password || !name || !experience || !location || !consultationFee) {
-      setError("Please fill in all clinical credentials to create a new account, or just Email & Password to login.");
-      setIsLoading(false);
-      return;
-    }
-
-    // 1. Try to sign up user in Supabase Auth
+    // Try to sign up user in Supabase Auth
     const { data: signupData, error: signupError } = await signup(email, password);
 
     // If user already exists, automatically log them in
@@ -66,7 +71,7 @@ export const DoctorAuth = () => {
       const { data: loginData, error: loginError } = await login(email, password);
       
       if (loginError) {
-        setError(loginError.message || "Invalid password for existing account.");
+        setError(loginError.message || "This email is already registered, and the password entered was incorrect.");
         setIsLoading(false);
         return;
       }
@@ -75,61 +80,55 @@ export const DoctorAuth = () => {
       return;
     }
 
-    // If other signup errors occur
     if (signupError) {
       setError(signupError.message || "Failed to create provider account.");
       setIsLoading(false);
       return;
     }
 
-    // 2. New user successfully signed up - Insert into DB
+    // New doctor created -> Create profile & doctor table rows
     if (signupData?.user) {
       const doctorId = signupData.user.id;
+      const formattedName = name.startsWith("Dr.") ? name : `Dr. ${name}`;
 
-      // Insert into doctors table so patients can find them
-      const { error: docError } = await supabase.from('doctors').insert({
-        id: doctorId,
-        name: `Dr. ${name.replace('Dr. ', '')}`,
-        specialty,
-        experience: `${experience} years`,
-        education: "Medical Degree", // default placeholder since user didn't want this field
-        rating: 5.0,
-        reviews: 0,
-        availability: JSON.stringify(["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"]),
-        slots: JSON.stringify(["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"]),
-        image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200",
-        about: `Dr. ${name.replace('Dr. ', '')} is a certified ${specialty.toLowerCase()} dedicated to providing advanced care.`,
-        location,
-        consultationFee: `$${consultationFee}`,
-      });
-
-      if (docError) {
-        console.error("Failed to insert doctor:", docError);
-      }
-
-      // Insert a basic profile so they don't get trapped in patient onboarding guards (if any exist)
+      // Insert into profiles first
       const { error: profileError } = await supabase.from('profiles').insert({
         id: doctorId,
-        name: `Dr. ${name.replace('Dr. ', '')}`,
-        mobile_number: "Doctor Account",
-        location,
-        dob: "1980-01-01",
+        name: formattedName,
+        mobile_number: null,
+        dob: "1980-01-01", // Default DOB for doctor
+        location: null
       });
 
       if (profileError) {
-        console.error("Failed to insert profile:", profileError);
+        console.error("Failed to insert profile for doctor:", profileError);
       }
 
-      // If email confirmation is disabled, session exists -> auto login
+      // Insert into doctors table
+      const { error: docError } = await supabase.from('doctors').insert({
+        id: doctorId,
+        specialization: "General Physician",
+        license_number: "LIC-" + Math.floor(100000 + Math.random() * 900000),
+        hospital: "City Central Clinic",
+        slots: JSON.stringify(["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"]),
+        availability: JSON.stringify(["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"]),
+        rating: 5.0,
+        reviews_count: 0,
+        image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200"
+      });
+
+      if (docError) {
+        console.error("Failed to insert doctor record:", docError);
+      }
+
       if (signupData.session) {
-        setSuccessMsg("Account Created! Logging you in...");
+        setSuccessMsg("Provider account created! Logging you in...");
         setTimeout(() => {
           navigate("/doctor/dashboard");
         }, 800);
       } else {
-        // If email confirmation is enabled
-        setSuccessMsg("Account Created successfully!");
-        setError("Important: Please check your email inbox to confirm your account before logging in. (If testing, disable 'Confirm Email' in Supabase settings).");
+        setSuccessMsg("Provider account created successfully!");
+        setError("Check your inbox to verify your email address before logging in.");
         setIsLoading(false);
       }
     } else {
@@ -138,92 +137,169 @@ export const DoctorAuth = () => {
   };
 
   return (
-    <div className="auth-page-container" style={{ minHeight: "100vh", display: "flex", flexDirection: "column" }}>
+    <div className="auth-page-container" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)" }}>
       <div style={{ padding: "1.5rem" }}>
-        <Link to="/" className="btn btn-secondary" style={{ display: "inline-flex", gap: "0.5rem" }}>
+        <Link to="/" className="btn btn-secondary" style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center", background: "white", boxShadow: "var(--shadow-sm)" }}>
           <ArrowLeft size={16} /> Back to Home
         </Link>
       </div>
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem", margin: "2rem 0" }}>
-        <div className="card" style={{ width: "100%", maxWidth: "480px", padding: "2.5rem", boxShadow: "var(--shadow-lg)" }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
+        <div className="card" style={{ width: "100%", maxWidth: "450px", padding: "2.5rem", borderRadius: "1.25rem", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)", background: "white" }}>
+          
+          {/* Header */}
           <div className="text-center m-b-6">
-            <div className="flex-center m-b-2" style={{ color: "var(--primary)" }}>
-              <Stethoscope size={40} fill="var(--primary-light)" />
+            <div className="flex-center m-b-2" style={{ width: "64px", height: "64px", borderRadius: "50%", background: "var(--primary-light)", color: "var(--primary)", margin: "0 auto 1rem auto" }}>
+              <Stethoscope size={32} />
             </div>
-            <h2>Medical Provider Portal</h2>
-            <p className="text-secondary-color" style={{ fontSize: "0.875rem" }}>
-              Enter your clinical details. If you already have an account, we'll log you right in!
+            <h2 style={{ fontSize: "1.5rem", fontWeight: "700", color: "#111827", margin: "0 0 0.25rem 0" }}>Medical Provider</h2>
+            <p className="text-secondary-color" style={{ fontSize: "0.875rem", margin: 0 }}>
+              Access clinical records and patient consultations
             </p>
           </div>
 
+          {/* Tab Selection */}
+          <div style={{ display: "flex", background: "#f3f4f6", padding: "0.25rem", borderRadius: "0.5rem", marginBottom: "1.5rem" }}>
+            <button
+              type="button"
+              onClick={() => { setIsSignUp(false); setError(""); setSuccessMsg(""); }}
+              style={{
+                flex: 1,
+                padding: "0.5rem 1rem",
+                background: !isSignUp ? "white" : "transparent",
+                border: "none",
+                borderRadius: "0.375rem",
+                color: !isSignUp ? "var(--primary)" : "#4b5563",
+                fontWeight: !isSignUp ? "600" : "500",
+                fontSize: "0.875rem",
+                cursor: "pointer",
+                boxShadow: !isSignUp ? "0 1px 3px rgba(0, 0, 0, 0.1)" : "none",
+                transition: "all 0.2s"
+              }}
+            >
+              Sign In
+            </button>
+            <button
+              type="button"
+              onClick={() => { setIsSignUp(true); setError(""); setSuccessMsg(""); }}
+              style={{
+                flex: 1,
+                padding: "0.5rem 1rem",
+                background: isSignUp ? "white" : "transparent",
+                border: "none",
+                borderRadius: "0.375rem",
+                color: isSignUp ? "var(--primary)" : "#4b5563",
+                fontWeight: isSignUp ? "600" : "500",
+                fontSize: "0.875rem",
+                cursor: "pointer",
+                boxShadow: isSignUp ? "0 1px 3px rgba(0, 0, 0, 0.1)" : "none",
+                transition: "all 0.2s"
+              }}
+            >
+              Create Account
+            </button>
+          </div>
+
           {error && (
-            <div style={{ padding: "1rem", background: "var(--danger-light)", color: "var(--danger-dark)", borderRadius: "var(--radius-md)", fontSize: "0.9rem", marginBottom: "1.25rem", borderLeft: "4px solid var(--danger)" }}>
-              <strong>Notice:</strong> {error}
+            <div style={{ padding: "0.875rem 1rem", background: "#fee2e2", color: "#991b1b", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem", borderLeft: "4px solid #ef4444" }}>
+              {error}
             </div>
           )}
           
           {successMsg && (
-            <div style={{ padding: "1rem", background: "var(--success-light)", color: "var(--success-dark)", borderRadius: "var(--radius-md)", fontSize: "0.9rem", marginBottom: "1.25rem", borderLeft: "4px solid var(--success)" }}>
+            <div style={{ padding: "0.875rem 1rem", background: "#d1fae5", color: "#065f46", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem", borderLeft: "4px solid #10b981" }}>
               {successMsg}
             </div>
           )}
 
           <form onSubmit={handleSubmit}>
-            <div className="form-group">
-              <label className="form-label" htmlFor="doctor-name">Dr. Full Name</label>
-              <input type="text" id="doctor-name" className="form-input" placeholder="Sarah Jenkins" value={name} onChange={(e) => setName(e.target.value)} />
-            </div>
-
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }} className="form-group">
-              <div>
-                <label className="form-label" htmlFor="doctor-specialty">Specialty</label>
-                <select id="doctor-specialty" className="form-input" value={specialty} onChange={(e) => setSpecialty(e.target.value)}>
-                  <option>Cardiologist</option>
-                  <option>Neurologist</option>
-                  <option>Pediatrician</option>
-                  <option>Dermatologist</option>
-                  <option>General Physician</option>
-                </select>
+            {isSignUp && (
+              <div className="form-group" style={{ marginBottom: "1.25rem" }}>
+                <label className="form-label" htmlFor="doctor-name" style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", fontWeight: "500" }}>Dr. Full Name</label>
+                <div style={{ position: "relative" }}>
+                  <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
+                    <User size={18} />
+                  </span>
+                  <input 
+                    type="text" 
+                    id="doctor-name" 
+                    className="form-input" 
+                    placeholder="Sarah Jenkins" 
+                    value={name} 
+                    onChange={(e) => setName(e.target.value)} 
+                    style={{ paddingLeft: "2.75rem", width: "100%" }}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="form-label" htmlFor="doctor-experience">Experience (Years)</label>
-                <input type="number" id="doctor-experience" className="form-input" placeholder="10" value={experience} onChange={(e) => setExperience(e.target.value)} />
+            )}
+
+            <div className="form-group" style={{ marginBottom: "1.25rem" }}>
+              <label className="form-label" htmlFor="doctor-email" style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", fontWeight: "500" }}>Clinical Email Address</label>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
+                  <Mail size={18} />
+                </span>
+                <input 
+                  type="email" 
+                  id="doctor-email" 
+                  className="form-input" 
+                  placeholder="sarah.jenkins@hospital.org" 
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                  onKeyDown={handleKeyDown} 
+                  required
+                  style={{ paddingLeft: "2.75rem", width: "100%" }}
+                />
               </div>
             </div>
 
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }} className="form-group">
-              <div>
-                <label className="form-label" htmlFor="doctor-location">Clinic/Hospital Location</label>
-                <input type="text" id="doctor-location" className="form-input" placeholder="Family First Clinic" value={location} onChange={(e) => setLocation(e.target.value)} />
+            <div className="form-group" style={{ marginBottom: "1.5rem" }}>
+              <label className="form-label" htmlFor="doctor-password" style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", fontWeight: "500" }}>Password</label>
+              <div style={{ position: "relative" }}>
+                <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
+                  <Lock size={18} />
+                </span>
+                <input 
+                  type="password" 
+                  id="doctor-password" 
+                  className="form-input" 
+                  placeholder="••••••••" 
+                  value={password} 
+                  onChange={(e) => setPassword(e.target.value)} 
+                  onKeyDown={handleKeyDown} 
+                  required
+                  style={{ paddingLeft: "2.75rem", width: "100%" }}
+                />
               </div>
-              <div>
-                <label className="form-label" htmlFor="doctor-fee">Consultation Fee ($)</label>
-                <input type="number" id="doctor-fee" className="form-input" placeholder="120" value={consultationFee} onChange={(e) => setConsultationFee(e.target.value)} />
-              </div>
             </div>
 
-            <div className="form-group">
-              <label className="form-label" htmlFor="doctor-email">Clinical Email Address</label>
-              <input type="email" id="doctor-email" className="form-input" placeholder="sarah.jenkins@hospital.org" value={email} onChange={(e) => setEmail(e.target.value)} onKeyDown={handleKeyDown} />
-            </div>
-
-            <div className="form-group">
-              <label className="form-label" htmlFor="doctor-password">Password</label>
-              <input type="password" id="doctor-password" className="form-input" placeholder="••••••••" value={password} onChange={(e) => setPassword(e.target.value)} onKeyDown={handleKeyDown} />
-            </div>
-
-            <button type="submit" className="btn btn-primary w-full m-t-4" style={{ padding: "0.75rem" }} disabled={isLoading}>
-              {isLoading ? "Processing..." : "Continue"}
+            <button type="submit" disabled={isLoading} className="btn btn-primary w-full" style={{ padding: "0.75rem", fontSize: "0.95rem", fontWeight: "600", display: "flex", justifyContent: "center", alignItems: "center", gap: "0.5rem" }}>
+              {isLoading ? "Processing..." : isSignUp ? "Create Provider Account" : "Clinical Sign In"}
             </button>
+            
+            <div style={{ display: "flex", alignItems: "center", margin: "1.5rem 0", color: "#e5e7eb" }}>
+              <div style={{ flex: 1, height: "1px", background: "#e5e7eb" }}></div>
+              <span style={{ padding: "0 0.75rem", fontSize: "0.75rem", color: "#9ca3af", fontWeight: "500", textTransform: "uppercase" }}>Demo Account</span>
+              <div style={{ flex: 1, height: "1px", background: "#e5e7eb" }}></div>
+            </div>
 
             <button 
               type="button" 
               onClick={handleGuestLogin} 
-              className="btn btn-secondary w-full m-t-2" 
-              style={{ padding: "0.75rem", borderColor: "var(--primary)", color: "var(--primary)" }}
+              className="btn btn-secondary w-full" 
+              style={{ 
+                padding: "0.75rem", 
+                borderColor: "rgba(34, 197, 94, 0.3)", 
+                color: "var(--success)", 
+                background: "rgba(34, 197, 94, 0.05)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                gap: "0.5rem",
+                fontWeight: "600"
+              }}
             >
-              Guest Doctor Login (Demo bypass)
+              <Sparkles size={16} /> Explore with Demo Doctor
             </button>
           </form>
         </div>

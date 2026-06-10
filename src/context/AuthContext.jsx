@@ -1,4 +1,4 @@
-﻿import React, { createContext, useContext, useState, useEffect } from "react";
+import React, { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
 import { mockPatients, mockDoctors } from "../data/mockData";
 
@@ -108,15 +108,17 @@ export const AuthProvider = ({ children }) => {
     setUser(session.user);
 
     let resolvedRole = "patient";
+    let doctorDetails = null;
     try {
       const { data: doctorData, error: doctorError } = await supabase
         .from("doctors")
-        .select("id")
+        .select("*")
         .eq("id", session.user.id)
         .maybeSingle();
 
       if (!doctorError && doctorData?.id) {
         resolvedRole = "doctor";
+        doctorDetails = doctorData;
       }
     } catch (err) {
       console.error("Doctor role lookup failed:", err);
@@ -131,17 +133,36 @@ export const AuthProvider = ({ children }) => {
       .single();
 
     if (data) {
-      const basePatient = mockPatients[0];
-      setProfile({
-        ...basePatient,
-        id: session.user.id,
-        name: data.name,
-        email: session.user.email,
-        phone: data.mobile_number,
-        location: data.location,
-        dob: data.dob,
-        age: calculateAge(data.dob),
-      });
+      if (resolvedRole === "doctor") {
+        setProfile({
+          id: session.user.id,
+          name: data.name,
+          email: session.user.email,
+          phone: data.mobile_number,
+          location: data.location || doctorDetails?.hospital,
+          specialty: doctorDetails?.specialization || "General Physician",
+          experience: doctorDetails?.license_number ? "5 years" : "Unknown",
+          hospital: doctorDetails?.hospital || "City Central Clinic",
+          licenseNumber: doctorDetails?.license_number,
+          slots: typeof doctorDetails?.slots === "string" ? JSON.parse(doctorDetails.slots) : doctorDetails?.slots || [],
+          availability: typeof doctorDetails?.availability === "string" ? JSON.parse(doctorDetails.availability) : doctorDetails?.availability || [],
+          rating: doctorDetails?.rating || 5.0,
+          reviews_count: doctorDetails?.reviews_count || 0,
+          image: doctorDetails?.image || "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200"
+        });
+      } else {
+        const basePatient = mockPatients[0];
+        setProfile({
+          ...basePatient,
+          id: session.user.id,
+          name: data.name,
+          email: session.user.email,
+          phone: data.mobile_number,
+          location: data.location,
+          dob: data.dob,
+          age: calculateAge(data.dob),
+        });
+      }
     } else {
       setProfile(null);
     }
@@ -203,21 +224,51 @@ export const AuthProvider = ({ children }) => {
 
   const saveProfile = async (profileData) => {
     setLoading(true);
-    const newProfile = {
+    
+    // 1. Build profile fields corresponding to public.profiles table
+    const profileFields = {
       id: user.id,
-      ...profileData,
+      name: profileData.name,
+      mobile_number: profileData.phone || profileData.mobile_number,
+      location: profileData.location,
+      dob: profileData.dob || null
     };
 
-    const { data, error } = await supabase.from("profiles").upsert(newProfile).select().single();
+    const { data: pData, error: pError } = await supabase
+      .from("profiles")
+      .upsert(profileFields)
+      .select()
+      .single();
 
-    if (!error) {
-      await handleSession({ user });
-      return true;
+    if (pError) {
+      console.error("Error saving base profile:", pError);
+      setLoading(false);
+      return false;
     }
 
-    console.error("Error saving profile:", error);
-    setLoading(false);
-    return false;
+    // 2. Build doctor fields corresponding to public.doctors table
+    if (role === "doctor") {
+      const doctorFields = {
+        id: user.id,
+        specialization: profileData.specialty || profileData.specialization || "General Physician",
+        hospital: profileData.hospital || profileData.location || "City Central Clinic",
+        license_number: profileData.licenseNumber || profileData.license_number || null
+      };
+
+      const { error: dError } = await supabase
+        .from("doctors")
+        .upsert(doctorFields);
+
+      if (dError) {
+        console.error("Error saving doctor details:", dError);
+        setLoading(false);
+        return false;
+      }
+    }
+
+    // Refresh the active session profile state
+    await handleSession({ user: rawUser || user });
+    return true;
   };
 
   const updateUserProfile = (updatedData) => {
