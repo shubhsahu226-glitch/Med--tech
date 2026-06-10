@@ -5,7 +5,6 @@ import { Video, VideoOff, PhoneOff, Mic, MicOff, PhoneCall } from "lucide-react"
 const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
   const [callActive, setCallActive] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null);
-  const [peerInstance, setPeerInstance] = useState(null);
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
 
@@ -16,6 +15,22 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
   // Video Refs
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
+
+  // Peer & Call refs to prevent stale closure bugs and connection duplicates (e.g. in React StrictMode)
+  const peerRef = useRef(null);
+  const activeCallRef = useRef(null);
+
+  // Lock body scroll when call is active to prevent scrolling/painting glitches
+  useEffect(() => {
+    if (callActive) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [callActive]);
 
   // Attach streams when refs become available
   useEffect(() => {
@@ -32,30 +47,45 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
 
   // Initialize PeerJS
   useEffect(() => {
-    if (!peerInstance && myPeerId) {
+    if (!peerRef.current && myPeerId) {
       const PeerConstructor = Peer.default || Peer;
       const peer = new PeerConstructor(myPeerId);
+      peerRef.current = peer;
       
       peer.on("open", (id) => {
-        console.log("Peer initialized with ID:", id);
+        console.log("Peer connection initialized with ID:", id);
       });
 
       peer.on("call", (call) => {
-        // Instead of auto-answering, we set incomingCall to show the ringing UI
+        console.log("Incoming call received from peer:", call.peer);
         setIncomingCall(call);
       });
 
-      setPeerInstance(peer);
+      peer.on("error", (err) => {
+        console.error("PeerJS connection error:", err);
+      });
+
+      peer.on("disconnected", () => {
+        console.log("PeerJS disconnected, attempting reconnect...");
+        peer.reconnect();
+      });
     }
     
     return () => {
-      if (peerInstance) {
-        peerInstance.destroy();
-        setPeerInstance(null);
-        setCallActive(false);
-        setIncomingCall(null);
-        cleanupMedia();
+      if (activeCallRef.current) {
+        try {
+          activeCallRef.current.close();
+        } catch (e) {}
+        activeCallRef.current = null;
       }
+      if (peerRef.current) {
+        console.log("Cleaning up PeerJS connection...");
+        peerRef.current.destroy();
+        peerRef.current = null;
+      }
+      setCallActive(false);
+      setIncomingCall(null);
+      cleanupMedia();
     };
   }, [myPeerId]);
 
@@ -81,14 +111,24 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
         });
 
         incomingCall.answer(stream);
+        activeCallRef.current = incomingCall;
         setCallActive(true);
         setIncomingCall(null);
         
         incomingCall.on("close", () => {
+          console.log("Incoming call closed by remote peer");
+          endCall();
+        });
+
+        incomingCall.on("error", (err) => {
+          console.error("Incoming call error:", err);
           endCall();
         });
       })
-      .catch(err => console.error("Failed to get local stream", err));
+      .catch(err => {
+        console.error("Failed to get local stream", err);
+        alert("Failed to access camera/microphone. Please verify device permissions.");
+      });
   };
 
   const declineCall = () => {
@@ -109,22 +149,43 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
         setLocalStream(stream);
         setCallActive(true);
         
-        if (peerInstance) {
-          const call = peerInstance.call(targetPeerId, stream);
+        if (peerRef.current) {
+          console.log("Calling target peer:", targetPeerId);
+          const call = peerRef.current.call(targetPeerId, stream);
           if (call) {
+            activeCallRef.current = call;
+            
             call.on("stream", (incomingRemoteStream) => {
               setRemoteStream(incomingRemoteStream);
             });
+            
             call.on("close", () => {
+              console.log("Outgoing call closed by remote peer");
+              endCall();
+            });
+
+            call.on("error", (err) => {
+              console.error("Outgoing call error:", err);
               endCall();
             });
           }
         }
       })
-      .catch(err => console.error("Failed to get local stream", err));
+      .catch(err => {
+        console.error("Failed to get local stream", err);
+        alert("Failed to access camera/microphone. Please verify device permissions.");
+      });
   };
 
   const endCall = () => {
+    if (activeCallRef.current) {
+      try {
+        activeCallRef.current.close();
+      } catch (err) {
+        console.warn("Failed to close call reference:", err);
+      }
+      activeCallRef.current = null;
+    }
     setCallActive(false);
     cleanupMedia();
     setIsMuted(false);
@@ -157,18 +218,14 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
       <div 
         style={{
           position: "fixed",
-          top: 0,
-          left: 0,
-          width: "100vw",
-          height: "100vh",
+          inset: 0,
           backgroundColor: "#0f172a",
           zIndex: 9999,
           display: "flex",
           flexDirection: "column",
-          animation: "fadeIn 0.25s ease-in-out"
         }}
       >
-        <div style={{ flex: 1, position: "relative" }}>
+        <div style={{ flex: 1, position: "relative", animation: "fadeIn 0.3s ease-in-out" }}>
           {/* Main Remote Video */}
           <video 
             ref={remoteVideoRef}
@@ -235,7 +292,8 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
           alignItems: "center", 
           justifyContent: "center", 
           gap: "1.5rem",
-          borderTop: "1px solid rgba(255,255,255,0.1)"
+          borderTop: "1px solid rgba(255,255,255,0.1)",
+          animation: "fadeIn 0.3s ease-in-out"
         }}>
           <button 
             onClick={toggleAudio}
