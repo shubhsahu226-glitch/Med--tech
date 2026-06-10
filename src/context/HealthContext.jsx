@@ -369,7 +369,12 @@ export const HealthProvider = ({ children }) => {
     const isGuest = patientId === "pat1" || doctorId === "doc1";
     if (!isGuest) {
       try {
-        await supabase.from('appointments').insert([newAptObj]);
+        // Omit meetingType from DB insert as the column does not exist
+        const { meetingType: _, ...dbAptObj } = newAptObj;
+        const { error } = await supabase.from('appointments').insert([dbAptObj]);
+        if (error) {
+          console.error("Supabase appointment insert failed:", error);
+        }
       } catch (err) {
         console.error("Supabase insert failed, fell back to local storage:", err);
       }
