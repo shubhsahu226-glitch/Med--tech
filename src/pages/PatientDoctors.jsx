@@ -352,7 +352,7 @@ export const PatientDoctors = () => {
             
             {/* Left Panel: Schedule Consultation Booking Form */}
             <div className="flex-column gap-4">
-              <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Schedule Consult Slot <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "normal" }}>(Code Version: V3)</span></h3>
+              <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Schedule Consult Slot <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "normal" }}>(Code Version: V4)</span></h3>
               
               <div className="card">
                 {bookingStatus ? (
@@ -360,6 +360,12 @@ export const PatientDoctors = () => {
                     <CheckCircle2 size={36} style={{ color: "var(--success)" }} />
                     <h4 style={{ marginTop: "1rem", color: "var(--success-dark)" }}>{bookingStatus}</h4>
                     <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Your consultation slot has been added.</p>
+                    <div style={{ marginTop: "1.25rem", padding: "0.6rem", borderRadius: "var(--radius-md)", backgroundColor: "var(--bg-tertiary)", fontSize: "0.7rem", color: "var(--text-secondary)", fontFamily: "monospace", textAlign: "left", width: "100%", border: "1px solid var(--border-color)" }}>
+                      <div style={{ fontWeight: "600", marginBottom: "0.25rem", color: "var(--text-primary)" }}>Debug Info:</div>
+                      <div>Mode: {user?.id === "pat1" || selectedDoctorId === "doc1" ? "Guest Mode (Local)" : "Database Mode (Supabase)"}</div>
+                      <div>Patient ID: {user?.id}</div>
+                      <div>Doctor ID: {selectedDoctorId}</div>
+                    </div>
                   </div>
                 ) : (
                   <form onSubmit={handleBookingSubmit} className="flex-column gap-3">
@@ -484,6 +490,13 @@ export const PatientDoctors = () => {
                     <button type="submit" className="btn btn-primary w-full m-t-2" disabled={bookingStatus === "Booking..."}>
                       {bookingStatus === "Booking..." ? "Booking..." : "Confirm Appointment"}
                     </button>
+
+                    <div style={{ marginTop: "1.25rem", padding: "0.6rem", borderRadius: "var(--radius-md)", backgroundColor: "var(--bg-tertiary)", fontSize: "0.7rem", color: "var(--text-secondary)", fontFamily: "monospace", textAlign: "left", border: "1px solid var(--border-color)" }}>
+                      <div style={{ fontWeight: "600", marginBottom: "0.25rem", color: "var(--text-primary)" }}>Debug Info:</div>
+                      <div>Mode: {user?.id === "pat1" || selectedDoctorId === "doc1" ? "Guest Mode (Local)" : "Database Mode (Supabase)"}</div>
+                      <div>Patient ID: {user?.id}</div>
+                      <div>Doctor ID: {selectedDoctorId}</div>
+                    </div>
                   </form>
                 )}
               </div>
