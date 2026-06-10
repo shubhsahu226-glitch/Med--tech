@@ -164,7 +164,8 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
           backgroundColor: "#0f172a",
           zIndex: 9999,
           display: "flex",
-          flexDirection: "column"
+          flexDirection: "column",
+          animation: "fadeIn 0.25s ease-in-out"
         }}
       >
         <div style={{ flex: 1, position: "relative" }}>
@@ -173,7 +174,14 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
             ref={remoteVideoRef}
             autoPlay
             playsInline
-            style={{ width: "100%", height: "100%", objectFit: "cover", backgroundColor: "#000" }}
+            style={{ 
+              width: "100%", 
+              height: "100%", 
+              objectFit: "cover", 
+              backgroundColor: "#000",
+              opacity: remoteStream ? 1 : 0,
+              transition: "opacity 0.3s ease-in-out"
+            }}
           />
           
           {/* Target Name Badge */}
@@ -202,7 +210,14 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
               autoPlay
               playsInline
               muted
-              style={{ width: "100%", height: "100%", objectFit: "cover", filter: isVideoOff ? "blur(10px)" : "none" }}
+              style={{ 
+                width: "100%", 
+                height: "100%", 
+                objectFit: "cover", 
+                filter: isVideoOff ? "blur(10px)" : "none",
+                opacity: localStream ? 1 : 0,
+                transition: "opacity 0.3s ease-in-out"
+              }}
             />
             {isVideoOff && (
               <div style={{ position: "absolute", top: 0, left: 0, width: "100%", height: "100%", display: "flex", alignItems: "center", justifyContent: "center", color: "white", background: "rgba(0,0,0,0.5)" }}>
