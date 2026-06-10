@@ -44,6 +44,14 @@ export const PatientDoctors = () => {
   const [meetingType, setMeetingType] = useState("Video");
   const [reason, setReason] = useState("");
   const [bookingStatus, setBookingStatus] = useState("");
+  const [bookingError, setBookingError] = useState("");
+
+  // Auto-initialize selectedDoctorId when doctors load if empty
+  useEffect(() => {
+    if (doctors && doctors.length > 0 && !selectedDoctorId) {
+      setSelectedDoctorId(doctors[0].id);
+    }
+  }, [doctors, selectedDoctorId]);
 
   // Telehealth Consultation Room States
   const [chatMessages, setChatMessages] = useState([]);
@@ -153,27 +161,36 @@ export const PatientDoctors = () => {
     return matchesSearch && matchesSpecialty;
   });
 
-  const handleBookingSubmit = (e) => {
+  const handleBookingSubmit = async (e) => {
     e.preventDefault();
     if (!selectedDoctorId || !bookingDate || !bookingSlot || !reason) return;
 
-    addAppointment({
-      patientId: user.id,
-      patientName: user.name,
-      doctorId: selectedDoctorId,
-      doctorName: activeDoctor.name,
-      doctorSpecialty: activeDoctor.specialty,
-      date: bookingDate,
-      time: bookingSlot,
-      reason,
-      meetingType
-    });
+    setBookingError("");
+    setBookingStatus("Booking...");
 
-    setBookingStatus("Booking confirmed!");
-    setReason("");
-    setBookingDate("");
-    setBookingSlot("");
-    setTimeout(() => setBookingStatus(""), 3000);
+    try {
+      await addAppointment({
+        patientId: user.id,
+        patientName: user.name,
+        doctorId: selectedDoctorId,
+        doctorName: activeDoctor.name,
+        doctorSpecialty: activeDoctor.specialty,
+        date: bookingDate,
+        time: bookingSlot,
+        reason,
+        meetingType
+      });
+
+      setBookingStatus("Booking confirmed!");
+      setReason("");
+      setBookingDate("");
+      setBookingSlot("");
+      setTimeout(() => setBookingStatus(""), 3000);
+    } catch (err) {
+      console.error("Failed to submit booking:", err);
+      setBookingStatus("");
+      setBookingError(err.message || "Failed to complete booking. Please try again.");
+    }
   };
 
   const handleSendMessage = async (e) => {
@@ -346,6 +363,12 @@ export const PatientDoctors = () => {
                   </div>
                 ) : (
                   <form onSubmit={handleBookingSubmit} className="flex-column gap-3">
+                    {bookingError && (
+                      <div className="card" style={{ padding: "0.75rem", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#ef4444", fontSize: "0.85rem", marginBottom: "0.5rem" }}>
+                        <span style={{ fontWeight: "600" }}>Error: </span>
+                        <span>{bookingError}</span>
+                      </div>
+                    )}
                     <div className="form-group">
                       <label className="form-label" htmlFor="appt-doc">Selected Practitioner</label>
                       <select
@@ -458,8 +481,8 @@ export const PatientDoctors = () => {
                       />
                     </div>
 
-                    <button type="submit" className="btn btn-primary w-full m-t-2">
-                      Confirm Appointment
+                    <button type="submit" className="btn btn-primary w-full m-t-2" disabled={bookingStatus === "Booking..."}>
+                      {bookingStatus === "Booking..." ? "Booking..." : "Confirm Appointment"}
                     </button>
                   </form>
                 )}

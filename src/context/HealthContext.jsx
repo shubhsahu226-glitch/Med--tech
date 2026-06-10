@@ -355,6 +355,17 @@ export const HealthProvider = ({ children }) => {
       doctorName: newAptObj.doctor_name
     };
 
+    const isGuest = patientId === "pat1" || doctorId === "doc1";
+    if (!isGuest) {
+      // Omit meetingType from DB insert as the column does not exist
+      const { meetingType: _, ...dbAptObj } = newAptObj;
+      const { error } = await supabase.from('appointments').insert([dbAptObj]);
+      if (error) {
+        console.error("Supabase appointment insert failed:", error);
+        throw error;
+      }
+    }
+
     setAppointments(prev => [mappedApt, ...prev]);
 
     try {
@@ -366,19 +377,6 @@ export const HealthProvider = ({ children }) => {
       console.warn("Failed to write appointment to localStorage:", e);
     }
 
-    const isGuest = patientId === "pat1" || doctorId === "doc1";
-    if (!isGuest) {
-      try {
-        // Omit meetingType from DB insert as the column does not exist
-        const { meetingType: _, ...dbAptObj } = newAptObj;
-        const { error } = await supabase.from('appointments').insert([dbAptObj]);
-        if (error) {
-          console.error("Supabase appointment insert failed:", error);
-        }
-      } catch (err) {
-        console.error("Supabase insert failed, fell back to local storage:", err);
-      }
-    }
     return mappedApt;
   };
 
