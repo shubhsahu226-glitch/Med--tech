@@ -1,4 +1,33 @@
-export const mockDoctors = [];
+export const mockDoctors = [
+  {
+    id: "doc1",
+    name: "Dr. Sarah Jenkins",
+    specialty: "Cardiologist",
+    hospital: "City Heart Institute",
+    experience: "12 Years",
+    rating: 4.8,
+    reviews: 124,
+    avatar: "https://images.unsplash.com/photo-1559839734-2b71ea197ec2?auto=format&fit=crop&q=80&w=150",
+    about: "Dr. Jenkins is a board-certified cardiologist specializing in preventive cardiology and hypertension management.",
+    slots: ["09:00 AM", "10:30 AM", "02:00 PM", "04:30 PM"],
+    availability: ["Monday", "Wednesday", "Friday"],
+    fee: "$150"
+  },
+  {
+    id: "doc2",
+    name: "Dr. Amit Patel",
+    specialty: "Neurologist",
+    hospital: "NeuroCare Center",
+    experience: "8 Years",
+    rating: 4.9,
+    reviews: 89,
+    avatar: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=150",
+    about: "Specializing in neurological disorders, migraines, and nerve health. Known for thorough diagnostic approaches.",
+    slots: ["10:00 AM", "11:30 AM", "01:00 PM", "03:30 PM"],
+    availability: ["Tuesday", "Thursday", "Saturday"],
+    fee: "$180"
+  }
+];
 
 export const mockPatients = [
   {
