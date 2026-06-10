@@ -59,12 +59,12 @@ export const DoctorDashboard = () => {
       <div className="card flex-column gap-4" style={{ padding: "1.5rem" }}>
         <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Workspace Navigation Console</h3>
         <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-          Access patient consultations, update diagnosis logs, write medical prescriptions, and modify clinic availability slots.
+          Access patient consultations, update diagnosis logs, write medical prescriptions, and monitor active patient alerts.
         </p>
         
         <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "1rem", marginTop: "0.5rem" }}>
-          <Link to="/doctor/workspace" className="btn btn-primary align-center gap-1" style={{ width: "fit-content", fontSize: "0.85rem" }}>
-            Open Schedule & Consultation <ArrowRight size={14} />
+          <Link to="/doctor/appointments" className="btn btn-primary align-center gap-1" style={{ width: "fit-content", fontSize: "0.85rem" }}>
+            Open Appointments & Consults <ArrowRight size={14} />
           </Link>
         </div>
       </div>

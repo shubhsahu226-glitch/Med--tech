@@ -94,14 +94,7 @@ export const PatientReports = () => {
   ];
 
   // History / Timeline States
-  const [historyList, setHistoryList] = useState(livePatientData?.history || []);
-  const [filterType, setFilterType] = useState("All");
-
-  useEffect(() => {
-    if (livePatientData?.history) {
-      setHistoryList(livePatientData.history);
-    }
-  }, [livePatientData]);
+  const historyList = livePatientData?.history || [];
 
   const handleFileChange = (e) => {
     const selectedFile = e.target.files[0];

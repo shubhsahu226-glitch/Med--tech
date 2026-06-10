@@ -19,7 +19,9 @@ export const uploadReportApi = async (formData) => {
       if (errData && errData.error) {
         errMsg = errData.error;
       }
-    } catch (e) {}
+    } catch {
+      // Ignore JSON parsing errors and use default message
+    }
     throw new Error(errMsg);
   }
 

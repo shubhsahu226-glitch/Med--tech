@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
@@ -36,8 +36,11 @@ export const Navbar = () => {
   ];
 
   const doctorLinks = [
-    { label: "Home", path: "/doctor/dashboard" },
-    { label: "Schedule & Consultation", path: "/doctor/workspace" }
+    { label: "Dashboard", path: "/doctor/dashboard" },
+    { label: "My Clinic", path: "/doctor/clinic" },
+    { label: "Patients", path: "/doctor/patients" },
+    { label: "Appointments", path: "/doctor/appointments" },
+    { label: "Alerts", path: "/doctor/alerts" }
   ];
 
   const navLinks = role === "patient" ? patientLinks : role === "doctor" ? doctorLinks : [];
@@ -204,8 +207,8 @@ export const Navbar = () => {
                   title="View Profile Details"
                 >
                   <img 
-                    src={user.avatar || user.image} 
-                    alt={user.name} 
+                    src={user.avatar || user.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"} 
+                    alt={user.name || "User"} 
                     style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", border: location.pathname.includes("/profile") ? "2px solid var(--primary)" : "1px solid var(--border-color)" }}
                   />
                   <div style={{ display: "flex", flexDirection: "column" }} className="navbar-user-text">

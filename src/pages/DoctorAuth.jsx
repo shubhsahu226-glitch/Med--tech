@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Stethoscope, ArrowLeft, Mail, Lock, User, Sparkles } from "lucide-react";
@@ -46,7 +46,7 @@ export const DoctorAuth = () => {
 
     if (!isSignUp) {
       // 1. Sign In Flow
-      const { data: loginData, error: loginError } = await login(email, password);
+      const { error: loginError } = await login(email, password, "doctor");
       if (loginError) {
         setError(loginError.message || "Invalid clinical email or password.");
         setIsLoading(false);
@@ -64,11 +64,19 @@ export const DoctorAuth = () => {
     }
 
     // Try to sign up user in Supabase Auth
-    const { data: signupData, error: signupError } = await signup(email, password);
+    const formattedName = name.startsWith("Dr.") ? name : `Dr. ${name}`;
+    const { data: signupData, error: signupError } = await signup(email, password, {
+      options: {
+        data: {
+          name: formattedName,
+          role: "doctor"
+        }
+      }
+    });
 
     // If user already exists, automatically log them in
     if (signupError && signupError.message === "User already registered") {
-      const { data: loginData, error: loginError } = await login(email, password);
+      const { error: loginError } = await login(email, password, "doctor");
       
       if (loginError) {
         setError(loginError.message || "This email is already registered, and the password entered was incorrect.");
@@ -89,7 +97,6 @@ export const DoctorAuth = () => {
     // New doctor created -> Create profile & doctor table rows
     if (signupData?.user) {
       const doctorId = signupData.user.id;
-      const formattedName = name.startsWith("Dr.") ? name : `Dr. ${name}`;
 
       // Insert into profiles first
       const { error: profileError } = await supabase.from('profiles').insert({
@@ -107,14 +114,13 @@ export const DoctorAuth = () => {
       // Insert into doctors table
       const { error: docError } = await supabase.from('doctors').insert({
         id: doctorId,
-        specialty: "General Physician",
-        experience: "5 years",
-        education: "MBBS",
-        location: "City Central Clinic",
-        slots: JSON.stringify(["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"]),
-        availability: JSON.stringify(["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"]),
+        specialization: "General Physician",
+        license_number: "LIC-" + Math.floor(100000 + Math.random() * 900000),
+        hospital: "City Central Clinic",
+        slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"],
+        availability: ["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"],
         rating: 5.0,
-        reviews: 0,
+        reviews_count: 0,
         image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200"
       });
 

@@ -1,5 +1,6 @@
-import React from "react";
-import { Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 import { 
   Sparkles, Calendar, MessageSquare, Clock, 
   ShieldAlert, History, ArrowRight, ShieldCheck, Zap, HeartPulse 
@@ -7,6 +8,18 @@ import {
 import { FeatureCard, WorkflowCard } from "../components/cards";
 
 export const Home = () => {
+  const { user, role } = useAuth();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    if (user) {
+      if (role === "doctor") {
+        navigate("/doctor/dashboard");
+      } else if (role === "patient") {
+        navigate("/patient/dashboard");
+      }
+    }
+  }, [user, role, navigate]);
   const features = [
     {
       title: "AI Diagnostic Insights",

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { HeartPulse, ArrowLeft, Mail, Lock, User, Sparkles } from "lucide-react";
@@ -46,7 +46,7 @@ export const PatientAuth = () => {
 
     if (!isSignUp) {
       // 1. Sign In Flow
-      const { data: loginData, error: loginError } = await login(email, password);
+      const { error: loginError } = await login(email, password, "patient");
       if (loginError) {
         setError(loginError.message || "Invalid email or password.");
         setIsLoading(false);
@@ -64,11 +64,18 @@ export const PatientAuth = () => {
     }
 
     // Try to sign up the user
-    const { data: signupData, error: signupError } = await signup(email, password);
+    const { data: signupData, error: signupError } = await signup(email, password, {
+      options: {
+        data: {
+          name: name,
+          role: "patient"
+        }
+      }
+    });
 
     // If user already registered, fall back to login
     if (signupError && signupError.message === "User already registered") {
-      const { data: loginData, error: loginError } = await login(email, password);
+      const { error: loginError } = await login(email, password, "patient");
       
       if (loginError) {
         setError(loginError.message || "This email is already registered, and the password entered was incorrect.");
@@ -86,18 +93,29 @@ export const PatientAuth = () => {
       return;
     }
 
-    // New user created -> Create default minimal profile in Supabase profiles table
+    // New user created -> Create default minimal profile in Supabase profiles & patients tables
     if (signupData?.user) {
       const { error: profileError } = await supabase.from('profiles').insert({
         id: signupData.user.id,
         name: name,
-        mobile_number: null,
-        dob: null,
-        location: null
+        mobile_number: "Not provided",
+        dob: "1990-01-01",
+        location: "Not provided"
       });
 
       if (profileError) {
         console.error("Failed to insert profile record:", profileError);
+      }
+
+      const { error: patientError } = await supabase.from('patients').insert({
+        id: signupData.user.id,
+        blood_type: null,
+        emergency_contact_name: null,
+        emergency_contact_phone: null
+      });
+
+      if (patientError) {
+        console.error("Failed to insert patient record:", patientError);
       }
 
       if (signupData.session) {

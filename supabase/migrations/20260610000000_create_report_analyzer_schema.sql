@@ -137,3 +137,19 @@ CREATE INDEX IF NOT EXISTS idx_param_history_patient_name ON public.parameter_hi
 CREATE INDEX IF NOT EXISTS idx_alerts_patient ON public.alerts(patient_id);
 CREATE INDEX IF NOT EXISTS idx_appointments_patient ON public.appointments(patient_id);
 CREATE INDEX IF NOT EXISTS idx_treatments_patient ON public.treatments(patient_id);
+
+-- 12. Messages Table
+CREATE TABLE IF NOT EXISTS public.messages (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    appointment_id UUID REFERENCES public.appointments(id) ON DELETE CASCADE,
+    patient_id TEXT,
+    doctor_id TEXT,
+    sender_id TEXT NOT NULL,
+    sender_role TEXT NOT NULL, -- 'doctor' or 'patient'
+    text TEXT NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT timezone('utc'::text, now()) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_messages_appointment ON public.messages(appointment_id);
+CREATE INDEX IF NOT EXISTS idx_messages_patient_doctor ON public.messages(patient_id, doctor_id);
+

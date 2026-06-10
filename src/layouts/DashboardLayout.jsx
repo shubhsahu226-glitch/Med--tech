@@ -19,7 +19,10 @@ import { ProfileSettings } from "../pages/ProfileSettings";
 
 // Consolidated Doctor Pages
 import { DoctorDashboard } from "../pages/DoctorDashboard";
-import { DoctorWorkspace } from "../pages/DoctorWorkspace";
+import { DoctorClinic } from "../pages/DoctorClinic";
+import { DoctorPatients } from "../pages/DoctorPatients";
+import { DoctorAppointments } from "../pages/DoctorAppointments";
+import { DoctorAlerts } from "../pages/DoctorAlerts";
 
 export const DashboardLayout = () => {
   const { user, profile, rawUser, role, loading } = useAuth();
@@ -65,7 +68,10 @@ export const DashboardLayout = () => {
 
               {/* Doctor Routes */}
               <Route path="/doctor/dashboard" element={<DoctorDashboard />} />
-              <Route path="/doctor/workspace" element={<DoctorWorkspace />} />
+              <Route path="/doctor/clinic" element={<DoctorClinic />} />
+              <Route path="/doctor/patients" element={<DoctorPatients />} />
+              <Route path="/doctor/appointments" element={<DoctorAppointments />} />
+              <Route path="/doctor/alerts" element={<DoctorAlerts />} />
               <Route path="/doctor/profile" element={<ProfileSettings />} />
 
               {/* Fallback inside dashboard frame */}

@@ -1,14 +1,15 @@
-import React, { useState, useEffect } from "react";
+import { useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
 import VideoCall from "../components/VideoCall";
 import { 
-  Search, MapPin, DollarSign, Calendar, Star, Video, MessageSquare, 
-  Send, PhoneOff, Award, ChevronRight, CheckCircle2 
+  Search, MapPin, Star, Video, MessageSquare, Send, CheckCircle2 
 } from "lucide-react";
-import { DoctorCard } from "../components/cards";
+
+const generateTempId = () => `temp_${Date.now()}`;
+const getCurrentTimeString = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 export const PatientDoctors = () => {
   const { user } = useAuth();
@@ -17,11 +18,13 @@ export const PatientDoctors = () => {
   // Refresh doctors list whenever this page is visited to ensure it's up to date
   useEffect(() => {
     if (refreshDoctors) refreshDoctors();
-  }, []);
+  }, [refreshDoctors]);
   const location = useLocation();
 
   // Tab State: search, telehealth
-  const [activeTab, setActiveTab] = useState("search");
+  const [activeTab, setActiveTab] = useState(() => 
+    location.state?.selectedDoctor ? "telehealth" : "search"
+  );
 
   // Search States
   const [searchQuery, setSearchQuery] = useState("");
@@ -29,7 +32,12 @@ export const PatientDoctors = () => {
   const specialties = ["All", "Cardiologist", "Neurologist", "Pediatrician", "General Physician"];
 
   // Booking States
-  const [selectedDoctorId, setSelectedDoctorId] = useState("");
+  const [selectedDoctorId, setSelectedDoctorId] = useState(() => {
+    if (location.state?.selectedDoctor) {
+      return location.state.selectedDoctor.id;
+    }
+    return "";
+  });
   const [bookingDate, setBookingDate] = useState("");
   const [bookingSlot, setBookingSlot] = useState("");
   const [meetingType, setMeetingType] = useState("Video");
@@ -40,18 +48,93 @@ export const PatientDoctors = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
-  // Sync pre-selected doctor if passed in route state
-  useEffect(() => {
-    if (location.state?.selectedDoctor) {
-      setSelectedDoctorId(location.state.selectedDoctor.id);
-      setActiveTab("telehealth");
-    } else if (doctors.length > 0 && !selectedDoctorId) {
-      setSelectedDoctorId(doctors[0].id);
-    }
-  }, [location.state, doctors, selectedDoctorId]);
-
-  const activeDoctor = doctors.length > 0 ? (doctors.find(d => d.id === selectedDoctorId) || doctors[0]) : null;
+  const activeDoctorId = selectedDoctorId || (doctors.length > 0 ? doctors[0].id : "");
+  const activeDoctor = doctors.find(d => d.id === activeDoctorId) || null;
   const patientApts = appointments.filter(apt => apt.patientId === user.id);
+
+  // Chat Integration with Supabase
+  const activeApt = patientApts.find(apt => apt.doctorId === activeDoctorId);
+  const isGuestMode = !user?.id || user.id === "pat1" || activeDoctorId === "doc1";
+  const hasConfirmedApt = activeApt && (activeApt.status === "Confirmed" || activeApt.status === "Upcoming");
+
+  useEffect(() => {
+    if (!activeDoctorId || !user?.id) return;
+    
+    const fetchMessages = async () => {
+      if (isGuestMode) {
+        try {
+          const key = `virtualvaidya_chat_${user.id}_${activeDoctorId}`;
+          const localMsgs = JSON.parse(localStorage.getItem(key) || "[]");
+          setChatMessages(localMsgs);
+        } catch (err) {
+          console.warn("Failed to load local messages", err);
+        }
+        return;
+      }
+
+      try {
+        const { data, error } = await supabase
+          .from('messages')
+          .select('*')
+          .eq('patient_id', user.id)
+          .eq('doctor_id', activeDoctorId)
+          .order('created_at', { ascending: true });
+          
+        if (data && !error) {
+          setChatMessages(data.map(m => ({
+            id: m.id,
+            sender: m.sender_role,
+            text: m.text,
+            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          })));
+        }
+      } catch (err) {
+        console.error("Failed to fetch messages:", err);
+      }
+    };
+    
+    fetchMessages();
+
+    if (isGuestMode) {
+      const interval = setInterval(() => {
+        try {
+          const key = `virtualvaidya_chat_${user.id}_${activeDoctorId}`;
+          const localMsgs = JSON.parse(localStorage.getItem(key) || "[]");
+          setChatMessages(localMsgs);
+        } catch (err) {
+          console.debug("Failed to retrieve chat updates in poll", err);
+        }
+      }, 1500);
+      return () => clearInterval(interval);
+    }
+
+    const channel = supabase
+      .channel(`chat_${user.id}_${activeDoctorId}`)
+      .on('postgres_changes', { 
+        event: 'INSERT', 
+        schema: 'public', 
+        table: 'messages', 
+        filter: `patient_id=eq.${user.id}` 
+      }, payload => {
+        const m = payload.new;
+        if (m.doctor_id === activeDoctorId) {
+          setChatMessages(prev => {
+            if (prev.find(msg => msg.id === m.id)) return prev;
+            return [...prev, {
+              id: m.id,
+              sender: m.sender_role,
+              text: m.text,
+              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }];
+          });
+        }
+      })
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [user?.id, activeDoctorId, isGuestMode]);
 
   if (!activeDoctor) {
     return (
@@ -95,69 +178,35 @@ export const PatientDoctors = () => {
     setTimeout(() => setBookingStatus(""), 3000);
   };
 
-  // Chat Integration with Supabase
-  const activeApt = patientApts.find(apt => apt.doctorId === activeDoctor?.id);
-
-  useEffect(() => {
-    if (!activeApt?.id) return;
-    
-    // Fetch initial messages
-    const fetchMessages = async () => {
-      const { data, error } = await supabase
-        .from('messages')
-        .select('*')
-        .eq('appointment_id', activeApt.id)
-        .order('created_at', { ascending: true });
-        
-      if (data && !error) {
-        setChatMessages(data.map(m => ({
-          id: m.id,
-          sender: m.sender_role,
-          text: m.text,
-          time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-        })));
-      }
-    };
-    
-    fetchMessages();
-
-    // Subscribe to new messages
-    const channel = supabase
-      .channel(`chat_${activeApt.id}`)
-      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages', filter: `appointment_id=eq.${activeApt.id}` }, payload => {
-        const m = payload.new;
-        setChatMessages(prev => {
-          // Prevent duplicates if we just sent it
-          if (prev.find(msg => msg.id === m.id)) return prev;
-          return [...prev, {
-            id: m.id,
-            sender: m.sender_role,
-            text: m.text,
-            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }];
-        });
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [activeApt?.id]);
-
   const handleSendMessage = async (e) => {
     e.preventDefault();
-    if (!newMessage.trim() || !activeApt?.id) return;
+    if (!newMessage.trim() || !activeDoctorId || !user?.id) return;
 
     const msgText = newMessage;
     setNewMessage("");
 
-    const tempId = `temp_${Date.now()}`;
-    const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    setChatMessages(prev => [...prev, { id: tempId, sender: "patient", text: msgText, time: timeString }]);
+    const tempId = generateTempId();
+    const timeString = getCurrentTimeString();
+    const newMsgObj = { id: tempId, sender: "patient", text: msgText, time: timeString };
+    
+    setChatMessages(prev => [...prev, newMsgObj]);
 
-    // Insert to DB
+    if (isGuestMode) {
+      try {
+        const key = `virtualvaidya_chat_${user.id}_${activeDoctorId}`;
+        const msgs = JSON.parse(localStorage.getItem(key) || "[]");
+        msgs.push(newMsgObj);
+        localStorage.setItem(key, JSON.stringify(msgs));
+      } catch (err) {
+        console.warn("Failed to save local message", err);
+      }
+      return;
+    }
+
     const { data, error } = await supabase.from('messages').insert([{
-      appointment_id: activeApt.id,
+      appointment_id: activeApt?.id || null,
+      patient_id: user.id,
+      doctor_id: activeDoctorId,
       sender_id: user.id,
       sender_role: 'patient',
       text: msgText
@@ -427,12 +476,35 @@ export const PatientDoctors = () => {
               
               <div className="card flex-column gap-3" style={{ padding: "1rem", overflow: "hidden" }}>
                 
-                {/* Mock Video Stream Panel */}
-                <VideoCall 
-                  myPeerId={activeTab === "telehealth" ? `pat_${user.id}` : null} 
-                  targetPeerId={activeDoctor ? `doc_${activeDoctor.id}` : null} 
-                  targetName={activeDoctor?.name}
-                />
+                {/* Video Call Session - unlocked only if appointment is confirmed */}
+                {hasConfirmedApt ? (
+                  <VideoCall 
+                    myPeerId={activeTab === "telehealth" ? `pat_${user.id}` : null} 
+                    targetPeerId={activeDoctor ? `doc_${activeDoctor.id}` : null} 
+                    targetName={activeDoctor?.name}
+                  />
+                ) : (
+                  <div 
+                    style={{
+                      backgroundColor: "#1e293b",
+                      height: "140px",
+                      borderRadius: "var(--radius-md)",
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      color: "#94a3b8",
+                      padding: "1rem",
+                      textAlign: "center"
+                    }}
+                  >
+                    <Video size={24} style={{ marginBottom: "8px", color: "var(--text-muted)" }} />
+                    <p style={{ fontSize: "0.85rem", margin: 0, fontWeight: "600" }}>Video Consultation Locked</p>
+                    <p style={{ fontSize: "0.7rem", color: "#64748b", marginTop: "4px", lineHeight: 1.3 }}>
+                      {activeApt ? "Awaiting confirmation from the medical provider." : "Please schedule an appointment to unlock video consultation."}
+                    </p>
+                  </div>
+                )}
 
                 {/* Mock Chat Feed Panel */}
                 <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "0.75rem" }} className="flex-column gap-2">

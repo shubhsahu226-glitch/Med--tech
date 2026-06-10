@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
 import { mockPatients, mockDoctors } from "../data/mockData";
 
@@ -73,14 +73,18 @@ export const AuthProvider = ({ children }) => {
 
     initializeAuth();
 
-    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (session?.user) {
         handleSession(session);
-      } else {
+      } else if (event === "SIGNED_OUT") {
         setUser(null);
         setProfile(null);
         setRole("guest");
+        safeRemoveItem("virtualvaidya_user");
+        safeRemoveItem("virtualvaidya_role");
         setLoading(false);
+      } else {
+        restoreLocalUser();
       }
     });
 
@@ -89,6 +93,7 @@ export const AuthProvider = ({ children }) => {
         subscription.unsubscribe();
       }
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   function calculateAge(dobString) {
@@ -103,12 +108,14 @@ export const AuthProvider = ({ children }) => {
     return age;
   }
 
-  const handleSession = async (session) => {
+  async function handleSession(session, forcedRole) {
     setLoading(true);
     setUser(session.user);
 
     let resolvedRole = "patient";
     let doctorDetails = null;
+    const isMetadataDoctor = session.user.user_metadata?.role === "doctor" || forcedRole === "doctor";
+
     try {
       const { data: doctorData, error: doctorError } = await supabase
         .from("doctors")
@@ -119,9 +126,50 @@ export const AuthProvider = ({ children }) => {
       if (!doctorError && doctorData?.id) {
         resolvedRole = "doctor";
         doctorDetails = doctorData;
+      } else if (isMetadataDoctor) {
+        // Self-heal: doctor record is missing, let's insert it
+        resolvedRole = "doctor";
+        const formattedName = session.user.user_metadata?.name || "Dr. Clinician";
+        
+        // Ensure profile exists first
+        const { data: profData } = await supabase
+          .from("profiles")
+          .select("id")
+          .eq("id", session.user.id)
+          .maybeSingle();
+          
+        if (!profData) {
+          await supabase.from("profiles").insert({
+            id: session.user.id,
+            name: formattedName,
+            mobile_number: "Not provided",
+            dob: "1980-01-01",
+            location: "City Central Clinic"
+          });
+        }
+        
+        const newDoc = {
+          id: session.user.id,
+          specialization: "General Physician",
+          license_number: "LIC-" + Math.floor(100000 + Math.random() * 900000),
+          hospital: "City Central Clinic",
+          slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"],
+          availability: ["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"],
+          rating: 5.0,
+          reviews_count: 0,
+          image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200"
+        };
+        
+        const { data: insertedDoc, error: insertError } = await supabase
+          .from("doctors")
+          .insert(newDoc)
+          .select()
+          .maybeSingle();
+          
+        doctorDetails = (!insertError && insertedDoc) ? insertedDoc : newDoc;
       }
     } catch (err) {
-      console.error("Doctor role lookup failed:", err);
+      console.error("Doctor role lookup / heal failed:", err);
     }
 
     setRole(resolvedRole);
@@ -131,6 +179,10 @@ export const AuthProvider = ({ children }) => {
       .select("*")
       .eq("id", session.user.id)
       .single();
+
+    if (error) {
+      console.error("Error fetching profiles:", error);
+    }
 
     if (data) {
       if (resolvedRole === "doctor") {
@@ -153,14 +205,52 @@ export const AuthProvider = ({ children }) => {
       } else {
         let patientDetails = null;
         try {
-          const { data: patData } = await supabase
+          const { data: patData, error: patError } = await supabase
             .from("patients")
             .select("*")
             .eq("id", session.user.id)
             .maybeSingle();
-          patientDetails = patData;
+
+          if (!patError && patData?.id) {
+            patientDetails = patData;
+          } else {
+            // Self-heal patient record
+            const formattedName = session.user.user_metadata?.name || data.name || "Patient";
+            
+            // Ensure profile exists first
+            const { data: profData } = await supabase
+              .from("profiles")
+              .select("id")
+              .eq("id", session.user.id)
+              .maybeSingle();
+              
+            if (!profData) {
+              await supabase.from("profiles").insert({
+                id: session.user.id,
+                name: formattedName,
+                mobile_number: "Not provided",
+                dob: "1990-01-01",
+                location: "Not provided"
+              });
+            }
+            
+            const newPat = {
+              id: session.user.id,
+              blood_type: null,
+              emergency_contact_name: null,
+              emergency_contact_phone: null
+            };
+            
+            const { data: insertedPat } = await supabase
+              .from("patients")
+              .insert(newPat)
+              .select()
+              .maybeSingle();
+              
+            patientDetails = insertedPat || newPat;
+          }
         } catch (patErr) {
-          console.error("Patient details lookup failed:", patErr);
+          console.error("Patient details lookup / heal failed:", patErr);
         }
 
         const basePatient = mockPatients[0];
@@ -199,7 +289,7 @@ export const AuthProvider = ({ children }) => {
     return !error;
   };
 
-  const login = async (email, password) => {
+  const login = async (email, password, forcedRole) => {
     setLoading(true);
     const { data, error } = await supabase.auth.signInWithPassword({
       email,
@@ -207,10 +297,10 @@ export const AuthProvider = ({ children }) => {
     });
 
     if (data?.session) {
-      await handleSession(data.session);
+      await handleSession(data.session, forcedRole);
     } else if (data?.user) {
       setUser(data.user);
-      setRole("patient");
+      setRole(forcedRole || "patient");
       setLoading(false);
     }
 
@@ -221,11 +311,12 @@ export const AuthProvider = ({ children }) => {
     return { data, error };
   };
 
-  const signup = async (email, password) => {
+  const signup = async (email, password, options = {}) => {
     setLoading(true);
     const { data, error } = await supabase.auth.signUp({
       email,
       password,
+      ...options
     });
     setLoading(false);
     return { data, error };
@@ -252,11 +343,9 @@ export const AuthProvider = ({ children }) => {
       dob: profileData.dob || null
     };
 
-    const { data: pData, error: pError } = await supabase
+    const { error: pError } = await supabase
       .from("profiles")
-      .upsert(profileFields)
-      .select()
-      .single();
+      .upsert(profileFields);
 
     if (pError) {
       console.error("Error saving base profile:", pError);
@@ -270,8 +359,15 @@ export const AuthProvider = ({ children }) => {
         id: user.id,
         specialization: profileData.specialty || profileData.specialization || "General Physician",
         hospital: profileData.hospital || profileData.location || "City Central Clinic",
-        license_number: profileData.licenseNumber || profileData.license_number || null
+        license_number: profileData.licenseNumber || profileData.license_number || null,
+        slots: profileData.slots ? JSON.stringify(profileData.slots) : undefined,
+        availability: profileData.availability ? JSON.stringify(profileData.availability) : undefined
       };
+
+      // Remove undefined keys
+      Object.keys(doctorFields).forEach(key => {
+        if (doctorFields[key] === undefined) delete doctorFields[key];
+      });
 
       const { error: dError } = await supabase
         .from("doctors")
@@ -305,7 +401,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     // Refresh the active session profile state
-    await handleSession({ user: rawUser || user });
+    await handleSession({ user });
     return true;
   };
 
@@ -359,4 +455,5 @@ export const AuthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useAuth = () => useContext(AuthContext);

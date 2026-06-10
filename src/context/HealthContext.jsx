@@ -1,13 +1,27 @@
-import React, { createContext, useContext, useState, useEffect } from "react";
+import { createContext, useContext, useState, useEffect } from "react";
 import { 
   mockPatients, 
   mockDoctors, 
   mockMedicationReminders, 
-  mockEmergencyAlerts, 
   mockReportTrends 
 } from "../data/mockData";
 import { useAuth } from "./AuthContext";
 import { supabase } from "../config/supabase";
+
+const generateUUID = () => {
+  try {
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+  } catch (err) {
+    console.debug("Failed to generate UUID natively", err);
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, function(c) {
+    const r = (Math.random() * 16) | 0,
+      v = c === "x" ? r : (r & 0x3) | 0x8;
+    return v.toString(16);
+  });
+};
 
 const HealthContext = createContext(null);
 
@@ -58,6 +72,7 @@ export const HealthProvider = ({ children }) => {
 
   // Fetch doctors on mount and when user changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchDoctors();
   }, [user]);
 
@@ -177,7 +192,7 @@ export const HealthProvider = ({ children }) => {
   }, [user]);
 
   const [appointments, setAppointments] = useState([]);
-  const [consultations, setConsultations] = useState([]);
+  const [consultations] = useState([]);
   const [trends, setTrends] = useState(mockReportTrends);
 
   // Sync state if user reports modify
@@ -252,31 +267,74 @@ export const HealthProvider = ({ children }) => {
     const isDoctor = role === 'doctor';
     const column = isDoctor ? 'doctor_id' : 'patient_id';
     
-    const { data, error } = await supabase
-      .from('appointments')
-      .select('*')
-      .eq(column, user.id)
-      .order('created_at', { ascending: false });
-
-    if (data && !error) {
-      // Map to frontend model
-      setAppointments(data.map(d => ({
+    // 1. Fetch from localStorage first
+    let localApts = [];
+    try {
+      const localAptsStr = localStorage.getItem("virtualvaidya_local_appointments") || "[]";
+      localApts = JSON.parse(localAptsStr).map(d => ({
         ...d,
         patientId: d.patient_id,
         doctorId: d.doctor_id,
         patientName: d.patient_name,
         doctorName: d.doctor_name
-      })));
+      }));
+    } catch (e) {
+      console.warn("Failed to read localStorage appointments:", e);
+    }
+
+    const isGuest = user.id === "pat1" || user.id === "doc1";
+    if (isGuest) {
+      const filtered = localApts.filter(apt => isDoctor ? apt.doctorId === user.id : apt.patientId === user.id);
+      setAppointments(filtered);
+      return;
+    }
+
+    // 2. Fetch from Supabase for real users
+    try {
+      const { data, error } = await supabase
+        .from('appointments')
+        .select('*')
+        .eq(column, user.id)
+        .order('created_at', { ascending: false });
+
+      if (data && !error) {
+        const dbApts = data.map(d => ({
+          ...d,
+          patientId: d.patient_id,
+          doctorId: d.doctor_id,
+          patientName: d.patient_name,
+          doctorName: d.doctor_name
+        }));
+        
+        // Merge avoiding duplicates
+        const allApts = [...dbApts];
+        localApts.forEach(localApt => {
+          if (localApt[column] === user.id && !allApts.find(a => a.id === localApt.id)) {
+            allApts.push(localApt);
+          }
+        });
+        
+        setAppointments(allApts);
+      } else {
+        setAppointments(localApts.filter(apt => isDoctor ? apt.doctorId === user.id : apt.patientId === user.id));
+      }
+    } catch (err) {
+      console.error("Failed to fetch appointments:", err);
+      setAppointments(localApts.filter(apt => isDoctor ? apt.doctorId === user.id : apt.patientId === user.id));
     }
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchAppointments();
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, role]);
 
   const addAppointment = async (appointmentData) => {
-    const { patientId, doctorId, patientName, doctorName, date, time, reason } = appointmentData;
-    const { data, error } = await supabase.from('appointments').insert([{
+    const { patientId, doctorId, patientName, doctorName, date, time, reason, meetingType } = appointmentData;
+    const newAptId = generateUUID();
+    const newAptObj = {
+      id: newAptId,
       patient_id: patientId,
       doctor_id: doctorId,
       patient_name: patientName,
@@ -284,29 +342,62 @@ export const HealthProvider = ({ children }) => {
       date,
       time,
       reason,
-      status: 'Upcoming'
-    }]).select();
+      meetingType: meetingType || "Video",
+      status: 'Pending',
+      created_at: new Date().toISOString()
+    };
 
-    if (data && data.length > 0) {
-      const newApt = {
-        ...data[0],
-        patientId: data[0].patient_id,
-        doctorId: data[0].doctor_id,
-        patientName: data[0].patient_name,
-        doctorName: data[0].doctor_name
-      };
-      setAppointments(prev => [newApt, ...prev]);
-      return newApt;
+    const mappedApt = {
+      ...newAptObj,
+      patientId: newAptObj.patient_id,
+      doctorId: newAptObj.doctor_id,
+      patientName: newAptObj.patient_name,
+      doctorName: newAptObj.doctor_name
+    };
+
+    setAppointments(prev => [mappedApt, ...prev]);
+
+    try {
+      const localAptsStr = localStorage.getItem("virtualvaidya_local_appointments") || "[]";
+      const localApts = JSON.parse(localAptsStr);
+      localApts.push(newAptObj);
+      localStorage.setItem("virtualvaidya_local_appointments", JSON.stringify(localApts));
+    } catch (e) {
+      console.warn("Failed to write appointment to localStorage:", e);
     }
-    return null;
+
+    const isGuest = patientId === "pat1" || doctorId === "doc1";
+    if (!isGuest) {
+      try {
+        await supabase.from('appointments').insert([newAptObj]);
+      } catch (err) {
+        console.error("Supabase insert failed, fell back to local storage:", err);
+      }
+    }
+    return mappedApt;
   };
 
   const updateAppointmentStatus = async (aptId, status) => {
-    const { error } = await supabase.from('appointments').update({ status }).eq('id', aptId);
-    if (!error) {
-      setAppointments(prev => 
-        prev.map(apt => apt.id === aptId ? { ...apt, status } : apt)
-      );
+    setAppointments(prev => 
+      prev.map(apt => apt.id === aptId ? { ...apt, status } : apt)
+    );
+
+    try {
+      const localAptsStr = localStorage.getItem("virtualvaidya_local_appointments") || "[]";
+      const localApts = JSON.parse(localAptsStr);
+      const updated = localApts.map(apt => apt.id === aptId ? { ...apt, status } : apt);
+      localStorage.setItem("virtualvaidya_local_appointments", JSON.stringify(updated));
+    } catch (e) {
+      console.warn("Failed to update localStorage appointments:", e);
+    }
+
+    const isGuest = user?.id === "pat1" || user?.id === "doc1";
+    if (!isGuest) {
+      try {
+        await supabase.from('appointments').update({ status }).eq('id', aptId);
+      } catch (err) {
+        console.error("Failed to update appointment status in Supabase:", err);
+      }
     }
   };
 
@@ -404,6 +495,7 @@ export const HealthProvider = ({ children }) => {
   );
 };
 
+// eslint-disable-next-line react-refresh/only-export-components
 export const useHealth = () => {
   const context = useContext(HealthContext);
   if (!context) {
