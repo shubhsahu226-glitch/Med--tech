@@ -295,9 +295,9 @@ export const PatientDoctors = () => {
               </div>
             </div>
 
-            {/* Doctors list (1-2 items only) */}
+            {/* Doctors list */}
             <div className="grid-3" style={{ gap: "1.5rem" }}>
-              {filteredDoctors.slice(0, 2).map(doc => (
+              {filteredDoctors.map(doc => (
                 <div key={doc.id} className="card flex-column gap-3" style={{ padding: "1.25rem" }}>
                   <div className="align-center gap-3">
                     <img 
