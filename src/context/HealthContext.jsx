@@ -21,22 +21,36 @@ export const HealthProvider = ({ children }) => {
   const [alerts, setAlerts] = useState(mockEmergencyAlerts);
 
   const fetchDoctors = async () => {
-    const { data, error } = await supabase
+    const { data: doctorsData, error: doctorsError } = await supabase
       .from('doctors')
-      .select('*, profiles(name, mobile_number, location)');
+      .select('*');
       
-    if (data && !error && data.length > 0) {
-      const parsedDoctors = data.map(doc => ({
-        ...doc,
-        name: doc.profiles?.name || "Doctor",
-        specialty: doc.specialization || "General Physician",
-        location: doc.profiles?.location || doc.hospital || "City Central Clinic",
-        slots: typeof doc.slots === 'string' ? JSON.parse(doc.slots) : doc.slots || [],
-        availability: typeof doc.availability === 'string' ? JSON.parse(doc.availability) : doc.availability || []
-      }));
+    if (doctorsData && !doctorsError && doctorsData.length > 0) {
+      const doctorIds = doctorsData.map(d => d.id);
+      const { data: profilesData } = await supabase
+        .from('profiles')
+        .select('id, name, mobile_number, location')
+        .in('id', doctorIds);
+        
+      const profilesMap = {};
+      if (profilesData) {
+        profilesData.forEach(p => { profilesMap[p.id] = p; });
+      }
+
+      const parsedDoctors = doctorsData.map(doc => {
+        const profile = profilesMap[doc.id] || {};
+        return {
+          ...doc,
+          name: profile.name || "Doctor",
+          specialty: doc.specialization || "General Physician",
+          location: profile.location || doc.hospital || "City Central Clinic",
+          slots: typeof doc.slots === 'string' ? JSON.parse(doc.slots) : doc.slots || [],
+          availability: typeof doc.availability === 'string' ? JSON.parse(doc.availability) : doc.availability || []
+        };
+      });
       setDoctors(parsedDoctors);
     } else {
-      if (error) console.error("Failed to fetch doctors:", error);
+      if (doctorsError) console.error("Failed to fetch doctors:", doctorsError);
       setDoctors(mockDoctors);
     }
   };
