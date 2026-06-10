@@ -33,7 +33,8 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
   // Initialize PeerJS
   useEffect(() => {
     if (!peerInstance && myPeerId) {
-      const peer = new Peer(myPeerId);
+      const PeerConstructor = Peer.default || Peer;
+      const peer = new PeerConstructor(myPeerId);
       
       peer.on("open", (id) => {
         console.log("Peer initialized with ID:", id);
