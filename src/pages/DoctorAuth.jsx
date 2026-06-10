@@ -95,9 +95,9 @@ export const DoctorAuth = () => {
       const { error: profileError } = await supabase.from('profiles').insert({
         id: doctorId,
         name: formattedName,
-        mobile_number: null,
+        mobile_number: "Not provided",
         dob: "1980-01-01", // Default DOB for doctor
-        location: null
+        location: "City Central Clinic"
       });
 
       if (profileError) {
@@ -107,13 +107,14 @@ export const DoctorAuth = () => {
       // Insert into doctors table
       const { error: docError } = await supabase.from('doctors').insert({
         id: doctorId,
-        specialization: "General Physician",
-        license_number: "LIC-" + Math.floor(100000 + Math.random() * 900000),
-        hospital: "City Central Clinic",
+        specialty: "General Physician",
+        experience: "5 years",
+        education: "MBBS",
+        location: "City Central Clinic",
         slots: JSON.stringify(["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"]),
         availability: JSON.stringify(["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"]),
         rating: 5.0,
-        reviews_count: 0,
+        reviews: 0,
         image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200"
       });
 
