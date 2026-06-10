@@ -25,7 +25,7 @@ export const HealthProvider = ({ children }) => {
       .from('doctors')
       .select('*, profiles(name, mobile_number, location)');
       
-    if (data && !error) {
+    if (data && !error && data.length > 0) {
       const parsedDoctors = data.map(doc => ({
         ...doc,
         name: doc.profiles?.name || "Doctor",
@@ -36,7 +36,7 @@ export const HealthProvider = ({ children }) => {
       }));
       setDoctors(parsedDoctors);
     } else {
-      console.error("Failed to fetch doctors:", error);
+      if (error) console.error("Failed to fetch doctors:", error);
       setDoctors(mockDoctors);
     }
   };
