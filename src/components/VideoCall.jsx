@@ -298,10 +298,11 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
           display: "flex",
           flexDirection: "column",
           transform: "translate3d(0,0,0)",
-          backfaceVisibility: "hidden"
+          backfaceVisibility: "hidden",
+          overflow: "hidden"
         }}
       >
-        <div style={{ flex: 1, position: "relative", animation: "fadeIn 0.3s ease-in-out" }}>
+        <div style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden", animation: "fadeIn 0.3s ease-in-out" }}>
           {/* Main Remote Video */}
           <video 
             ref={remoteVideoRef}
