@@ -31,6 +31,9 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
   const activeCallRef = useRef(null);
   const isMountedRef = useRef(true);
 
+  // Toggle debug panel display using URL query params (e.g., ?debug=true)
+  const showDebugLogs = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "true";
+
   // Debug logging helper
   const addLog = (msg) => {
     console.log("[VideoCall Debug]", msg);
@@ -326,42 +329,44 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
             {targetName || "Target"} (Live)
           </div>
 
-          {/* Floating Diagnostic Logs */}
-          <div style={{
-            position: "absolute",
-            top: "20px",
-            right: "20px",
-            width: "320px",
-            backgroundColor: "rgba(0,0,0,0.85)",
-            border: "1px solid #22c55e",
-            borderRadius: "8px",
-            padding: "10px",
-            zIndex: 100000,
-            fontFamily: "monospace",
-            fontSize: "11px",
-            color: "#22c55e",
-            boxShadow: "0 4px 15px rgba(0,0,0,0.5)"
-          }}>
-            <div style={{ fontWeight: "bold", borderBottom: "1px solid #22c55e", paddingBottom: "4px", marginBottom: "6px", display: "flex", justifyContent: "space-between" }}>
-              <span>Diagnostic Logs (V6)</span>
-              <button 
-                onClick={() => {
-                  try {
-                    sessionStorage.removeItem("videocall_debug_logs");
-                    setLogs([]);
-                  } catch (e) {}
-                }}
-                style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "10px" }}
-              >
-                Clear
-              </button>
+          {/* Floating Diagnostic Logs - Rendered conditionally */}
+          {showDebugLogs && (
+            <div style={{
+              position: "absolute",
+              top: "20px",
+              right: "20px",
+              width: "320px",
+              backgroundColor: "rgba(0,0,0,0.85)",
+              border: "1px solid #22c55e",
+              borderRadius: "8px",
+              padding: "10px",
+              zIndex: 100000,
+              fontFamily: "monospace",
+              fontSize: "11px",
+              color: "#22c55e",
+              boxShadow: "0 4px 15px rgba(0,0,0,0.5)"
+            }}>
+              <div style={{ fontWeight: "bold", borderBottom: "1px solid #22c55e", paddingBottom: "4px", marginBottom: "6px", display: "flex", justifyContent: "space-between" }}>
+                <span>Diagnostic Logs (V6)</span>
+                <button 
+                  onClick={() => {
+                    try {
+                      sessionStorage.removeItem("videocall_debug_logs");
+                      setLogs([]);
+                    } catch (e) {}
+                  }}
+                  style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "10px" }}
+                >
+                  Clear
+                </button>
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
+                {logs.map((log, index) => (
+                  <div key={index} style={{ wordBreak: "break-all", whiteSpace: "pre-wrap" }}>{log}</div>
+                ))}
+              </div>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", gap: "3px" }}>
-              {logs.map((log, index) => (
-                <div key={index} style={{ wordBreak: "break-all", whiteSpace: "pre-wrap" }}>{log}</div>
-              ))}
-            </div>
-          </div>
+          )}
 
           {/* Local PIP Video */}
           <div 
