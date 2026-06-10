@@ -64,9 +64,11 @@ export const PatientDoctors = () => {
 
   // Filter Doctors list
   const filteredDoctors = doctors.filter(doc => {
-    const matchesSearch = doc.name.toLowerCase().includes(searchQuery.toLowerCase()) || 
-                          doc.specialty.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesSpecialty = selectedSpecialty === "All" || doc.specialty === selectedSpecialty;
+    const docName = doc.name || "";
+    const docSpecialty = doc.specialty || "";
+    const matchesSearch = docName.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                          docSpecialty.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesSpecialty = selectedSpecialty === "All" || docSpecialty === selectedSpecialty;
     return matchesSearch && matchesSpecialty;
   });
 
