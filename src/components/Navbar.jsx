@@ -6,16 +6,17 @@ import { Heart, Bell, Menu, X, LogOut } from "lucide-react";
 
 export const Navbar = () => {
   const { user, role, logout } = useAuth();
-  const { reminders, alerts } = useHealth();
+  const { reminders, alerts, appointments } = useHealth();
   const navigate = useNavigate();
   const location = useLocation();
   const [showNotifications, setShowNotifications] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
-  // Active notifications count (uncompleted medication reminders + critical alerts)
+  // Active notifications count (uncompleted medication reminders + critical alerts + doctor pending appointments)
   const pendingReminders = reminders.filter(r => !r.taken).length;
   const activeAlerts = alerts.filter(a => a.severity === "high").length;
-  const totalNotifications = pendingReminders + activeAlerts;
+  const pendingAptsCount = role === "doctor" ? (appointments || []).filter(apt => apt.doctorId === user?.id && apt.status === "Pending").length : 0;
+  const totalNotifications = role === "doctor" ? pendingAptsCount + activeAlerts : pendingReminders + activeAlerts;
 
   const handleLogout = () => {
     logout();
@@ -150,7 +151,36 @@ export const Navbar = () => {
                       <p className="text-secondary-color text-center" style={{ fontSize: "0.8rem", padding: "0.75rem 0" }}>No critical alerts</p>
                     ) : (
                       <div className="flex-column gap-2">
-                        {alerts.filter(a => a.severity === "high").slice(0, 1).map(alert => (
+                        {role === "doctor" && (appointments || []).filter(apt => apt.doctorId === user?.id && apt.status === "Pending").map(apt => (
+                          <div 
+                            key={apt.id} 
+                            style={{
+                              padding: "0.5rem 0.75rem",
+                              borderRadius: "var(--radius-sm)",
+                              background: "rgba(217, 119, 6, 0.08)",
+                              borderLeft: "3px solid #d97706",
+                              display: "flex",
+                              justifyContent: "space-between",
+                              alignItems: "center"
+                            }}
+                          >
+                            <div style={{ flex: 1, marginRight: "0.5rem" }}>
+                              <div style={{ fontSize: "0.75rem", fontWeight: "600", color: "#b45309" }}>Booking Request</div>
+                              <div style={{ fontSize: "0.7rem", color: "var(--text-secondary)", marginTop: "0.1rem" }}>From: {apt.patientName}</div>
+                              <div style={{ fontSize: "0.65rem", color: "var(--text-muted)", marginTop: "0.1rem" }}>{apt.date} @ {apt.time}</div>
+                            </div>
+                            <Link 
+                              to="/doctor/appointments" 
+                              className="btn btn-primary" 
+                              style={{ padding: "0.2rem 0.5rem", fontSize: "0.65rem", borderRadius: "var(--radius-sm)", backgroundColor: "var(--primary)", borderColor: "var(--primary)" }}
+                              onClick={() => setShowNotifications(false)}
+                            >
+                              Review
+                            </Link>
+                          </div>
+                        ))}
+
+                        {role === "patient" && alerts.filter(a => a.severity === "high").slice(0, 1).map(alert => (
                           <div 
                             key={alert.id} 
                             style={{
@@ -165,7 +195,7 @@ export const Navbar = () => {
                           </div>
                         ))}
 
-                        {reminders.filter(r => !r.taken).slice(0, 2).map(rem => (
+                        {role === "patient" && reminders.filter(r => !r.taken).slice(0, 2).map(rem => (
                           <div 
                             key={rem.id} 
                             style={{

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
@@ -6,11 +6,16 @@ import { Calendar, Users, FileText, ArrowRight } from "lucide-react";
 
 export const DoctorDashboard = () => {
   const { user } = useAuth();
-  const { patients, appointments } = useHealth();
+  const { patients, appointments, refreshAppointments } = useHealth();
+
+  // Refresh appointments on mount to get latest status
+  useEffect(() => {
+    if (refreshAppointments) refreshAppointments();
+  }, []);
 
   // Filter clinician's schedule
   const doctorAppointments = appointments.filter(apt => apt.doctorId === user.id || apt.doctorId === "doc1");
-  const upcomingApts = doctorAppointments.filter(apt => apt.status === "Upcoming");
+  const upcomingApts = doctorAppointments.filter(apt => apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending");
 
   return (
     <div className="flex-column gap-6" style={{ backgroundColor: "var(--bg-primary)" }}>
@@ -40,7 +45,7 @@ export const DoctorDashboard = () => {
           </div>
           <div>
             <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "500" }}>Scheduled Sessions</div>
-            <div style={{ fontSize: "1.1rem", fontWeight: "600", color: "var(--text-primary)" }}>{upcomingApts.length} Pending</div>
+            <div style={{ fontSize: "1.1rem", fontWeight: "600", color: "var(--text-primary)" }}>{upcomingApts.length} Active</div>
           </div>
         </div>
 

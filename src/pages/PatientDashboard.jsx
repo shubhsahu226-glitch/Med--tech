@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
@@ -7,12 +7,17 @@ import { AppointmentCard, ReminderCard } from "../components/cards";
 
 export const PatientDashboard = () => {
   const { user } = useAuth();
-  const { appointments, reminders, treatments } = useHealth();
+  const { appointments, reminders, treatments, refreshAppointments } = useHealth();
   const navigate = useNavigate();
+
+  // Refresh appointments on mount to get latest status
+  useEffect(() => {
+    if (refreshAppointments) refreshAppointments();
+  }, []);
 
   // Find next upcoming appointment
   const nextAppointment = appointments
-    .filter(apt => apt.patientId === user.id && apt.status === "Upcoming")
+    .filter(apt => apt.patientId === user.id && (apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending"))
     .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
 
   // Limit checklist reminders to 1 key upcoming medication

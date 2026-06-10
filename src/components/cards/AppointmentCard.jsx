@@ -35,7 +35,7 @@ export const AppointmentCard = ({ appointment, onStartConsultation, isDoctor = f
           <span className="align-center gap-1"><Clock size={14} /> {appointment.time}</span>
         </div>
         
-        {appointment.status === "Upcoming" && (
+        {(appointment.status === "Upcoming" || appointment.status === "Confirmed") && (
           <button 
             onClick={onStartConsultation} 
             className="btn btn-primary animate-pulse" 

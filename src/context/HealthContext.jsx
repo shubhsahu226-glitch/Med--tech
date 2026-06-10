@@ -487,6 +487,7 @@ export const HealthProvider = ({ children }) => {
       consultations,
       uploadReport,
       refreshDoctors: fetchDoctors,
+      refreshAppointments: fetchAppointments,
       addAppointment,
       updateAppointmentStatus,
       addReminder,

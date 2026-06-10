@@ -10,7 +10,12 @@ const getCurrentTimeString = () => new Date().toLocaleTimeString([], { hour: '2-
 
 export const DoctorAppointments = () => {
   const { user } = useAuth();
-  const { appointments, addTreatmentNotes, updateAppointmentStatus } = useHealth();
+  const { appointments, addTreatmentNotes, updateAppointmentStatus, refreshAppointments } = useHealth();
+
+  // Refresh appointments on mount to get latest status
+  useEffect(() => {
+    if (refreshAppointments) refreshAppointments();
+  }, []);
 
   // Tab State: list, consult
   const [activeTab, setActiveTab] = useState("list");
@@ -153,7 +158,7 @@ export const DoctorAppointments = () => {
   const isGuestMode = !user?.id || user.id === "doc1" || activeApt?.patientId === "pat1";
 
   useEffect(() => {
-    if (!activeApt?.patientId || !user?.id || activeTab !== "consult") return;
+    if (!activeApt?.patientId || !user?.id || activeTab !== "consult" || (!isGuestMode && !activeApt?.id)) return;
     
     // Fetch initial messages
     const fetchMessages = async () => {
@@ -172,8 +177,7 @@ export const DoctorAppointments = () => {
         const { data, error } = await supabase
           .from('messages')
           .select('*')
-          .eq('patient_id', activeApt.patientId)
-          .eq('doctor_id', user.id)
+          .eq('appointment_id', activeApt.id)
           .order('created_at', { ascending: true });
           
         if (data && !error) {
@@ -206,32 +210,30 @@ export const DoctorAppointments = () => {
 
     // Subscribe to new messages for this doctor
     const channel = supabase
-      .channel(`chat_${activeApt.patientId}_${user.id}`)
+      .channel(`chat_${activeApt.id}`)
       .on('postgres_changes', { 
         event: 'INSERT', 
         schema: 'public', 
         table: 'messages', 
-        filter: `doctor_id=eq.${user.id}` 
+        filter: `appointment_id=eq.${activeApt.id}` 
       }, payload => {
         const m = payload.new;
-        if (m.patient_id === activeApt.patientId) {
-          setChatMessages(prev => {
-            if (prev.find(msg => msg.id === m.id)) return prev;
-            return [...prev, {
-              id: m.id,
-              sender: m.sender_role,
-              text: m.text,
-              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-            }];
-          });
-        }
+        setChatMessages(prev => {
+          if (prev.find(msg => msg.id === m.id)) return prev;
+          return [...prev, {
+            id: m.id,
+            sender: m.sender_role,
+            text: m.text,
+            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+          }];
+        });
       })
       .subscribe();
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [activeApt?.patientId, user?.id, activeTab, isGuestMode]);
+  }, [activeApt?.patientId, user?.id, activeTab, isGuestMode, activeApt?.id]);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
@@ -260,8 +262,6 @@ export const DoctorAppointments = () => {
 
     const { data, error } = await supabase.from('messages').insert([{
       appointment_id: activeApt.id,
-      patient_id: activeApt.patientId,
-      doctor_id: user.id,
       sender_id: user.id,
       sender_role: 'doctor',
       text: msgText
