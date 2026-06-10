@@ -21,10 +21,13 @@ export const PatientDoctors = () => {
     if (refreshAppointments) refreshAppointments();
   }, []);
   const location = useLocation();
+  const queryParams = new URLSearchParams(location.search);
+  const queryTab = queryParams.get("tab");
+  const queryDoctorId = queryParams.get("doctor");
 
   // Tab State: search, telehealth
   const [activeTab, setActiveTab] = useState(() => 
-    location.state?.selectedDoctor ? "telehealth" : "search"
+    queryTab === "telehealth" || location.state?.selectedDoctor ? "telehealth" : "search"
   );
 
   // Search States
@@ -34,6 +37,7 @@ export const PatientDoctors = () => {
 
   // Booking States
   const [selectedDoctorId, setSelectedDoctorId] = useState(() => {
+    if (queryDoctorId) return queryDoctorId;
     if (location.state?.selectedDoctor) {
       return location.state.selectedDoctor.id;
     }
@@ -352,7 +356,7 @@ export const PatientDoctors = () => {
             
             {/* Left Panel: Schedule Consultation Booking Form */}
             <div className="flex-column gap-4">
-              <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Schedule Consult Slot <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "normal" }}>(Code Version: V4)</span></h3>
+              <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Schedule Consult Slot <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "normal" }}>(Code Version: V5)</span></h3>
               
               <div className="card">
                 {bookingStatus ? (

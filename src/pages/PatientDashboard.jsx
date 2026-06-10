@@ -131,7 +131,7 @@ export const PatientDashboard = () => {
             {nextAppointment ? (
               <AppointmentCard 
                 appointment={nextAppointment} 
-                onStartConsultation={() => navigate("/patient/doctors", { state: { selectedDoctor: { id: nextAppointment.doctorId } } })} 
+                onStartConsultation={() => navigate(`/patient/doctors?tab=telehealth&doctor=${nextAppointment.doctorId}`)} 
                 isDoctor={false}
               />
             ) : (
