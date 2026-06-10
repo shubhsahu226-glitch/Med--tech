@@ -352,7 +352,7 @@ export const PatientDoctors = () => {
             
             {/* Left Panel: Schedule Consultation Booking Form */}
             <div className="flex-column gap-4">
-              <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Schedule Consult Slot</h3>
+              <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Schedule Consult Slot <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "normal" }}>(Code Version: V3)</span></h3>
               
               <div className="card">
                 {bookingStatus ? (
