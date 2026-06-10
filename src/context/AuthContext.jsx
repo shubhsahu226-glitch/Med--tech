@@ -151,6 +151,18 @@ export const AuthProvider = ({ children }) => {
           image: doctorDetails?.image || "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200"
         });
       } else {
+        let patientDetails = null;
+        try {
+          const { data: patData } = await supabase
+            .from("patients")
+            .select("*")
+            .eq("id", session.user.id)
+            .maybeSingle();
+          patientDetails = patData;
+        } catch (patErr) {
+          console.error("Patient details lookup failed:", patErr);
+        }
+
         const basePatient = mockPatients[0];
         setProfile({
           ...basePatient,
@@ -161,6 +173,12 @@ export const AuthProvider = ({ children }) => {
           location: data.location,
           dob: data.dob,
           age: calculateAge(data.dob),
+          bloodGroup: patientDetails?.blood_type || null,
+          emergencyContactName: patientDetails?.emergency_contact_name || null,
+          emergencyContactPhone: patientDetails?.emergency_contact_phone || null,
+          emergencyContact: patientDetails?.emergency_contact_phone 
+            ? `${patientDetails.emergency_contact_name} (${patientDetails.emergency_contact_phone})`
+            : null,
         });
       }
     } else {
@@ -261,6 +279,26 @@ export const AuthProvider = ({ children }) => {
 
       if (dError) {
         console.error("Error saving doctor details:", dError);
+        setLoading(false);
+        return false;
+      }
+    }
+
+    // 3. Build patient fields corresponding to public.patients table
+    if (role === "patient") {
+      const patientFields = {
+        id: user.id,
+        blood_type: profileData.bloodGroup || null,
+        emergency_contact_name: profileData.emergencyContactName || null,
+        emergency_contact_phone: profileData.emergencyContactPhone || null
+      };
+
+      const { error: patError } = await supabase
+        .from("patients")
+        .upsert(patientFields);
+
+      if (patError) {
+        console.error("Error saving patient details:", patError);
         setLoading(false);
         return false;
       }

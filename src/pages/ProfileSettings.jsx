@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { User, Phone, Mail, MapPin, Settings, CheckCircle2, ShieldCheck, Calendar, FileText, AlertCircle } from "lucide-react";
+import { User, Phone, Mail, MapPin, Settings, CheckCircle2, ShieldCheck, Calendar, FileText, AlertCircle, Heart } from "lucide-react";
 
 export const ProfileSettings = () => {
   const { user, role, updateUserProfile, saveProfile } = useAuth();
@@ -14,6 +14,11 @@ export const ProfileSettings = () => {
   const [specialty, setSpecialty] = useState(user?.specialty || user?.specialization || "General Physician");
   const [experience, setExperience] = useState(user?.experience || "");
   const [licenseNumber, setLicenseNumber] = useState(user?.licenseNumber || user?.license_number || "");
+  
+  // Patient specific fields
+  const [bloodGroup, setBloodGroup] = useState(user?.bloodGroup || "");
+  const [emergencyContactName, setEmergencyContactName] = useState(user?.emergencyContactName || "");
+  const [emergencyContactPhone, setEmergencyContactPhone] = useState(user?.emergencyContactPhone || "");
 
   const [isLoading, setIsLoading] = useState(false);
   const [success, setSuccess] = useState(false);
@@ -31,6 +36,9 @@ export const ProfileSettings = () => {
       setSpecialty(user.specialty || user.specialization || "General Physician");
       setExperience(user.experience || "");
       setLicenseNumber(user.licenseNumber || user.license_number || "");
+      setBloodGroup(user.bloodGroup || "");
+      setEmergencyContactName(user.emergencyContactName || "");
+      setEmergencyContactPhone(user.emergencyContactPhone || "");
     }
   }, [user]);
 
@@ -59,7 +67,14 @@ export const ProfileSettings = () => {
       // Mock flow - save to local session storage
       const commonData = { name, email, phone };
       const roleSpecificData = role === "patient" 
-        ? { dob, age: calculateAge(dob) } 
+        ? { 
+            dob, 
+            age: calculateAge(dob), 
+            bloodGroup, 
+            emergencyContactName, 
+            emergencyContactPhone,
+            emergencyContact: emergencyContactPhone ? `${emergencyContactName} (${emergencyContactPhone})` : ""
+          } 
         : { location, consultationFee, specialty, experience, licenseNumber };
 
       updateUserProfile({
@@ -85,7 +100,10 @@ export const ProfileSettings = () => {
       hospital: location,
       licenseNumber,
       consultationFee,
-      experience
+      experience,
+      bloodGroup,
+      emergencyContactName,
+      emergencyContactPhone
     };
 
     const isSaved = await saveProfile(profileData);
@@ -241,27 +259,91 @@ export const ProfileSettings = () => {
             </div>
 
             {role === "patient" ? (
-              <div className="form-group">
-                <label className="form-label" htmlFor="settings-dob" style={{ fontWeight: "500" }}>Date of Birth</label>
-                <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
-                    <Calendar size={16} />
-                  </span>
-                  <input 
-                    type="date" 
-                    id="settings-dob"
-                    className="form-input" 
-                    value={dob}
-                    onChange={(e) => setDob(e.target.value)}
-                    style={{ paddingLeft: "2.5rem", width: "100%" }}
-                  />
+              <>
+                <div className="form-group">
+                  <label className="form-label" htmlFor="settings-dob" style={{ fontWeight: "500" }}>Date of Birth</label>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
+                      <Calendar size={16} />
+                    </span>
+                    <input 
+                      type="date" 
+                      id="settings-dob"
+                      className="form-input" 
+                      value={dob}
+                      onChange={(e) => setDob(e.target.value)}
+                      style={{ paddingLeft: "2.5rem", width: "100%" }}
+                    />
+                  </div>
+                  {dob && (
+                    <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem", display: "block" }}>
+                      Age: {calculateAge(dob)} years old
+                    </span>
+                  )}
                 </div>
-                {dob && (
-                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem", display: "block" }}>
-                    Age: {calculateAge(dob)} years old
-                  </span>
-                )}
-              </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="settings-blood" style={{ fontWeight: "500" }}>Blood Group</label>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
+                      <Heart size={16} />
+                    </span>
+                    <select
+                      id="settings-blood"
+                      className="form-input"
+                      value={bloodGroup}
+                      onChange={(e) => setBloodGroup(e.target.value)}
+                      style={{ paddingLeft: "2.5rem", width: "100%" }}
+                    >
+                      <option value="">Select Blood Group</option>
+                      <option value="A+">A+</option>
+                      <option value="A-">A-</option>
+                      <option value="B+">B+</option>
+                      <option value="B-">B-</option>
+                      <option value="AB+">AB+</option>
+                      <option value="AB-">AB-</option>
+                      <option value="O+">O+</option>
+                      <option value="O-">O-</option>
+                    </select>
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="settings-emergency-name" style={{ fontWeight: "500" }}>Emergency Contact Name</label>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
+                      <User size={16} />
+                    </span>
+                    <input 
+                      type="text" 
+                      id="settings-emergency-name"
+                      className="form-input" 
+                      placeholder="e.g. John Doe"
+                      value={emergencyContactName}
+                      onChange={(e) => setEmergencyContactName(e.target.value)}
+                      style={{ paddingLeft: "2.5rem", width: "100%" }}
+                    />
+                  </div>
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" htmlFor="settings-emergency-phone" style={{ fontWeight: "500" }}>Emergency Contact Phone</label>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
+                      <Phone size={16} />
+                    </span>
+                    <input 
+                      type="tel" 
+                      id="settings-emergency-phone"
+                      className="form-input" 
+                      placeholder="e.g. +1 (555) 000-0000"
+                      value={emergencyContactPhone}
+                      onChange={(e) => setEmergencyContactPhone(e.target.value)}
+                      style={{ paddingLeft: "2.5rem", width: "100%" }}
+                    />
+                  </div>
+                </div>
+              </>
             ) : (
               <>
                 <div className="form-group">

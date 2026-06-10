@@ -17,8 +17,9 @@ export const HealthProvider = ({ children }) => {
   // Data States
   const [patients, setPatients] = useState(mockPatients);
   const [doctors, setDoctors] = useState([]);
-  const [reminders, setReminders] = useState(mockMedicationReminders);
-  const [alerts, setAlerts] = useState(mockEmergencyAlerts);
+  const [reminders, setReminders] = useState([]);
+  const [alerts, setAlerts] = useState([]);
+  const [treatments, setTreatments] = useState([]);
 
   const fetchDoctors = async () => {
     const { data: doctorsData, error: doctorsError } = await supabase
@@ -95,6 +96,84 @@ export const HealthProvider = ({ children }) => {
     };
     
     fetchReports();
+  }, [user]);
+
+  // Fetch alerts, reminders, and treatments for the logged in user
+  useEffect(() => {
+    const fetchAlertsAndReminders = async () => {
+      if (!user?.id) {
+        setAlerts([]);
+        setReminders([]);
+        setTreatments([]);
+        return;
+      }
+
+      // 1. Reminders (Show mock reminders ONLY for demo patient, otherwise start empty)
+      if (user.id === "pat1") {
+        setReminders(mockMedicationReminders);
+      } else {
+        setReminders([]);
+      }
+
+      // 2. Alerts (Query active clinical alerts from Supabase, or mock clinical alert for demo user)
+      if (user.id === "pat1" || user.id === "pat2" || user.id === "pat3") {
+        setAlerts([
+          {
+            id: "al_mock1",
+            title: "Abnormal LDL Cholesterol",
+            severity: "medium",
+            description: "Fasting lipid profile shows LDL level of 134 mg/dL which is borderline high.",
+            action: "Review dietary saturated fat intake and schedule a follow-up test in 3 months."
+          }
+        ]);
+      } else {
+        const { data, error } = await supabase
+          .from('alerts')
+          .select('*')
+          .eq('patient_id', user.id)
+          .eq('status', 'Active');
+
+        if (data && !error) {
+          setAlerts(data.map(a => ({
+            id: a.id,
+            title: a.title,
+            severity: a.severity?.toLowerCase() || "medium",
+            description: a.description,
+            action: "Review metrics details inside the Reports center."
+          })));
+        } else {
+          setAlerts([]);
+        }
+      }
+
+      // 3. Treatments (Query active treatments from Supabase, or mock treatment for demo user)
+      if (user.id === "pat1") {
+        setTreatments([
+          {
+            id: "t_mock1",
+            patient_id: user.id,
+            doctor_name: "Dr. Sarah Jenkins",
+            diagnosis: "Hypertension Therapy Regimen",
+            notes: "Blood pressure reading logs show steady improvement. Please continue tracking readings twice weekly and maintain the current schedule.",
+            prescription: "Lisinopril 10mg daily",
+            follow_up_date: "July 12, 2026"
+          }
+        ]);
+      } else {
+        const { data, error } = await supabase
+          .from('treatments')
+          .select('*')
+          .eq('patient_id', user.id);
+
+        if (data && !error) {
+          setTreatments(data);
+        } else {
+          setTreatments([]);
+        }
+      }
+    };
+
+    fetchAlertsAndReminders();
   }, [user]);
 
   const [appointments, setAppointments] = useState([]);
@@ -308,6 +387,7 @@ export const HealthProvider = ({ children }) => {
       reminders,
       alerts,
       trends,
+      treatments,
       consultations,
       uploadReport,
       refreshDoctors: fetchDoctors,

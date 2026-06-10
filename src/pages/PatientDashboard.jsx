@@ -7,7 +7,7 @@ import { AppointmentCard, ReminderCard } from "../components/cards";
 
 export const PatientDashboard = () => {
   const { user } = useAuth();
-  const { appointments, reminders, patients } = useHealth();
+  const { appointments, reminders, treatments } = useHealth();
   const navigate = useNavigate();
 
   // Find next upcoming appointment
@@ -18,14 +18,25 @@ export const PatientDashboard = () => {
   // Limit checklist reminders to 1 key upcoming medication
   const activeReminders = reminders.filter(r => !r.taken).slice(0, 1);
 
-  // Fetch current treatment details from mock history
-  const livePatient = patients.find(p => p.id === user.id) || user;
-  const currentTreatment = livePatient.history?.[0] || {
-    diagnosis: "Chronic Hypertension Management",
-    notes: "Daily cardiovascular monitoring. Restrict dietary sodium. Continue blood pressure tracking logs.",
-    doctor: "Dr. Sarah Jenkins",
-    date: "Jun 02, 2026"
-  };
+  // Check if guest demo patient
+  const isGuest = !user?.id || user.id === "pat1";
+
+  // Fetch current treatment details from Supabase or fallback to mock for guest
+  const currentTreatment = treatments && treatments.length > 0
+    ? {
+        diagnosis: treatments[0].diagnosis,
+        notes: treatments[0].notes,
+        doctor: treatments[0].doctor_name || "Primary Clinician",
+        date: treatments[0].created_at ? new Date(treatments[0].created_at).toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: '2-digit' }) : "Recently"
+      }
+    : isGuest
+      ? {
+          diagnosis: "Chronic Hypertension Management",
+          notes: "Daily cardiovascular monitoring. Restrict dietary sodium. Continue blood pressure tracking logs.",
+          doctor: "Dr. Sarah Jenkins",
+          date: "Jun 02, 2026"
+        }
+      : null;
 
   return (
     <div className="flex-column gap-6" style={{ backgroundColor: "var(--bg-primary)" }}>
@@ -47,25 +58,25 @@ export const PatientDashboard = () => {
         <div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "500" }}>Age & Gender</div>
           <div style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--text-primary)", marginTop: "0.15rem" }}>
-            {user.age || 29} Years / {user.gender || "Male"}
+            {user.age || "Not Specified"} Years / {user.gender || "Not Specified"}
           </div>
         </div>
         <div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "500" }}>Blood Group</div>
           <div style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--text-primary)", marginTop: "0.15rem" }}>
-            {user.bloodGroup || "O+"}
+            {user.bloodGroup || "Not Specified"}
           </div>
         </div>
         <div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "500" }}>Emergency Contact</div>
           <div style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--text-primary)", marginTop: "0.15rem" }}>
-            {user.emergencyContact || "+1 (555) 911-3000"}
+            {user.emergencyContact || "Not Specified"}
           </div>
         </div>
         <div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "500" }}>Primary Physician</div>
           <div style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--text-primary)", marginTop: "0.15rem" }}>
-            {currentTreatment.doctor}
+            {currentTreatment ? currentTreatment.doctor : "None Assigned"}
           </div>
         </div>
       </div>
@@ -79,21 +90,29 @@ export const PatientDashboard = () => {
           {/* Current Treatment */}
           <div>
             <h3 style={{ fontSize: "1.15rem", marginBottom: "1rem", fontWeight: "600" }}>Current Treatment Course</h3>
-            <div className="card flex-column gap-3" style={{ padding: "1.5rem" }}>
-              <div className="flex-between">
-                <span className="badge badge-info" style={{ backgroundColor: "var(--primary-light)", color: "var(--primary)", fontSize: "0.7rem" }}>
-                  Active Regimen
-                </span>
-                <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Diagnosed: {currentTreatment.date}</span>
+            {currentTreatment ? (
+              <div className="card flex-column gap-3" style={{ padding: "1.5rem" }}>
+                <div className="flex-between">
+                  <span className="badge badge-info" style={{ backgroundColor: "var(--primary-light)", color: "var(--primary)", fontSize: "0.7rem" }}>
+                    Active Regimen
+                  </span>
+                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>Prescribed: {currentTreatment.date}</span>
+                </div>
+                <h4 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "600" }}>{currentTreatment.diagnosis}</h4>
+                <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                  {currentTreatment.notes}
+                </p>
+                <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", borderTop: "1px dashed var(--border-color)", paddingTop: "0.75rem", marginTop: "0.25rem" }}>
+                  Prescribed by: <strong style={{ color: "var(--text-secondary)" }}>{currentTreatment.doctor}</strong>
+                </div>
               </div>
-              <h4 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "600" }}>{currentTreatment.diagnosis}</h4>
-              <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
-                {currentTreatment.notes}
-              </p>
-              <div style={{ fontSize: "0.8rem", color: "var(--text-muted)", borderTop: "1px dashed var(--border-color)", paddingTop: "0.75rem", marginTop: "0.25rem" }}>
-                Prescribed by: <strong style={{ color: "var(--text-secondary)" }}>{currentTreatment.doctor}</strong>
+            ) : (
+              <div className="card text-center" style={{ padding: "3rem 1.5rem" }}>
+                <Activity size={28} style={{ color: "var(--text-muted)", marginBottom: "0.75rem" }} />
+                <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "500" }}>No Active Treatment Regimens</h4>
+                <p className="text-secondary-color" style={{ fontSize: "0.8rem", marginTop: "0.25rem" }}>Prescriptions or treatment courses from your doctors will appear here.</p>
               </div>
-            </div>
+            )}
           </div>
 
           {/* Upcoming Appointments */}
@@ -108,6 +127,7 @@ export const PatientDashboard = () => {
               <AppointmentCard 
                 appointment={nextAppointment} 
                 onStartConsultation={() => navigate("/patient/doctors")} 
+                isDoctor={false}
               />
             ) : (
               <div className="card text-center" style={{ padding: "2.5rem 1.5rem" }}>
