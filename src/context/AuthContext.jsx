@@ -12,26 +12,26 @@ export const AuthProvider = ({ children }) => {
 
   const safeGetItem = (key) => {
     try {
-      return localStorage.getItem(key);
+      return sessionStorage.getItem(key);
     } catch (e) {
-      console.warn("localStorage read blocked by security sandbox:", e);
+      console.warn("sessionStorage read blocked by security sandbox:", e);
       return null;
     }
   };
 
   const safeSetItem = (key, value) => {
     try {
-      localStorage.setItem(key, value);
+      sessionStorage.setItem(key, value);
     } catch (e) {
-      console.warn("localStorage write blocked by security sandbox:", e);
+      console.warn("sessionStorage write blocked by security sandbox:", e);
     }
   };
 
   const safeRemoveItem = (key) => {
     try {
-      localStorage.removeItem(key);
+      sessionStorage.removeItem(key);
     } catch (e) {
-      console.warn("localStorage delete blocked by security sandbox:", e);
+      console.warn("sessionStorage delete blocked by security sandbox:", e);
     }
   };
 

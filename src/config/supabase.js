@@ -7,4 +7,11 @@ import { createClient } from '@supabase/supabase-js';
 const supabaseUrl = 'https://dgfhhjopffftydioegeo.supabase.co';
 const supabaseKey = 'sb_publishable_fWGXDMcTYVK2l65RYsBDOg_fmEeVgkL';
 
-export const supabase = createClient(supabaseUrl, supabaseKey);
+export const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    storage: window.sessionStorage,
+    autoRefreshToken: true,
+    persistSession: true,
+    detectSessionInUrl: true
+  }
+});

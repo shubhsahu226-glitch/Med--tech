@@ -12,9 +12,41 @@ export const PatientDashboard = () => {
   const { appointments, reminders, treatments, refreshAppointments, triggerEmergencyAlert } = useHealth();
   const navigate = useNavigate();
 
-  // Active Consultation Overlay states
-  const [activeSessionApt, setActiveSessionApt] = useState(null);
-  const [sessionTab, setSessionTab] = useState("landing"); // landing, video, or chat
+  // Active Consultation Overlay states with sessionStorage persistence to survive page refreshes
+  const [activeSessionApt, setActiveSessionAptState] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem("virtualvaidya_active_session_apt");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [sessionTab, setSessionTabState] = useState(() => {
+    try {
+      return sessionStorage.getItem("virtualvaidya_session_tab") || "landing";
+    } catch (e) {
+      return "landing";
+    }
+  });
+
+  const setActiveSessionApt = (apt) => {
+    setActiveSessionAptState(apt);
+    try {
+      if (apt) {
+        sessionStorage.setItem("virtualvaidya_active_session_apt", JSON.stringify(apt));
+      } else {
+        sessionStorage.removeItem("virtualvaidya_active_session_apt");
+        sessionStorage.removeItem("virtualvaidya_session_tab");
+      }
+    } catch (e) {}
+  };
+
+  const setSessionTab = (tab) => {
+    setSessionTabState(tab);
+    try {
+      sessionStorage.setItem("virtualvaidya_session_tab", tab);
+    } catch (e) {}
+  };
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef(null);
@@ -423,6 +455,14 @@ export const PatientDashboard = () => {
             animation: "fadeIn 0.2s ease-out"
           }}
         >
+          {/* Background VideoCall listener (always mounted when telehealth room is open) */}
+          <VideoCall 
+            myPeerId={`pat_${user.id}`}
+            targetPeerId={`doc_${activeSessionApt.doctorId}`}
+            targetName={activeSessionApt.doctorName}
+            hideIdleUI={sessionTab !== "video"}
+            sessionTab={sessionTab}
+          />
           {/* Header */}
           <div 
             style={{ 
@@ -634,13 +674,7 @@ export const PatientDashboard = () => {
               </div>
             ) : sessionTab === "video" ? (
               /* VIDEO STREAM */
-              <div style={{ flex: 1, position: "relative", minHeight: 0, padding: "1.5rem" }}>
-                <VideoCall 
-                  myPeerId={`pat_${user.id}`}
-                  targetPeerId={`doc_${activeSessionApt.doctorId}`}
-                  targetName={activeSessionApt.doctorName}
-                />
-              </div>
+              <div id="telehealth-video-slot" style={{ flex: 1, position: "relative", minHeight: 0, padding: "1.5rem", display: "flex", flexDirection: "column" }} />
             ) : (
               /* SECURED CHAT */
               <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", backgroundColor: "#0f172a" }}>

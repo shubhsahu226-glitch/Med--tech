@@ -3,11 +3,31 @@ import { createPortal } from "react-dom";
 import * as PeerModule from "peerjs";
 import { Video, VideoOff, PhoneOff, Mic, MicOff, PhoneCall } from "lucide-react";
 
-const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
+const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, sessionTab = "landing" }) => {
   const [callActive, setCallActive] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null);
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
+  const [portalTarget, setPortalTarget] = useState(null);
+
+  useEffect(() => {
+    if (!hideIdleUI) {
+      const findTarget = () => {
+        const el = document.getElementById("telehealth-video-slot");
+        if (el) {
+          setPortalTarget(el);
+        } else {
+          setTimeout(() => {
+            const retryEl = document.getElementById("telehealth-video-slot");
+            if (retryEl) setPortalTarget(retryEl);
+          }, 50);
+        }
+      };
+      findTarget();
+    } else {
+      setPortalTarget(null);
+    }
+  }, [hideIdleUI, sessionTab]);
 
   // Role Detection
   const isPatient = myPeerId?.startsWith("pat_");
@@ -538,6 +558,16 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
           overflow: "hidden"
         }}
       >
+        <style>{`
+          body.video-call-active #root,
+          body.video-call-active .app-container {
+            display: none !important;
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 0.55; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.08); }
+          }
+        `}</style>
         <div style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden", animation: "fadeIn 0.3s ease-in-out" }}>
           {/* Main Remote Video */}
           <video 
@@ -703,102 +733,128 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
     );
   };
 
-  // Incoming Call Ringing UI
-  if (incomingCall) {
-    return (
-      <div 
-        style={{
-          backgroundColor: "var(--bg-primary)",
-          height: "160px",
-          borderRadius: "var(--radius-md)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          border: "2px solid var(--primary)",
-          animation: "pulse-border-red 2s infinite",
-          boxShadow: "var(--shadow-lg)"
-        }}
-      >
-        <PhoneCall size={32} color="var(--primary)" style={{ animation: "wiggle 1s infinite" }} />
-        <h4 style={{ color: "var(--text-primary)", margin: "10px 0", fontSize: "1rem", fontWeight: "600" }}>Incoming Video Call...</h4>
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <button 
-            onClick={answerCall} 
-            className="btn btn-primary" 
-            style={{ backgroundColor: "var(--success)", borderColor: "var(--success)", padding: "0.5rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
-          >
-            <Video size={16} /> Accept
-          </button>
-          <button 
-            onClick={declineCall} 
-            className="btn btn-danger" 
-            style={{ padding: "0.5rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
-          >
-            <PhoneOff size={16} /> Decline
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Idle UI (Ready to call)
-  return (
+  const idleContent = (
     <div 
       style={{
         backgroundColor: "var(--bg-primary)",
-        height: "140px",
         borderRadius: "var(--radius-md)",
         border: "1px solid var(--border-color)",
         position: "relative",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
+        width: "100%",
+        height: "100%",
+        minHeight: "240px",
+        padding: "2rem"
       }}
     >
       <div className="text-center" style={{ color: "var(--text-secondary)" }}>
-        <Video size={24} style={{ marginBottom: "8px", color: isPatient ? "var(--primary)" : "var(--text-muted)", animation: isPatient ? "pulse 2s infinite" : "none" }} />
-        <p style={{ fontSize: "0.85rem", margin: "0 0 10px 0", fontWeight: "500", color: "var(--text-primary)" }}>
+        <Video size={36} style={{ marginBottom: "12px", color: isPatient ? "var(--primary)" : "var(--text-muted)", animation: isPatient ? "pulse 2s infinite" : "none" }} />
+        <p style={{ fontSize: "1rem", margin: "0 0 12px 0", fontWeight: "600", color: "var(--text-primary)" }}>
           {isPatient ? "Waiting for doctor to start the call..." : "Video Consultation Room"}
         </p>
         {!isPatient ? (
           <button 
             onClick={initiateCall} 
-            className="btn btn-primary" 
-            style={{ padding: "0.5rem 1.5rem", borderRadius: "50px", display: "flex", alignItems: "center", gap: "0.5rem", margin: "0 auto" }}
+            className="btn btn-primary animate-pulse-scale" 
+            style={{ padding: "0.6rem 2rem", borderRadius: "50px", display: "flex", alignItems: "center", gap: "0.5rem", margin: "0 auto", fontWeight: "600" }}
           >
-            <Video size={16} /> Start Call
+            <Video size={18} /> Start Call
           </button>
         ) : (
-          <p style={{ fontSize: "0.7rem", color: "var(--text-secondary)", margin: 0, padding: "0 1.5rem", lineHeight: 1.35 }}>
+          <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0, padding: "0 1.5rem", lineHeight: 1.45 }}>
             Keep this tab open. You will receive a call ring once the doctor initiates the session.
           </p>
         )}
       </div>
       
-      {/* Global CSS for animations and hiding root layout when call is active */}
       <style>{`
-        body.video-call-active #root,
-        body.video-call-active .app-container {
-          display: none !important;
-        }
-        @keyframes wiggle {
-          0%, 100% { transform: rotate(-15deg); }
-          50% { transform: rotate(15deg); }
-        }
         @keyframes pulse {
           0%, 100% { opacity: 0.55; transform: scale(1); }
           50% { opacity: 1; transform: scale(1.08); }
         }
-        @keyframes pulse-border-red {
-          0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4); }
-          70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
-        }
       `}</style>
-      {renderOverlay()}
     </div>
   );
+
+  if (callActive) {
+    return renderOverlay();
+  }
+
+  if (incomingCall) {
+    return createPortal(
+      <div 
+        style={{
+          position: "fixed",
+          bottom: "30px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 999999,
+          width: "90%",
+          maxWidth: "400px",
+          backgroundColor: "var(--bg-primary)",
+          borderRadius: "var(--radius-md)",
+          padding: "1.5rem",
+          border: "2px solid var(--primary)",
+          animation: "pulse-border-red 2s infinite, slideUp 0.3s ease-out",
+          boxShadow: "var(--shadow-2xl)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <PhoneCall size={32} color="var(--primary)" style={{ animation: "wiggle 1s infinite" }} />
+        <h4 style={{ color: "var(--text-primary)", margin: "10px 0", fontSize: "1rem", fontWeight: "600" }}>Incoming Video Call...</h4>
+        <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: "0 0 1rem 0", textAlign: "center" }}>
+          <strong>{targetName || "Doctor"}</strong> is calling you for the consultation.
+        </p>
+        <div style={{ display: "flex", gap: "1rem", width: "100%" }}>
+          <button 
+            onClick={answerCall} 
+            className="btn btn-primary flex-1 align-center gap-2 justify-content-center" 
+            style={{ backgroundColor: "var(--success)", borderColor: "var(--success)", padding: "0.6rem" }}
+          >
+            <Video size={16} /> Accept
+          </button>
+          <button 
+            onClick={declineCall} 
+            className="btn btn-danger flex-1 align-center gap-2 justify-content-center" 
+            style={{ padding: "0.6rem" }}
+          >
+            <PhoneOff size={16} /> Decline
+          </button>
+        </div>
+        <style>{`
+          @keyframes wiggle {
+            0%, 100% { transform: rotate(-15deg); }
+            50% { transform: rotate(15deg); }
+          }
+          @keyframes pulse-border-red {
+            0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+          }
+          @keyframes slideUp {
+            from { transform: translate(-50%, 20px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+          }
+        `}</style>
+      </div>,
+      document.body
+    );
+  }
+
+  if (hideIdleUI) {
+    return null;
+  }
+
+  if (portalTarget) {
+    return createPortal(idleContent, portalTarget);
+  }
+
+  return idleContent;
 };
 
 export default VideoCall;
