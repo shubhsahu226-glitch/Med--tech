@@ -17,6 +17,7 @@ export const DoctorAppointments = () => {
 
   // Selection states
   const [selectedAptId, setSelectedAptId] = useState("");
+  const [sessionTab, setSessionTab] = useState("landing"); // landing, video, or chat
 
   // Refresh appointments on mount to get latest status and check for consult room redirection
   useEffect(() => {
@@ -329,15 +330,7 @@ export const DoctorAppointments = () => {
                     onClick={() => {
                       setSelectedAptId(apt.id);
                       setActiveTab("consult");
-                      const width = 1100;
-                      const height = 700;
-                      const left = (window.screen.width - width) / 2;
-                      const top = (window.screen.height - height) / 2;
-                      window.open(
-                        `/room?apptId=${apt.id}`,
-                        `video_room_${apt.id}`,
-                        `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,location=no,resizable=yes`
-                      );
+                      setSessionTab("landing");
                     }}
                     className="btn btn-primary w-full align-center gap-2 justify-content-center"
                     style={{ padding: "0.5rem", fontSize: "0.8rem", fontWeight: "600" }}
@@ -427,91 +420,144 @@ export const DoctorAppointments = () => {
             <div className="flex-column gap-6">
               
               {/* Selected Patient Bio summary */}
-              <div className="card align-center gap-3" style={{ padding: "1rem" }}>
-                <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "var(--primary-light)", color: "var(--primary)", display: "flex", alignItems: "center", justify: "center", fontWeight: "600", fontSize: "1.1rem" }}>
-                  {selectedPatient?.name?.charAt(0)}
+              <div className="card" style={{ padding: "1rem", display: "flex", justifyContent: "space-between", alignItems: "center" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+                  <div style={{ width: "40px", height: "40px", borderRadius: "50%", background: "var(--primary-light)", color: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "600", fontSize: "1.1rem" }}>
+                    {selectedPatient?.name?.charAt(0)}
+                  </div>
+                  <div>
+                    <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "600" }}>{selectedPatient?.name}</h4>
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", margin: 0 }}>Active Clinical Consultation Room</p>
+                  </div>
                 </div>
-                <div>
-                  <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "600" }}>{selectedPatient?.name}</h4>
-                  <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", margin: 0 }}>Active Clinical Consultation Room</p>
-                </div>
-              </div>
-
-              {/* Video Call Window Launcher */}
-              <div 
-                style={{
-                  backgroundColor: "#1e293b",
-                  borderRadius: "var(--radius-md)",
-                  padding: "1.75rem",
-                  textAlign: "center",
-                  border: "1px dashed var(--border-color)",
-                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-                }}
-              >
-                <div style={{ width: "44px", height: "44px", borderRadius: "50%", backgroundColor: "rgba(59, 130, 246, 0.15)", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.75rem auto" }}>
-                  <Video size={20} />
-                </div>
-                <h4 style={{ color: "white", margin: "0 0 0.4rem 0", fontSize: "0.95rem", fontWeight: "600" }}>Video Call Standalone Window</h4>
-                <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "1rem", lineHeight: "1.4" }}>
-                  The telehealth call is launched in a dedicated clean popup window. Use that window to converse with the patient, and fill out charting details below.
-                </p>
-                <button 
-                  type="button"
-                  onClick={() => {
-                    const width = 1100;
-                    const height = 700;
-                    const left = (window.screen.width - width) / 2;
-                    const top = (window.screen.height - height) / 2;
-                    window.open(
-                      `/room?apptId=${activeApt.id}`,
-                      `video_room_${activeApt.id}`,
-                      `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,location=no,resizable=yes`
-                    );
-                  }}
-                  className="btn btn-secondary w-full"
-                  style={{ fontSize: "0.75rem", padding: "0.45rem" }}
-                >
-                  Launch Call Window
-                </button>
-              </div>
-
-              {/* Secure Chat */}
-              <div className="card flex-column gap-3" style={{ padding: "1rem" }}>
-                <h3 style={{ fontSize: "0.95rem", margin: 0, fontWeight: "600" }}>Secured Consultation Chat</h3>
-                
-                <div style={{ height: "120px", overflowY: "auto", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", padding: "0.5rem" }} className="flex-column gap-2">
-                  {chatMessages.map((msg, i) => (
-                    <div 
-                      key={i} 
-                      style={{ 
-                        alignSelf: msg.sender === "doctor" ? "flex-end" : "flex-start",
-                        backgroundColor: msg.sender === "doctor" ? "var(--primary-light)" : "var(--bg-tertiary)",
-                        padding: "0.35rem 0.6rem",
-                        borderRadius: "var(--radius-md)",
-                        maxWidth: "85%",
-                        fontSize: "0.75rem"
-                      }}
-                    >
-                      <p style={{ margin: 0 }}>{msg.text}</p>
-                      <span style={{ fontSize: "0.55rem", color: "var(--text-muted)", float: "right", marginTop: "2px" }}>{msg.time}</span>
-                    </div>
-                  ))}
-                </div>
-
-                <form onSubmit={handleSendMessage} style={{ display: "flex", gap: "0.5rem" }}>
-                  <input 
-                    type="text" 
-                    className="form-input" 
-                    placeholder="Type to send message..." 
-                    style={{ fontSize: "0.75rem", padding: "0.4rem" }}
-                    value={newMessage}
-                    onChange={(e) => setNewMessage(e.target.value)}
-                  />
-                  <button type="submit" className="btn btn-primary" style={{ padding: "0.4rem" }} title="Send Message">
-                    <Send size={12} />
+                {sessionTab !== "landing" && (
+                  <button
+                    onClick={() => setSessionTab("landing")}
+                    className="btn btn-secondary"
+                    style={{ padding: "0.35rem 0.6rem", fontSize: "0.7rem", fontWeight: "600", borderColor: "var(--border-solid)" }}
+                  >
+                    ← Options
                   </button>
-                </form>
+                )}
               </div>
+
+              {/* Sub Navigation Tabs for Doctor (only if not on landing) */}
+              {sessionTab !== "landing" && (
+                <div style={{ display: "flex", backgroundColor: "var(--bg-secondary)", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)", overflow: "hidden" }}>
+                  <button
+                    type="button"
+                    onClick={() => setSessionTab("video")}
+                    style={{
+                      flex: 1,
+                      padding: "0.75rem",
+                      background: sessionTab === "video" ? "var(--primary-light)" : "none",
+                      border: "none",
+                      color: sessionTab === "video" ? "var(--primary)" : "var(--text-secondary)",
+                      fontWeight: "600",
+                      fontSize: "0.8rem",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "0.5rem"
+                    }}
+                  >
+                    <Video size={14} /> Start Video Call
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSessionTab("chat")}
+                    style={{
+                      flex: 1,
+                      padding: "0.75rem",
+                      background: sessionTab === "chat" ? "var(--primary-light)" : "none",
+                      border: "none",
+                      color: sessionTab === "chat" ? "var(--primary)" : "var(--text-secondary)",
+                      fontWeight: "600",
+                      fontSize: "0.8rem",
+                      cursor: "pointer",
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      gap: "0.5rem"
+                    }}
+                  >
+                    <MessageSquare size={14} /> Chat Feed
+                  </button>
+                </div>
+              )}
+
+              {/* Tab Content Rendering */}
+              {sessionTab === "landing" ? (
+                /* CHOICE SCREEN (LANDING) */
+                <div className="card flex-column gap-4" style={{ padding: "2rem", textAlign: "center", minHeight: "300px", justifyContent: "center", alignItems: "center" }}>
+                  <h3 style={{ fontSize: "1.05rem", margin: 0, fontWeight: "600", color: "var(--text-primary)" }}>Choose Consultation Method</h3>
+                  <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0, maxWidth: "300px" }}>
+                    Select how you would like to connect with <strong>{selectedPatient?.name}</strong> today:
+                  </p>
+                  <div className="flex-column gap-3" style={{ width: "100%", maxWidth: "320px" }}>
+                    <button
+                      onClick={() => setSessionTab("video")}
+                      className="btn btn-primary align-center gap-2 justify-content-center"
+                      style={{ padding: "0.65rem", fontSize: "0.8rem", fontWeight: "600", width: "100%" }}
+                    >
+                      <Video size={14} /> Start Video Call
+                    </button>
+                    <button
+                      onClick={() => setSessionTab("chat")}
+                      className="btn btn-secondary align-center gap-2 justify-content-center"
+                      style={{ padding: "0.65rem", fontSize: "0.8rem", fontWeight: "600", width: "100%", borderColor: "var(--border-solid)" }}
+                    >
+                      <MessageSquare size={14} /> Open Chat Feed
+                    </button>
+                  </div>
+                </div>
+              ) : sessionTab === "video" ? (
+                <div style={{ flex: 1, minHeight: "300px", position: "relative" }}>
+                  <VideoCall 
+                    myPeerId={`doc_${user.id}`} 
+                    targetPeerId={`pat_${selectedPatient?.id}`} 
+                    targetName={selectedPatient?.name}
+                  />
+                </div>
+              ) : (
+                <div className="card flex-column gap-3" style={{ padding: "1rem" }}>
+                  <h3 style={{ fontSize: "0.95rem", margin: 0, fontWeight: "600" }}>Secured Consultation Chat</h3>
+                  
+                  <div style={{ height: "180px", overflowY: "auto", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", padding: "0.5rem" }} className="flex-column gap-2">
+                    {chatMessages.map((msg, i) => (
+                      <div 
+                        key={i} 
+                        style={{ 
+                          alignSelf: msg.sender === "doctor" ? "flex-end" : "flex-start",
+                          backgroundColor: msg.sender === "doctor" ? "var(--primary-light)" : "var(--bg-tertiary)",
+                          padding: "0.35rem 0.6rem",
+                          borderRadius: "var(--radius-md)",
+                          maxWidth: "85%",
+                          fontSize: "0.75rem"
+                        }}
+                      >
+                        <p style={{ margin: 0, color: "var(--text-primary)" }}>{msg.text}</p>
+                        <span style={{ fontSize: "0.55rem", color: "var(--text-muted)", float: "right", marginTop: "2px" }}>{msg.time}</span>
+                      </div>
+                    ))}
+                  </div>
+
+                  <form onSubmit={handleSendMessage} style={{ display: "flex", gap: "0.5rem" }}>
+                    <input 
+                      type="text" 
+                      className="form-input" 
+                      placeholder="Type to send message..." 
+                      style={{ fontSize: "0.75rem", padding: "0.4rem" }}
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                    />
+                    <button type="submit" className="btn btn-primary" style={{ padding: "0.4rem" }} title="Send Message">
+                      <Send size={12} />
+                    </button>
+                  </form>
+                </div>
+              )}
 
             </div>
 

@@ -3,13 +3,9 @@ import { supabase } from "../config/supabase";
 import { useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
-import VideoCall from "../components/VideoCall";
 import { 
-  Search, MapPin, Star, Video, MessageSquare, Send, CheckCircle2 
+  Search, MapPin, Star, Video, MessageSquare, CheckCircle2 
 } from "lucide-react";
-
-const generateTempId = () => `temp_${Date.now()}`;
-const getCurrentTimeString = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 const formatFee = (fee) => {
   if (!fee) return "₹500";
@@ -75,94 +71,8 @@ export const PatientDoctors = () => {
     }
   }, [doctors, selectedDoctorId]);
 
-  // Telehealth Consultation Room States
-  const [chatMessages, setChatMessages] = useState([]);
-  const [newMessage, setNewMessage] = useState("");
-
   const activeDoctorId = selectedDoctorId || (doctors.length > 0 ? doctors[0].id : "");
   const activeDoctor = doctors.find(d => d.id === activeDoctorId) || null;
-  const patientApts = appointments.filter(apt => apt.patientId === user.id);
-
-  // Chat Integration with Supabase
-  const activeApt = patientApts.find(apt => apt.doctorId === activeDoctorId);
-  const isGuestMode = !user?.id || user.id === "pat1" || activeDoctorId === "doc1";
-  const hasConfirmedApt = activeApt && (activeApt.status === "Confirmed" || activeApt.status === "Upcoming");
-
-  useEffect(() => {
-    if (!activeDoctorId || !user?.id || (!isGuestMode && !activeApt?.id)) return;
-    
-    const fetchMessages = async () => {
-      if (isGuestMode) {
-        try {
-          const key = `virtualvaidya_chat_${user.id}_${activeDoctorId}`;
-          const localMsgs = JSON.parse(localStorage.getItem(key) || "[]");
-          setChatMessages(localMsgs);
-        } catch (err) {
-          console.warn("Failed to load local messages", err);
-        }
-        return;
-      }
-
-      try {
-        const { data, error } = await supabase
-          .from('messages')
-          .select('*')
-          .eq('appointment_id', activeApt.id)
-          .order('created_at', { ascending: true });
-          
-        if (data && !error) {
-          setChatMessages(data.map(m => ({
-            id: m.id,
-            sender: m.sender_role,
-            text: m.text,
-            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          })));
-        }
-      } catch (err) {
-        console.error("Failed to fetch messages:", err);
-      }
-    };
-    
-    fetchMessages();
-
-    if (isGuestMode) {
-      const interval = setInterval(() => {
-        try {
-          const key = `virtualvaidya_chat_${user.id}_${activeDoctorId}`;
-          const localMsgs = JSON.parse(localStorage.getItem(key) || "[]");
-          setChatMessages(localMsgs);
-        } catch (err) {
-          console.debug("Failed to retrieve chat updates in poll", err);
-        }
-      }, 1500);
-      return () => clearInterval(interval);
-    }
-
-    const channel = supabase
-      .channel(`chat_${activeApt.id}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages', 
-        filter: `appointment_id=eq.${activeApt.id}` 
-      }, payload => {
-        const m = payload.new;
-        setChatMessages(prev => {
-          if (prev.find(msg => msg.id === m.id)) return prev;
-          return [...prev, {
-            id: m.id,
-            sender: m.sender_role,
-            text: m.text,
-            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }];
-        });
-      })
-      .subscribe();
-
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [user?.id, activeDoctorId, isGuestMode, activeApt?.id]);
 
   if (!activeDoctor) {
     return (
@@ -228,44 +138,6 @@ export const PatientDoctors = () => {
     }, 1500);
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !activeDoctorId || !user?.id) return;
-
-    const msgText = newMessage;
-    setNewMessage("");
-
-    const tempId = generateTempId();
-    const timeString = getCurrentTimeString();
-    const newMsgObj = { id: tempId, sender: "patient", text: msgText, time: timeString };
-    
-    setChatMessages(prev => [...prev, newMsgObj]);
-
-    if (isGuestMode) {
-      try {
-        const key = `virtualvaidya_chat_${user.id}_${activeDoctorId}`;
-        const msgs = JSON.parse(localStorage.getItem(key) || "[]");
-        msgs.push(newMsgObj);
-        localStorage.setItem(key, JSON.stringify(msgs));
-      } catch (err) {
-        console.warn("Failed to save local message", err);
-      }
-      return;
-    }
-
-    const { data, error } = await supabase.from('messages').insert([{
-      appointment_id: activeApt?.id || null,
-      sender_id: user.id,
-      sender_role: 'patient',
-      text: msgText
-    }]).select();
-
-    if (data && !error) {
-      setChatMessages(prev => prev.map(m => m.id === tempId ? {
-        id: data[0].id, sender: data[0].sender_role, text: data[0].text, time: new Date(data[0].created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-      } : m));
-    }
-  };
 
   return (
     <div className="flex-column gap-6" style={{ backgroundColor: "var(--bg-primary)" }}>
@@ -384,24 +256,22 @@ export const PatientDoctors = () => {
 
         {/* TAB 2: TELEHEALTH CONSULT CENTER */}
         {activeTab === "telehealth" && (
-          <div className="split-layout split-layout-2-1" style={{ gap: "2.5rem" }}>
+          <div style={{ maxWidth: "600px", margin: "0 auto", padding: "1rem" }}>
             
-            {/* Left Panel: Schedule Consultation Booking Form */}
+            {/* Schedule Consultation Booking Form */}
             <div className="flex-column gap-4">
-              <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Schedule Consult Slot <span style={{ fontSize: "0.7rem", color: "var(--text-muted)", fontWeight: "normal" }}>(Code Version: V5)</span></h3>
+              <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Schedule Consult Slot</h3>
               
               <div className="card">
                 {bookingStatus ? (
-                  <div className="flex-column flex-center text-center" style={{ padding: "2rem 1rem" }}>
-                    <CheckCircle2 size={36} style={{ color: "var(--success)" }} />
-                    <h4 style={{ marginTop: "1rem", color: "var(--success-dark)" }}>{bookingStatus}</h4>
-                    <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)" }}>Your consultation slot has been added.</p>
-                    <div style={{ marginTop: "1.25rem", padding: "0.6rem", borderRadius: "var(--radius-md)", backgroundColor: "var(--bg-tertiary)", fontSize: "0.7rem", color: "var(--text-secondary)", fontFamily: "monospace", textAlign: "left", width: "100%", border: "1px solid var(--border-color)" }}>
-                      <div style={{ fontWeight: "600", marginBottom: "0.25rem", color: "var(--text-primary)" }}>Debug Info:</div>
-                      <div>Mode: {user?.id === "pat1" || selectedDoctorId === "doc1" ? "Guest Mode (Local)" : "Database Mode (Supabase)"}</div>
-                      <div>Patient ID: {user?.id}</div>
-                      <div>Doctor ID: {selectedDoctorId}</div>
-                    </div>
+                  <div className="flex-column flex-center text-center" style={{ padding: "2.5rem 1.5rem" }}>
+                    <CheckCircle2 size={40} style={{ color: "var(--success)" }} />
+                    <h4 style={{ marginTop: "1rem", color: "var(--success-dark)", fontWeight: "600" }}>{bookingStatus}</h4>
+                    <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "0.25rem" }}>Your consultation slot has been booked successfully!</p>
+                    <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>Go to your Dashboard to start the video call or messaging when the session is confirmed.</p>
+                    <button onClick={() => setActiveTab("search")} className="btn btn-secondary m-t-4" style={{ padding: "0.5rem 1.5rem" }}>
+                      Back to Specialists
+                    </button>
                   </div>
                 ) : (
                   <form onSubmit={handleBookingSubmit} className="flex-column gap-3">
@@ -412,28 +282,19 @@ export const PatientDoctors = () => {
                       </div>
                     )}
                     <div className="form-group">
-                      <label className="form-label" htmlFor="appt-doc">Selected Practitioner</label>
+                      <label className="form-label" htmlFor="appt-doctor">Select Specialist</label>
                       <select
-                        id="appt-doc"
+                        id="appt-doctor"
                         className="form-input"
                         value={selectedDoctorId}
-                        onChange={(e) => {
-                          setSelectedDoctorId(e.target.value);
-                          setBookingSlot("");
-                        }}
+                        onChange={(e) => setSelectedDoctorId(e.target.value)}
+                        required
                       >
                         {doctors.map(d => (
                           <option key={d.id} value={d.id}>{d.name} ({d.specialty})</option>
                         ))}
                       </select>
                     </div>
-
-                    {activeDoctor && (
-                      <div className="card" style={{ padding: "0.75rem", backgroundColor: "var(--primary-light)", border: "1px solid var(--primary)", borderRadius: "var(--radius-md)", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
-                        <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--primary)" }}>Consultation Price:</span>
-                        <span style={{ fontSize: "1rem", fontWeight: "700", color: "var(--primary)" }}>{formatFee(activeDoctor.consultationFee || activeDoctor.fee)}</span>
-                      </div>
-                    )}
 
                     <div className="form-group">
                       <label className="form-label" htmlFor="appt-date">Consultation Date</label>
@@ -447,31 +308,24 @@ export const PatientDoctors = () => {
                       />
                     </div>
 
-                    {bookingDate && activeDoctor && (
-                      <div className="form-group">
-                        <label className="form-label">Available Hours</label>
-                        <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.25rem" }}>
-                          {activeDoctor.slots.slice(0, 3).map(slot => (
-                            <button
-                              key={slot}
-                              type="button"
-                              onClick={() => setBookingSlot(slot)}
-                              style={{
-                                padding: "0.35rem 0.6rem",
-                                fontSize: "0.75rem",
-                                fontWeight: "600",
-                                borderRadius: "var(--radius-md)",
-                                backgroundColor: bookingSlot === slot ? "var(--primary)" : "white",
-                                color: bookingSlot === slot ? "white" : "var(--text-secondary)",
-                                border: bookingSlot === slot ? "1px solid var(--primary)" : "1px solid var(--border-color)"
-                              }}
-                            >
-                              {slot}
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-                    )}
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="appt-slot">Available Time Slots</label>
+                      <select
+                        id="appt-slot"
+                        className="form-input"
+                        value={bookingSlot}
+                        onChange={(e) => setBookingSlot(e.target.value)}
+                        required
+                      >
+                        <option value="">-- Select Time Slot --</option>
+                        {activeDoctor?.slots?.map((slot, idx) => (
+                          <option key={idx} value={slot}>{slot}</option>
+                        ))}
+                        {(!activeDoctor || !activeDoctor.slots || activeDoctor.slots.length === 0) && (
+                          <option value="" disabled>No slots available today</option>
+                        )}
+                      </select>
+                    </div>
 
                     <div className="form-group">
                       <label className="form-label">Consultation Channel</label>
@@ -479,34 +333,26 @@ export const PatientDoctors = () => {
                         <button
                           type="button"
                           onClick={() => setMeetingType("Video")}
+                          className="btn align-center gap-2 justify-content-center"
                           style={{
-                            padding: "0.5rem",
-                            borderRadius: "var(--radius-md)",
-                            border: meetingType === "Video" ? "1px solid var(--primary)" : "1px solid var(--border-color)",
-                            backgroundColor: meetingType === "Video" ? "var(--primary-light)" : "white",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "0.5rem",
+                            padding: "0.6rem",
+                            border: meetingType === "Video" ? "2px solid var(--primary)" : "1px solid var(--border-color)",
+                            backgroundColor: meetingType === "Video" ? "var(--primary-light)" : "var(--bg-secondary)",
                             fontSize: "0.8rem",
                             color: meetingType === "Video" ? "var(--primary)" : "var(--text-secondary)"
                           }}
                         >
                           <Video size={14} />
-                          <span>Video Session</span>
+                          <span>Video Consultation</span>
                         </button>
                         <button
                           type="button"
                           onClick={() => setMeetingType("Chat")}
+                          className="btn align-center gap-2 justify-content-center"
                           style={{
-                            padding: "0.5rem",
-                            borderRadius: "var(--radius-md)",
-                            border: meetingType === "Chat" ? "1px solid var(--primary)" : "1px solid var(--border-color)",
-                            backgroundColor: meetingType === "Chat" ? "var(--primary-light)" : "white",
-                            display: "flex",
-                            alignItems: "center",
-                            justifyContent: "center",
-                            gap: "0.5rem",
+                            padding: "0.6rem",
+                            border: meetingType === "Chat" ? "2px solid var(--primary)" : "1px solid var(--border-color)",
+                            backgroundColor: meetingType === "Chat" ? "var(--primary-light)" : "var(--bg-secondary)",
                             fontSize: "0.8rem",
                             color: meetingType === "Chat" ? "var(--primary)" : "var(--text-secondary)"
                           }}
@@ -533,128 +379,8 @@ export const PatientDoctors = () => {
                     <button type="submit" className="btn btn-primary w-full m-t-2" disabled={bookingStatus === "Booking..."}>
                       {bookingStatus === "Booking..." ? "Booking..." : "Confirm Appointment"}
                     </button>
-
-                    <div style={{ marginTop: "1.25rem", padding: "0.6rem", borderRadius: "var(--radius-md)", backgroundColor: "var(--bg-tertiary)", fontSize: "0.7rem", color: "var(--text-secondary)", fontFamily: "monospace", textAlign: "left", border: "1px solid var(--border-color)" }}>
-                      <div style={{ fontWeight: "600", marginBottom: "0.25rem", color: "var(--text-primary)" }}>Debug Info:</div>
-                      <div>Mode: {user?.id === "pat1" || selectedDoctorId === "doc1" ? "Guest Mode (Local)" : "Database Mode (Supabase)"}</div>
-                      <div>Patient ID: {user?.id}</div>
-                      <div>Doctor ID: {selectedDoctorId}</div>
-                    </div>
                   </form>
                 )}
-              </div>
-            </div>
-
-            {/* Right Panel: Live Consultation Video and Chat Room */}
-            <div className="flex-column gap-4">
-              <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Live Digital Room</h3>
-              
-              <div className="card flex-column gap-3" style={{ padding: "1rem", overflow: "hidden" }}>
-                
-                {/* Video Call Session - unlocked only if appointment is confirmed */}
-                {hasConfirmedApt ? (
-                  <div 
-                    style={{
-                      backgroundColor: "#1e293b",
-                      borderRadius: "var(--radius-md)",
-                      padding: "1.75rem",
-                      textAlign: "center",
-                      border: "1px dashed var(--border-color)",
-                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
-                    }}
-                  >
-                    <div style={{ width: "44px", height: "44px", borderRadius: "50%", backgroundColor: "rgba(34, 197, 94, 0.15)", color: "#22c55e", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.75rem auto" }}>
-                      <Video size={20} />
-                    </div>
-                    <h4 style={{ color: "white", margin: "0 0 0.4rem 0", fontSize: "0.95rem", fontWeight: "600" }}>Launch Secure Video Room</h4>
-                    <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "1rem", lineHeight: "1.4" }}>
-                      Your appointment is confirmed! Click below to start the video room in a dedicated popup window.
-                    </p>
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        const width = 1100;
-                        const height = 700;
-                        const left = (window.screen.width - width) / 2;
-                        const top = (window.screen.height - height) / 2;
-                        window.open(
-                          `/room?apptId=${activeApt.id}`,
-                          `video_room_${activeApt.id}`,
-                          `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,location=no,resizable=yes`
-                        );
-                      }}
-                      className="btn btn-primary w-full"
-                      style={{ fontSize: "0.8rem", padding: "0.5rem" }}
-                    >
-                      Open Call Window
-                    </button>
-                  </div>
-                ) : (
-                  <div 
-                    style={{
-                      backgroundColor: "#1e293b",
-                      height: "140px",
-                      borderRadius: "var(--radius-md)",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      color: "#94a3b8",
-                      padding: "1rem",
-                      textAlign: "center"
-                    }}
-                  >
-                    <Video size={24} style={{ marginBottom: "8px", color: "var(--text-muted)" }} />
-                    <p style={{ fontSize: "0.85rem", margin: 0, fontWeight: "600" }}>Video Consultation Locked</p>
-                    <p style={{ fontSize: "0.7rem", color: "#64748b", marginTop: "4px", lineHeight: 1.3 }}>
-                      {activeApt?.status === "Paid" 
-                        ? `Payment of ${formatFee(activeDoctor?.consultationFee || activeDoctor?.fee)} received successfully! Awaiting provider's acceptance to start the consultation.` 
-                        : activeApt 
-                        ? "Awaiting confirmation from the medical provider." 
-                        : "Please schedule an appointment to unlock video consultation."}
-                    </p>
-                  </div>
-                )}
-
-                {/* Mock Chat Feed Panel */}
-                <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "0.75rem" }} className="flex-column gap-2">
-                  <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block", fontWeight: "600" }}>Secured Messaging</span>
-                  
-                  <div style={{ height: "120px", overflowY: "auto", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", padding: "0.5rem" }} className="flex-column gap-2">
-                    {chatMessages.map((msg, i) => (
-                      <div 
-                        key={i} 
-                        style={{ 
-                          alignSelf: msg.sender === "patient" ? "flex-end" : "flex-start",
-                          backgroundColor: msg.sender === "patient" ? "var(--primary-light)" : "var(--bg-tertiary)",
-                          padding: "0.4rem 0.6rem",
-                          borderRadius: "var(--radius-md)",
-                          maxWidth: "85%",
-                          fontSize: "0.75rem"
-                        }}
-                      >
-                        <p style={{ margin: 0, color: "var(--text-primary)" }}>{msg.text}</p>
-                        <span style={{ fontSize: "0.6rem", color: "var(--text-muted)", float: "right", marginTop: "2px" }}>{msg.time}</span>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Message Input Form */}
-                  <form onSubmit={handleSendMessage} style={{ display: "flex", gap: "0.5rem" }}>
-                    <input 
-                      type="text" 
-                      className="form-input" 
-                      placeholder="Type a message..." 
-                      style={{ fontSize: "0.75rem", padding: "0.4rem" }}
-                      value={newMessage}
-                      onChange={(e) => setNewMessage(e.target.value)}
-                    />
-                    <button type="submit" className="btn btn-primary" style={{ padding: "0.4rem" }} title="Send Message">
-                      <Send size={12} />
-                    </button>
-                  </form>
-                </div>
-
               </div>
             </div>
 
