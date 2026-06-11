@@ -342,7 +342,7 @@ export const PatientReports = () => {
                     style={{
                       padding: "1rem",
                       border: selectedReportId === rep.id ? "1px solid var(--primary)" : "1px solid var(--border-color)",
-                      backgroundColor: selectedReportId === rep.id ? "var(--primary-light)" : "rgba(255, 255, 255, 0.02)",
+                      backgroundColor: selectedReportId === rep.id ? "var(--primary-light)" : "var(--bg-primary)",
                       transition: "all var(--transition-fast)"
                     }}
                   >

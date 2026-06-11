@@ -161,16 +161,17 @@ export const PatientAuth = () => {
           </div>
 
           {/* Tab Selection */}
-          <div style={{ display: "flex", background: "rgba(255, 255, 255, 0.04)", padding: "0.25rem", borderRadius: "0.5rem", marginBottom: "1.5rem", border: "1px solid var(--border-color)" }}>
+          <div style={{ display: "flex", background: "var(--bg-tertiary)", padding: "0.25rem", borderRadius: "0.5rem", marginBottom: "1.5rem", border: "1px solid var(--border-color)" }}>
             <button
               type="button"
               onClick={() => { setIsSignUp(false); setError(""); setSuccessMsg(""); }}
               style={{
                 flex: 1,
                 padding: "0.5rem 1rem",
-                background: !isSignUp ? "rgba(255, 255, 255, 0.06)" : "transparent",
+                background: !isSignUp ? "var(--bg-primary)" : "transparent",
                 border: "none",
                 borderRadius: "0.375rem",
+                boxShadow: !isSignUp ? "var(--shadow-sm)" : "none",
                 color: !isSignUp ? "var(--primary)" : "var(--text-secondary)",
                 fontWeight: !isSignUp ? "600" : "500",
                 fontSize: "0.875rem",
@@ -186,9 +187,10 @@ export const PatientAuth = () => {
               style={{
                 flex: 1,
                 padding: "0.5rem 1rem",
-                background: isSignUp ? "rgba(255, 255, 255, 0.06)" : "transparent",
+                background: isSignUp ? "var(--bg-primary)" : "transparent",
                 border: "none",
                 borderRadius: "0.375rem",
+                boxShadow: isSignUp ? "var(--shadow-sm)" : "none",
                 color: isSignUp ? "var(--primary)" : "var(--text-secondary)",
                 fontWeight: isSignUp ? "600" : "500",
                 fontSize: "0.875rem",
@@ -201,13 +203,13 @@ export const PatientAuth = () => {
           </div>
 
           {error && (
-            <div style={{ padding: "0.875rem 1rem", background: "rgba(239, 68, 68, 0.1)", color: "#f87171", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem", borderLeft: "4px solid #ef4444" }}>
+            <div style={{ padding: "0.875rem 1rem", background: "var(--danger-light)", color: "var(--danger-dark)", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem", borderLeft: "4px solid var(--danger)" }}>
               {error}
             </div>
           )}
           
           {successMsg && (
-            <div style={{ padding: "0.875rem 1rem", background: "rgba(16, 185, 129, 0.1)", color: "#34d399", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem", borderLeft: "4px solid #10b981" }}>
+            <div style={{ padding: "0.875rem 1rem", background: "var(--success-light)", color: "var(--success-dark)", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem", borderLeft: "4px solid var(--success)" }}>
               {successMsg}
             </div>
           )}

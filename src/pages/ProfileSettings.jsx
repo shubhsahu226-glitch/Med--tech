@@ -370,7 +370,7 @@ export const ProfileSettingsForm = () => {
                       className="form-input" 
                       value={email}
                       disabled
-                      style={{ paddingLeft: "2.5rem", width: "100%", borderRadius: "0.5rem", backgroundColor: "rgba(255, 255, 255, 0.02)", cursor: "not-allowed", color: "var(--text-muted)", border: "1px solid var(--border-color)" }}
+                      style={{ paddingLeft: "2.5rem", width: "100%", borderRadius: "0.5rem", backgroundColor: "rgba(15, 23, 42, 0.03)", cursor: "not-allowed", color: "var(--text-muted)", border: "1px solid var(--border-color)" }}
                       title="Account email cannot be modified"
                     />
                   </div>
@@ -398,7 +398,7 @@ export const ProfileSettingsForm = () => {
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
                     {user?.availability && user.availability.length > 0 ? (
                       user.availability.map((day, idx) => (
-                        <span key={idx} style={{ padding: "0.35rem 0.75rem", background: "rgba(255, 255, 255, 0.04)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-full)", fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>
+                        <span key={idx} style={{ padding: "0.35rem 0.75rem", background: "var(--bg-tertiary)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-full)", fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>
                           {day}
                         </span>
                       ))
@@ -413,7 +413,7 @@ export const ProfileSettingsForm = () => {
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
                     {user?.slots && user.slots.length > 0 ? (
                       user.slots.map((slot, idx) => (
-                        <span key={idx} style={{ padding: "0.35rem 0.75rem", background: "rgba(14, 165, 233, 0.05)", border: "1px solid rgba(14, 165, 233, 0.15)", borderRadius: "var(--radius-md)", fontSize: "0.8rem", fontWeight: "500", color: "#0284c7" }}>
+                        <span key={idx} style={{ padding: "0.35rem 0.75rem", background: "var(--primary-light)", border: "1px solid rgba(225, 29, 72, 0.15)", borderRadius: "var(--radius-md)", fontSize: "0.8rem", fontWeight: "500", color: "var(--primary)" }}>
                           {slot}
                         </span>
                       ))
@@ -425,7 +425,7 @@ export const ProfileSettingsForm = () => {
               </div>
 
               <div style={{
-                background: "rgba(255, 255, 255, 0.03)",
+                background: "var(--bg-secondary)",
                 border: "1px solid var(--border-color)",
                 padding: "1.25rem",
                 borderRadius: "1rem",
@@ -435,7 +435,7 @@ export const ProfileSettingsForm = () => {
                 lineHeight: "1.4"
               }} className="flex-column gap-2">
                 <div style={{ fontWeight: "600", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
-                  <Sparkles size={14} style={{ color: "#d97706" }} />
+                  <Sparkles size={14} style={{ color: "var(--primary)" }} />
                   <span>How to adjust consultation hours?</span>
                 </div>
                 <span>The slots and days are generated automatically based on your clinic setup. Use the <strong>"My Clinic"</strong> navigation panel to configure hours, consult days, and pricing.</span>
@@ -586,7 +586,7 @@ export const ProfileSettingsForm = () => {
                   className="form-input" 
                   value={email}
                   disabled
-                  style={{ paddingLeft: "2.5rem", width: "100%", backgroundColor: "rgba(255, 255, 255, 0.02)", cursor: "not-allowed", color: "var(--text-muted)", border: "1px solid var(--border-color)" }}
+                  style={{ paddingLeft: "2.5rem", width: "100%", backgroundColor: "rgba(15, 23, 42, 0.03)", cursor: "not-allowed", color: "var(--text-muted)", border: "1px solid var(--border-color)" }}
                   title="Email cannot be modified directly (linked to auth account)"
                 />
               </div>

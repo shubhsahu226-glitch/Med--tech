@@ -561,8 +561,8 @@ export const PatientDashboard = () => {
                   <button
                     onClick={() => setSessionTab("video")}
                     style={{
-                      background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      background: "#ffffff",
+                      border: "1px solid var(--border-color)",
                       borderRadius: "12px",
                       padding: "2rem 1.5rem",
                       textAlign: "center",
@@ -572,23 +572,25 @@ export const PatientDashboard = () => {
                       alignItems: "center",
                       gap: "1rem",
                       transition: "all 0.2s ease-in-out",
-                      boxShadow: "0 4px 6px -1px rgba(0,0,0,0.2)"
+                      boxShadow: "var(--shadow-md)"
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#3b82f6";
+                      e.currentTarget.style.borderColor = "var(--primary)";
                       e.currentTarget.style.transform = "translateY(-4px)";
+                      e.currentTarget.style.boxShadow = "var(--shadow-lg)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                      e.currentTarget.style.borderColor = "var(--border-color)";
                       e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "var(--shadow-md)";
                     }}
                   >
-                    <div style={{ width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "rgba(59, 130, 246, 0.15)", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "var(--primary-light)", color: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <Video size={24} />
                     </div>
                     <div>
-                      <h3 style={{ color: "white", fontSize: "1.1rem", fontWeight: "600", margin: "0 0 0.25rem 0" }}>Start Video Call</h3>
-                      <p style={{ color: "#64748b", fontSize: "0.75rem", lineHeight: "1.3" }}>Connect face-to-face via high definition secure video stream.</p>
+                      <h3 style={{ color: "var(--text-primary)", fontSize: "1.1rem", fontWeight: "600", margin: "0 0 0.25rem 0" }}>Start Video Call</h3>
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", lineHeight: "1.3" }}>Connect face-to-face via high definition secure video stream.</p>
                     </div>
                   </button>
 
@@ -596,8 +598,8 @@ export const PatientDashboard = () => {
                   <button
                     onClick={() => setSessionTab("chat")}
                     style={{
-                      background: "linear-gradient(135deg, #1e293b 0%, #0f172a 100%)",
-                      border: "1px solid rgba(255, 255, 255, 0.08)",
+                      background: "#ffffff",
+                      border: "1px solid var(--border-color)",
                       borderRadius: "12px",
                       padding: "2rem 1.5rem",
                       textAlign: "center",
@@ -607,23 +609,25 @@ export const PatientDashboard = () => {
                       alignItems: "center",
                       gap: "1rem",
                       transition: "all 0.2s ease-in-out",
-                      boxShadow: "0 4px 6px -1px rgba(0,0,0,0.2)"
+                      boxShadow: "var(--shadow-md)"
                     }}
                     onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "#10b981";
+                      e.currentTarget.style.borderColor = "var(--success)";
                       e.currentTarget.style.transform = "translateY(-4px)";
+                      e.currentTarget.style.boxShadow = "var(--shadow-lg)";
                     }}
                     onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "rgba(255, 255, 255, 0.08)";
+                      e.currentTarget.style.borderColor = "var(--border-color)";
                       e.currentTarget.style.transform = "translateY(0)";
+                      e.currentTarget.style.boxShadow = "var(--shadow-md)";
                     }}
                   >
-                    <div style={{ width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "rgba(16, 185, 129, 0.15)", color: "#10b981", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                    <div style={{ width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "var(--success-light)", color: "var(--success-dark)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                       <MessageSquare size={24} />
                     </div>
                     <div>
-                      <h3 style={{ color: "white", fontSize: "1.1rem", fontWeight: "600", margin: "0 0 0.25rem 0" }}>Chat</h3>
-                      <p style={{ color: "#64748b", fontSize: "0.75rem", lineHeight: "1.3" }}>Text messaging system for live discussions and prescriptions.</p>
+                      <h3 style={{ color: "var(--text-primary)", fontSize: "1.1rem", fontWeight: "600", margin: "0 0 0.25rem 0" }}>Chat</h3>
+                      <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", lineHeight: "1.3" }}>Text messaging system for live discussions and prescriptions.</p>
                     </div>
                   </button>
                 </div>

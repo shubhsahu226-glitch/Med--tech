@@ -212,7 +212,7 @@ export const DoctorClinic = () => {
                         fontSize: "0.8rem",
                         fontWeight: "600",
                         borderRadius: "var(--radius-full)",
-                        backgroundColor: active ? "var(--primary)" : "rgba(255, 255, 255, 0.05)",
+                        backgroundColor: active ? "var(--primary)" : "var(--bg-tertiary)",
                         color: active ? "white" : "var(--text-secondary)",
                         border: "1px solid var(--border-color)",
                         cursor: "pointer",

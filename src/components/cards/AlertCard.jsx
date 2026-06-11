@@ -23,7 +23,7 @@ export const AlertCard = ({ alert }) => {
         </span>
       </div>
       <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>{alert.description}</p>
-      <div style={{ padding: "0.75rem", background: "rgba(255, 255, 255, 0.03)", borderRadius: "var(--radius-sm)", border: "1px dashed var(--border-color)", fontSize: "0.8rem" }}>
+      <div style={{ padding: "0.75rem", background: isHigh ? "var(--danger-light)" : "var(--warning-light)", borderRadius: "var(--radius-sm)", border: "1px dashed var(--border-color)", fontSize: "0.8rem" }}>
         <strong>Required Action:</strong> {alert.action}
       </div>
     </div>

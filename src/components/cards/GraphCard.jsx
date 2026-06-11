@@ -6,9 +6,9 @@ export const GraphCard = ({ trendsData }) => {
   if (!trendsData || trendsData.length === 0) return null;
 
   const metricMeta = {
-    ldl: { label: "LDL Cholesterol", color: "#3b82f6", minVal: 80, maxVal: 180, unit: "mg/dL" },
-    glucose: { label: "Fasting Sugar", color: "#10b981", minVal: 70, maxVal: 160, unit: "mg/dL" },
-    systolic: { label: "Systolic Blood Pressure", color: "#ef4444", minVal: 100, maxVal: 150, unit: "mmHg" }
+    ldl: { label: "LDL Cholesterol", color: "#e11d48", minVal: 80, maxVal: 180, unit: "mg/dL" },
+    glucose: { label: "Fasting Sugar", color: "#f43f5e", minVal: 70, maxVal: 160, unit: "mg/dL" },
+    systolic: { label: "Systolic Blood Pressure", color: "#be123c", minVal: 100, maxVal: 150, unit: "mmHg" }
   };
 
   const currentMeta = metricMeta[metric];

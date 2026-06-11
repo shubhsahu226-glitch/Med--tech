@@ -4,11 +4,11 @@ import { Activity, Info } from "lucide-react";
 export const TrendGraphs = ({ trendsData = [] }) => {
   // Available standard medical trackers
   const trackerMeta = {
-    glucose: { label: "Fasting Blood Sugar", color: "#f59e0b", defaultMin: 70, defaultMax: 150, unit: "mg/dL" },
-    ldl: { label: "LDL Cholesterol", color: "#ec4899", defaultMin: 60, defaultMax: 180, unit: "mg/dL" },
-    systolic: { label: "Systolic Blood Pressure", color: "#ef4444", defaultMin: 90, defaultMax: 160, unit: "mmHg" },
-    creatinine: { label: "Serum Creatinine", color: "#8b5cf6", defaultMin: 0.5, defaultMax: 1.5, unit: "mg/dL" },
-    hemoglobin: { label: "Hemoglobin", color: "#3b82f6", defaultMin: 10, defaultMax: 18, unit: "g/dL" }
+    glucose: { label: "Fasting Blood Sugar", color: "#f43f5e", defaultMin: 70, defaultMax: 150, unit: "mg/dL" },
+    ldl: { label: "LDL Cholesterol", color: "#e11d48", defaultMin: 60, defaultMax: 180, unit: "mg/dL" },
+    systolic: { label: "Systolic Blood Pressure", color: "#be123c", defaultMin: 90, defaultMax: 160, unit: "mmHg" },
+    creatinine: { label: "Serum Creatinine", color: "#fda4af", defaultMin: 0.5, defaultMax: 1.5, unit: "mg/dL" },
+    hemoglobin: { label: "Hemoglobin", color: "#f43f5e", defaultMin: 10, defaultMax: 18, unit: "g/dL" }
   };
 
   const [activeMetricKey, setActiveMetricKey] = useState("glucose");

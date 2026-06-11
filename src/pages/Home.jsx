@@ -92,7 +92,7 @@ export const Home = () => {
         transform: "translateX(-50%)",
         width: "600px",
         height: "600px",
-        background: "radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(225, 29, 72, 0.08) 0%, transparent 70%)",
         zIndex: -1,
         pointerEvents: "none"
       }} />
@@ -102,7 +102,7 @@ export const Home = () => {
         left: "15%",
         width: "400px",
         height: "400px",
-        background: "radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%)",
+        background: "radial-gradient(circle, rgba(244, 63, 94, 0.06) 0%, transparent 70%)",
         zIndex: -1,
         pointerEvents: "none"
       }} />
@@ -134,8 +134,8 @@ export const Home = () => {
             borderRadius: "var(--radius-full)",
             fontSize: "0.875rem",
             fontWeight: "600",
-            border: "1px solid rgba(99, 102, 241, 0.2)",
-            boxShadow: "0 4px 20px rgba(99, 102, 241, 0.1)"
+            border: "1px solid rgba(225, 29, 72, 0.2)",
+            boxShadow: "0 4px 20px rgba(225, 29, 72, 0.1)"
           }}
         >
           <HeartPulse size={16} className="animate-pulse" style={{ color: "var(--primary)" }} />
@@ -154,7 +154,7 @@ export const Home = () => {
         <div className="flex-center flex-wrap gap-6 m-t-4" style={{ width: "100%" }}>
           <div 
             className="card flex-column align-center text-center animate-slide-up delay-2" 
-            style={{ width: "340px", padding: "2.5rem 2rem", border: "1px solid var(--border-color)", background: "rgba(17, 24, 39, 0.65)" }}
+            style={{ width: "340px", padding: "2.5rem 2rem", border: "1px solid var(--border-color)", background: "rgba(255, 255, 255, 0.9)" }}
           >
             <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>👤</div>
             <h3 style={{ fontSize: "1.35rem", fontWeight: "700", marginBottom: "0.5rem" }}>For Patients</h3>
@@ -168,7 +168,7 @@ export const Home = () => {
 
           <div 
             className="card flex-column align-center text-center animate-slide-up delay-3" 
-            style={{ width: "340px", padding: "2.5rem 2rem", border: "1px solid var(--border-color)", background: "rgba(17, 24, 39, 0.65)" }}
+            style={{ width: "340px", padding: "2.5rem 2rem", border: "1px solid var(--border-color)", background: "rgba(255, 255, 255, 0.9)" }}
           >
             <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🩺</div>
             <h3 style={{ fontSize: "1.35rem", fontWeight: "700", marginBottom: "0.5rem" }}>For Medical Doctors</h3>
