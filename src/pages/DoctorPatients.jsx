@@ -61,11 +61,12 @@ export const DoctorPatients = () => {
 
       // Real Database logic
       try {
-        // Query appointments for current doctor to find patient IDs
+        // Query patient_doctor_connections for current doctor to find patient IDs
         const { data: aptsData, error: aptsErr } = await supabase
-          .from('appointments')
+          .from('patient_doctor_connections')
           .select('patient_id')
-          .eq('doctor_id', user.id);
+          .eq('doctor_id', user.id)
+          .eq('status', 'Active');
 
         if (aptsErr) throw aptsErr;
         if (!aptsData || aptsData.length === 0) {

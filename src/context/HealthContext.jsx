@@ -221,11 +221,15 @@ export const HealthProvider = ({ children }) => {
       } else {
         const { data, error } = await supabase
           .from('treatments')
-          .select('*')
+          .select('*, doctor:profiles!treatments_doctor_id_fkey(name)')
           .eq('patient_id', user.id);
 
         if (data && !error) {
-          setTreatments(data);
+          const mappedData = data.map(t => ({
+            ...t,
+            doctor_name: t.doctor?.name || "Unknown Doctor"
+          }));
+          setTreatments(mappedData);
         } else {
           setTreatments([]);
         }
@@ -337,7 +341,7 @@ export const HealthProvider = ({ children }) => {
     try {
       const { data, error } = await supabase
         .from('appointments')
-        .select('*')
+        .select('*, patient:profiles!appointments_patient_id_fkey(name), doctor:profiles!appointments_doctor_id_fkey(name)')
         .eq(column, user.id)
         .order('created_at', { ascending: false });
 
@@ -346,8 +350,8 @@ export const HealthProvider = ({ children }) => {
           ...d,
           patientId: d.patient_id,
           doctorId: d.doctor_id,
-          patientName: d.patient_name,
-          doctorName: d.doctor_name
+          patientName: d.patient?.name || "Unknown Patient",
+          doctorName: d.doctor?.name || "Unknown Doctor"
         }));
         
         // Merge avoiding duplicates
@@ -426,8 +430,6 @@ export const HealthProvider = ({ children }) => {
       id: newAptId,
       patient_id: patientId,
       doctor_id: doctorId,
-      patient_name: patientName,
-      doctor_name: doctorName,
       date,
       time,
       reason,
@@ -440,8 +442,8 @@ export const HealthProvider = ({ children }) => {
       ...newAptObj,
       patientId: newAptObj.patient_id,
       doctorId: newAptObj.doctor_id,
-      patientName: newAptObj.patient_name,
-      doctorName: newAptObj.doctor_name
+      patientName: patientName,
+      doctorName: doctorName
     };
 
     const isGuest = patientId === "pat1" || doctorId === "doc1";
