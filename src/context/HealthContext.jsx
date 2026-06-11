@@ -341,7 +341,7 @@ export const HealthProvider = ({ children }) => {
     try {
       const { data, error } = await supabase
         .from('appointments')
-        .select('*, patient:profiles!appointments_patient_id_fkey(name), doctor:profiles!appointments_doctor_id_fkey(name)')
+        .select('*, patient:patients(profiles(name)), doctor:doctors(profiles(name))')
         .eq(column, user.id)
         .order('created_at', { ascending: false });
 
@@ -350,8 +350,8 @@ export const HealthProvider = ({ children }) => {
           ...d,
           patientId: d.patient_id,
           doctorId: d.doctor_id,
-          patientName: d.patient?.name || "Unknown Patient",
-          doctorName: d.doctor?.name || "Unknown Doctor"
+          patientName: d.patient?.profiles?.name || d.patient_name || "Unknown Patient",
+          doctorName: d.doctor?.profiles?.name || d.doctor_name || "Unknown Doctor"
         }));
         
         // Merge avoiding duplicates

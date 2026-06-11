@@ -110,10 +110,10 @@ export const PatientDoctors = () => {
       try {
         await addAppointment({
           patientId: user.id,
-          patientName: user.name,
+          patientName: user.name || user.email || "Patient",
           doctorId: selectedDoctorId,
-          doctorName: activeDoctor.name,
-          doctorSpecialty: activeDoctor.specialty,
+          doctorName: activeDoctor.name || "Doctor",
+          doctorSpecialty: activeDoctor.specialty || "General Physician",
           date: bookingDate,
           time: bookingSlot,
           reason,
