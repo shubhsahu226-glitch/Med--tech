@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
-import { Stethoscope, CheckCircle2, ShieldCheck, Clock, MapPin, DollarSign, Calendar, Sparkles } from "lucide-react";
+import { Stethoscope, CheckCircle2, ShieldCheck, Clock, MapPin, IndianRupee, Calendar, Sparkles } from "lucide-react";
 
 export const DoctorClinic = () => {
   const { user, role, saveProfile, updateUserProfile } = useAuth();
@@ -8,7 +8,7 @@ export const DoctorClinic = () => {
   const [clinicName, setClinicName] = useState("");
   const [specialty, setSpecialty] = useState("General Physician");
   const [description, setDescription] = useState("");
-  const [consultationFee, setConsultationFee] = useState("50");
+  const [consultationFee, setConsultationFee] = useState("500");
   const [availabilityDays, setAvailabilityDays] = useState(["Monday", "Wednesday", "Friday"]);
   const [startTime, setStartTime] = useState("09:00 AM");
   const [endTime, setEndTime] = useState("05:00 PM");
@@ -22,7 +22,7 @@ export const DoctorClinic = () => {
       setClinicName(user.hospital || user.location || "City Central Clinic");
       setSpecialty(user.specialty || "General Physician");
       setDescription(user.description || `Dr. ${user.name || "Clinician"} is dedicated to providing high quality virtual consultations.`);
-      setConsultationFee(user.consultationFee ? user.consultationFee.replace("$", "") : "50");
+      setConsultationFee(user.consultationFee ? user.consultationFee.replace("$", "").replace("₹", "") : "500");
       
       if (user.availability && user.availability.length > 0) {
         setAvailabilityDays(user.availability);
@@ -54,7 +54,7 @@ export const DoctorClinic = () => {
         hospital: clinicName,
         specialty,
         description,
-        consultationFee: `$${consultationFee}`,
+        consultationFee: `₹${consultationFee}`,
         availability: availabilityDays,
         slots: generatedSlots
       });
@@ -72,7 +72,7 @@ export const DoctorClinic = () => {
       specialty,
       hospital: clinicName,
       licenseNumber: user.licenseNumber || "",
-      consultationFee: `$${consultationFee}`,
+      consultationFee: `₹${consultationFee}`,
       availability: availabilityDays,
       slots: generatedSlots
     };
@@ -160,16 +160,16 @@ export const DoctorClinic = () => {
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="clinic-fee" style={{ fontWeight: "500" }}>Consultation Fee ($)</label>
+                <label className="form-label" htmlFor="clinic-fee" style={{ fontWeight: "500" }}>Consultation Fee (₹)</label>
                 <div style={{ position: "relative" }}>
                   <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
-                    <DollarSign size={16} />
+                    <IndianRupee size={16} />
                   </span>
                   <input 
                     type="number" 
                     id="clinic-fee" 
                     className="form-input" 
-                    placeholder="50" 
+                    placeholder="500" 
                     value={consultationFee} 
                     onChange={(e) => setConsultationFee(e.target.value)} 
                     style={{ paddingLeft: "2.5rem", width: "100%" }}
@@ -322,8 +322,8 @@ export const DoctorClinic = () => {
                 <span>{clinicName}</span>
               </div>
               <div className="align-center gap-2" style={{ color: "var(--text-secondary)" }}>
-                <DollarSign size={14} style={{ color: "var(--success)" }} />
-                <span><strong>${consultationFee}</strong> Consultation Fee</span>
+                <IndianRupee size={14} style={{ color: "var(--success)" }} />
+                <span><strong>₹{consultationFee}</strong> Consultation Fee</span>
               </div>
               <div className="align-center gap-2" style={{ color: "var(--text-secondary)" }}>
                 <Calendar size={14} style={{ color: "#d97706" }} />

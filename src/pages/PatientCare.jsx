@@ -6,13 +6,20 @@ import { ReminderCard } from "../components/cards";
 
 export const PatientCare = () => {
   const { user } = useAuth();
-  const { reminders, toggleReminder, deleteReminder, treatments } = useHealth();
+  const { reminders, toggleReminder, deleteReminder, addReminder, treatments } = useHealth();
 
   // Tab State: treatment, advice
   const [activeTab, setActiveTab] = useState("treatment");
 
-  // Daily medication limits (1 key reminder for minimalism)
-  const activeReminders = reminders.slice(0, 1);
+  // Form States for adding medication
+  const [medName, setMedName] = useState("");
+  const [medDosage, setMedDosage] = useState("");
+  const [medFrequency, setMedFrequency] = useState("Once daily (Morning)");
+  const [medTime, setMedTime] = useState("08:00 AM");
+  const [feedbackMsg, setFeedbackMsg] = useState("");
+
+  // Daily medication checklist (Display all reminders)
+  const activeReminders = reminders;
 
   // Check if guest demo patient
   const isGuest = !user?.id || user.id === "pat1";
@@ -54,6 +61,17 @@ export const PatientCare = () => {
       message: activeTreatment.notes || "Continue with active prescription schedules and checkups."
     }
   } : null;
+
+  const handleAddMedication = (e) => {
+    e.preventDefault();
+    if (!medName || !medDosage) return;
+
+    addReminder(medName, medDosage, medFrequency, medTime);
+    setMedName("");
+    setMedDosage("");
+    setFeedbackMsg("Medication tracker added successfully!");
+    setTimeout(() => setFeedbackMsg(""), 3000);
+  };
 
   return (
     <div className="flex-column gap-6" style={{ backgroundColor: "var(--bg-primary)" }}>
@@ -138,24 +156,103 @@ export const PatientCare = () => {
 
               </div>
 
-              {/* Ongoing Medication Checklist */}
-              <div className="flex-column gap-4">
-                <h3 style={{ fontSize: "1.15rem", margin: 0, fontWeight: "600" }}>Ongoing Medication</h3>
-                
-                <div className="flex-column gap-3">
-                  {activeReminders.map(rem => (
-                    <ReminderCard 
-                      key={rem.id}
-                      reminder={rem}
-                      onToggle={() => toggleReminder(rem.id)}
-                      onDelete={() => deleteReminder(rem.id)}
-                    />
-                  ))}
-                  {activeReminders.length === 0 && (
-                    <div className="card text-center" style={{ padding: "1.5rem" }}>
-                      <p className="text-secondary-color" style={{ fontSize: "0.8rem" }}>No medications scheduled.</p>
+              {/* Ongoing Medication Checklist & Tracker Add Form */}
+              <div className="flex-column gap-6">
+                <div className="flex-column gap-4">
+                  <h3 style={{ fontSize: "1.15rem", margin: 0, fontWeight: "600" }}>Ongoing Medication</h3>
+                  
+                  <div className="flex-column gap-3">
+                    {activeReminders.map(rem => (
+                      <ReminderCard 
+                        key={rem.id}
+                        reminder={rem}
+                        onToggle={() => toggleReminder(rem.id)}
+                        onDelete={() => deleteReminder(rem.id)}
+                      />
+                    ))}
+                    {activeReminders.length === 0 && (
+                      <div className="card text-center" style={{ padding: "1.5rem" }}>
+                        <p className="text-secondary-color" style={{ fontSize: "0.8rem" }}>No medications scheduled.</p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Add Medication Tracker Card */}
+                <div className="card flex-column gap-3" style={{ padding: "1.5rem" }}>
+                  <h3 style={{ fontSize: "1rem", margin: 0, fontWeight: "600" }}>Add Medication Tracker</h3>
+                  
+                  {feedbackMsg && (
+                    <div style={{ padding: "0.5rem 0.75rem", background: "var(--success-light)", color: "var(--success-dark)", borderRadius: "var(--radius-md)", fontSize: "0.75rem", borderLeft: "3px solid var(--success)" }}>
+                      {feedbackMsg}
                     </div>
                   )}
+
+                  <form onSubmit={handleAddMedication} className="flex-column gap-3">
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="med-name" style={{ fontSize: "0.75rem" }}>Medication Name</label>
+                      <input 
+                        type="text" 
+                        id="med-name"
+                        className="form-input" 
+                        placeholder="e.g. Lisinopril, Metformin" 
+                        value={medName}
+                        onChange={(e) => setMedName(e.target.value)}
+                        style={{ fontSize: "0.8rem", padding: "0.45rem", width: "100%" }}
+                        required
+                      />
+                    </div>
+
+                    <div className="form-group">
+                      <label className="form-label" htmlFor="med-dosage" style={{ fontSize: "0.75rem" }}>Dosage & Strength</label>
+                      <input 
+                        type="text" 
+                        id="med-dosage"
+                        className="form-input" 
+                        placeholder="e.g. 10mg, 1 tablet" 
+                        value={medDosage}
+                        onChange={(e) => setMedDosage(e.target.value)}
+                        style={{ fontSize: "0.8rem", padding: "0.45rem", width: "100%" }}
+                        required
+                      />
+                    </div>
+
+                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="med-freq" style={{ fontSize: "0.75rem" }}>Frequency</label>
+                        <select 
+                          id="med-freq"
+                          className="form-input" 
+                          value={medFrequency}
+                          onChange={(e) => setMedFrequency(e.target.value)}
+                          style={{ fontSize: "0.8rem", padding: "0.45rem", width: "100%" }}
+                        >
+                          <option>Once daily (Morning)</option>
+                          <option>Once daily (Night)</option>
+                          <option>Twice daily</option>
+                          <option>Three times daily</option>
+                        </select>
+                      </div>
+
+                      <div className="form-group">
+                        <label className="form-label" htmlFor="med-time" style={{ fontSize: "0.75rem" }}>Scheduled Time</label>
+                        <input 
+                          type="text" 
+                          id="med-time"
+                          className="form-input" 
+                          placeholder="e.g. 08:00 AM" 
+                          value={medTime}
+                          onChange={(e) => setMedTime(e.target.value)}
+                          style={{ fontSize: "0.8rem", padding: "0.45rem", width: "100%" }}
+                          required
+                        />
+                      </div>
+                    </div>
+
+                    <button type="submit" className="btn btn-secondary w-full" style={{ padding: "0.5rem", fontSize: "0.75rem", fontWeight: "600", borderColor: "var(--primary)", color: "var(--primary)" }}>
+                      + Add Medication
+                    </button>
+                  </form>
                 </div>
               </div>
 

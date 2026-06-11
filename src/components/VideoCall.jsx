@@ -88,6 +88,9 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
       addLog("Local stream attached to video element.");
+      localVideoRef.current.play().catch(err => {
+        addLog(`Local video autoplay prevented: ${err.message}`);
+      });
     }
   }, [localStream, callActive]);
 
@@ -95,17 +98,41 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
     if (remoteVideoRef.current && remoteStream) {
       remoteVideoRef.current.srcObject = remoteStream;
       addLog("Remote stream attached to video element.");
+      remoteVideoRef.current.play().catch(err => {
+        addLog(`Remote video autoplay prevented: ${err.message}`);
+      });
     }
   }, [remoteStream, callActive]);
 
   // Initialize PeerJS
   useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (peerRef.current) {
+        addLog("Tab unload/refresh detected. Sync destroying PeerJS...");
+        peerRef.current.destroy();
+      }
+    };
+
     if (!peerRef.current && myPeerId) {
       addLog(`Initializing PeerJS with ID: ${myPeerId}`);
       const PeerConstructor = Peer.default || Peer;
       
       try {
-        const peer = new PeerConstructor(myPeerId);
+        const peer = new PeerConstructor(myPeerId, {
+          debug: 3,
+          host: "0.peerjs.com",
+          port: 443,
+          secure: true,
+          config: {
+            iceServers: [
+              { urls: "stun:stun.l.google.com:19302" },
+              { urls: "stun:stun1.l.google.com:19302" },
+              { urls: "stun:stun2.l.google.com:19302" },
+              { urls: "stun:stun3.l.google.com:19302" },
+              { urls: "stun:stun4.l.google.com:19302" }
+            ]
+          }
+        });
         peerRef.current = peer;
         
         peer.on("open", (id) => {
@@ -125,12 +152,15 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
           addLog("PeerJS server disconnected. Reconnecting...");
           peer.reconnect();
         });
+
+        window.addEventListener("beforeunload", handleBeforeUnload);
       } catch (err) {
         addLog(`PeerJS constructor exception: ${err.message}`);
       }
     }
     
     return () => {
+      window.removeEventListener("beforeunload", handleBeforeUnload);
       if (activeCallRef.current) {
         try {
           addLog("Closing active call during cleanup...");
