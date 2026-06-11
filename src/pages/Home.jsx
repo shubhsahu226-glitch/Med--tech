@@ -83,18 +83,44 @@ export const Home = () => {
   ];
 
   return (
-    <div style={{ background: "white" }}>
+    <div style={{ background: "transparent", position: "relative", overflow: "hidden" }}>
+      {/* Decorative Glow Elements */}
+      <div style={{
+        position: "absolute",
+        top: "-100px",
+        left: "50%",
+        transform: "translateX(-50%)",
+        width: "600px",
+        height: "600px",
+        background: "radial-gradient(circle, rgba(99, 102, 241, 0.15) 0%, transparent 70%)",
+        zIndex: -1,
+        pointerEvents: "none"
+      }} />
+      <div style={{
+        position: "absolute",
+        top: "300px",
+        left: "15%",
+        width: "400px",
+        height: "400px",
+        background: "radial-gradient(circle, rgba(168, 85, 247, 0.1) 0%, transparent 70%)",
+        zIndex: -1,
+        pointerEvents: "none"
+      }} />
+
       {/* Hero Section */}
       <section 
+        className="animate-slide-up"
         style={{
-          padding: "5rem 2rem",
+          padding: "6rem 2rem",
           maxWidth: "1200px",
           margin: "0 auto",
           textAlign: "center",
           display: "flex",
           flexDirection: "column",
           alignItems: "center",
-          gap: "1.5rem"
+          gap: "1.75rem",
+          position: "relative",
+          zIndex: 1
         }}
       >
         <div 
@@ -104,50 +130,52 @@ export const Home = () => {
             gap: "0.5rem",
             background: "var(--primary-light)",
             color: "var(--primary)",
-            padding: "0.5rem 1rem",
+            padding: "0.6rem 1.2rem",
             borderRadius: "var(--radius-full)",
             fontSize: "0.875rem",
-            fontWeight: "600"
+            fontWeight: "600",
+            border: "1px solid rgba(99, 102, 241, 0.2)",
+            boxShadow: "0 4px 20px rgba(99, 102, 241, 0.1)"
           }}
         >
-          <HeartPulse size={16} />
+          <HeartPulse size={16} className="animate-pulse" style={{ color: "var(--primary)" }} />
           <span>Intelligent Healthcare Network</span>
         </div>
         
-        <h1 style={{ maxWidth: "800px", fontSize: "3rem", fontWeight: "800", lineHeight: 1.15 }}>
-          Connecting Patients & Doctors through <span style={{ color: "var(--primary)" }}>AI-Powered</span> Clinical Insights
+        <h1 style={{ maxWidth: "900px", fontSize: "3.5rem", fontWeight: "800", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
+          Connecting Patients & Doctors through <span style={{ background: "var(--primary-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI-Powered</span> Clinical Insights
         </h1>
         
-        <p className="text-secondary-color" style={{ maxWidth: "650px", fontSize: "1.125rem" }}>
+        <p className="text-secondary-color" style={{ maxWidth: "700px", fontSize: "1.2rem", lineHeight: 1.6 }}>
           Upload reports for instant AI-generated explanations, manage medications, and consult certified doctors on a single, secure platform.
         </p>
 
         {/* Call to Actions - Side by Side Entry Points */}
-        <div className="flex-center flex-wrap gap-4 m-t-4" style={{ width: "100%" }}>
+        <div className="flex-center flex-wrap gap-6 m-t-4" style={{ width: "100%" }}>
           <div 
-            className="card flex-column align-center text-center" 
-            style={{ width: "320px", padding: "2rem", border: "1px solid var(--border-color)" }}
+            className="card flex-column align-center text-center animate-slide-up delay-2" 
+            style={{ width: "340px", padding: "2.5rem 2rem", border: "1px solid var(--border-color)", background: "rgba(17, 24, 39, 0.65)" }}
           >
-            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>👤</div>
-            <h3 style={{ fontSize: "1.25rem" }}>For Patients</h3>
-            <p className="text-secondary-color" style={{ fontSize: "0.85rem", marginBottom: "1.5rem", minHeight: "60px" }}>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>👤</div>
+            <h3 style={{ fontSize: "1.35rem", fontWeight: "700", marginBottom: "0.5rem" }}>For Patients</h3>
+            <p className="text-secondary-color" style={{ fontSize: "0.875rem", marginBottom: "1.75rem", minHeight: "60px", lineHeight: 1.5 }}>
               Upload lab reports, view AI summaries, schedule consultations, and log daily medications.
             </p>
-            <Link to="/patient/auth" className="btn btn-primary w-full">
+            <Link to="/patient/auth" className="btn btn-primary w-full btn-hover-arrow">
               Patient Portal <ArrowRight size={16} />
             </Link>
           </div>
 
           <div 
-            className="card flex-column align-center text-center" 
-            style={{ width: "320px", padding: "2rem", border: "1px solid var(--border-color)" }}
+            className="card flex-column align-center text-center animate-slide-up delay-3" 
+            style={{ width: "340px", padding: "2.5rem 2rem", border: "1px solid var(--border-color)", background: "rgba(17, 24, 39, 0.65)" }}
           >
-            <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🩺</div>
-            <h3 style={{ fontSize: "1.25rem" }}>For Medical Doctors</h3>
-            <p className="text-secondary-color" style={{ fontSize: "0.85rem", marginBottom: "1.5rem", minHeight: "60px" }}>
+            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🩺</div>
+            <h3 style={{ fontSize: "1.35rem", fontWeight: "700", marginBottom: "0.5rem" }}>For Medical Doctors</h3>
+            <p className="text-secondary-color" style={{ fontSize: "0.875rem", marginBottom: "1.75rem", minHeight: "60px", lineHeight: 1.5 }}>
               Review connected patient charts, manage incoming consultations, and write prescriptions.
             </p>
-            <Link to="/doctor/auth" className="btn btn-secondary w-full">
+            <Link to="/doctor/auth" className="btn btn-secondary w-full btn-hover-arrow">
               Doctor Dashboard <ArrowRight size={16} />
             </Link>
           </div>

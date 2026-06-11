@@ -3,7 +3,7 @@ import { Sparkles } from "lucide-react";
 
 export const ReportSummaryCard = ({ report }) => {
   return (
-    <div className="card flex-column gap-4" style={{ backgroundColor: "white" }}>
+    <div className="card flex-column gap-4">
       <div className="flex-between">
         <div className="align-center gap-2">
           <Sparkles size={18} style={{ color: "var(--primary)" }} />

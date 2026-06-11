@@ -65,7 +65,7 @@ export const GraphCard = ({ trendsData }) => {
                 padding: "0.4rem 0.75rem",
                 borderRadius: "var(--radius-sm)",
                 fontWeight: "600",
-                backgroundColor: metric === key ? "white" : "transparent",
+                backgroundColor: metric === key ? "var(--primary-light)" : "transparent",
                 color: metric === key ? "var(--primary)" : "var(--text-secondary)",
                 boxShadow: metric === key ? "var(--shadow-sm)" : "none",
                 transition: "all var(--transition-fast)"
@@ -125,8 +125,7 @@ export const GraphCard = ({ trendsData }) => {
                 style={{ 
                   fontSize: "10px", 
                   fontWeight: "700", 
-                  fill: "var(--text-primary)", 
-                  background: "white" 
+                  fill: "var(--text-primary)" 
                 }}
               >
                 {p.val}

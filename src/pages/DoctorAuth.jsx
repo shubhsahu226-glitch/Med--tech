@@ -155,43 +155,42 @@ export const DoctorAuth = () => {
   };
 
   return (
-    <div className="auth-page-container" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%)" }}>
+    <div className="auth-page-container animate-slide-up" style={{ minHeight: "100vh", display: "flex", flexDirection: "column", background: "transparent" }}>
       <div style={{ padding: "1.5rem" }}>
-        <Link to="/" className="btn btn-secondary" style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center", background: "white", boxShadow: "var(--shadow-sm)" }}>
+        <Link to="/" className="btn btn-secondary" style={{ display: "inline-flex", gap: "0.5rem", alignItems: "center" }}>
           <ArrowLeft size={16} /> Back to Home
         </Link>
       </div>
 
       <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", padding: "1rem" }}>
-        <div className="card" style={{ width: "100%", maxWidth: "450px", padding: "2.5rem", borderRadius: "1.25rem", boxShadow: "0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 8px 10px -6px rgba(0, 0, 0, 0.05)", background: "white" }}>
+        <div className="card" style={{ width: "100%", maxWidth: "450px", padding: "2.5rem", borderRadius: "1.25rem" }}>
           
           {/* Header */}
           <div className="text-center m-b-6">
-            <div className="flex-center m-b-2" style={{ width: "64px", height: "64px", borderRadius: "50%", background: "var(--primary-light)", color: "var(--primary)", margin: "0 auto 1rem auto" }}>
+            <div className="flex-center m-b-2 icon-bounce" style={{ width: "64px", height: "64px", borderRadius: "50%", background: "var(--primary-light)", color: "var(--primary)", margin: "0 auto 1rem auto" }}>
               <Stethoscope size={32} />
             </div>
-            <h2 style={{ fontSize: "1.5rem", fontWeight: "700", color: "#111827", margin: "0 0 0.25rem 0" }}>Medical Provider</h2>
+            <h2 style={{ fontSize: "1.5rem", fontWeight: "700", margin: "0 0 0.25rem 0" }}>Medical Provider</h2>
             <p className="text-secondary-color" style={{ fontSize: "0.875rem", margin: 0 }}>
               Access clinical records and patient consultations
             </p>
           </div>
 
           {/* Tab Selection */}
-          <div style={{ display: "flex", background: "#f3f4f6", padding: "0.25rem", borderRadius: "0.5rem", marginBottom: "1.5rem" }}>
+          <div style={{ display: "flex", background: "rgba(255, 255, 255, 0.04)", padding: "0.25rem", borderRadius: "0.5rem", marginBottom: "1.5rem", border: "1px solid var(--border-color)" }}>
             <button
               type="button"
               onClick={() => { setIsSignUp(false); setError(""); setSuccessMsg(""); }}
               style={{
                 flex: 1,
                 padding: "0.5rem 1rem",
-                background: !isSignUp ? "white" : "transparent",
+                background: !isSignUp ? "rgba(255, 255, 255, 0.06)" : "transparent",
                 border: "none",
                 borderRadius: "0.375rem",
-                color: !isSignUp ? "var(--primary)" : "#4b5563",
+                color: !isSignUp ? "var(--primary)" : "var(--text-secondary)",
                 fontWeight: !isSignUp ? "600" : "500",
                 fontSize: "0.875rem",
                 cursor: "pointer",
-                boxShadow: !isSignUp ? "0 1px 3px rgba(0, 0, 0, 0.1)" : "none",
                 transition: "all 0.2s"
               }}
             >
@@ -203,14 +202,13 @@ export const DoctorAuth = () => {
               style={{
                 flex: 1,
                 padding: "0.5rem 1rem",
-                background: isSignUp ? "white" : "transparent",
+                background: isSignUp ? "rgba(255, 255, 255, 0.06)" : "transparent",
                 border: "none",
                 borderRadius: "0.375rem",
-                color: isSignUp ? "var(--primary)" : "#4b5563",
+                color: isSignUp ? "var(--primary)" : "var(--text-secondary)",
                 fontWeight: isSignUp ? "600" : "500",
                 fontSize: "0.875rem",
                 cursor: "pointer",
-                boxShadow: isSignUp ? "0 1px 3px rgba(0, 0, 0, 0.1)" : "none",
                 transition: "all 0.2s"
               }}
             >
@@ -219,13 +217,13 @@ export const DoctorAuth = () => {
           </div>
 
           {error && (
-            <div style={{ padding: "0.875rem 1rem", background: "#fee2e2", color: "#991b1b", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem", borderLeft: "4px solid #ef4444" }}>
+            <div style={{ padding: "0.875rem 1rem", background: "rgba(239, 68, 68, 0.1)", color: "#f87171", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem", borderLeft: "4px solid #ef4444" }}>
               {error}
             </div>
           )}
           
           {successMsg && (
-            <div style={{ padding: "0.875rem 1rem", background: "#d1fae5", color: "#065f46", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem", borderLeft: "4px solid #10b981" }}>
+            <div style={{ padding: "0.875rem 1rem", background: "rgba(16, 185, 129, 0.1)", color: "#34d399", borderRadius: "var(--radius-md)", fontSize: "0.85rem", marginBottom: "1.25rem", borderLeft: "4px solid #10b981" }}>
               {successMsg}
             </div>
           )}
@@ -235,7 +233,7 @@ export const DoctorAuth = () => {
               <div className="form-group" style={{ marginBottom: "1.25rem" }}>
                 <label className="form-label" htmlFor="doctor-name" style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", fontWeight: "500" }}>Dr. Full Name</label>
                 <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
+                  <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", display: "flex" }}>
                     <User size={18} />
                   </span>
                   <input 
@@ -254,7 +252,7 @@ export const DoctorAuth = () => {
             <div className="form-group" style={{ marginBottom: "1.25rem" }}>
               <label className="form-label" htmlFor="doctor-email" style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", fontWeight: "500" }}>Clinical Email Address</label>
               <div style={{ position: "relative" }}>
-                <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
+                <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", display: "flex" }}>
                   <Mail size={18} />
                 </span>
                 <input 
@@ -274,7 +272,7 @@ export const DoctorAuth = () => {
             <div className="form-group" style={{ marginBottom: "1.5rem" }}>
               <label className="form-label" htmlFor="doctor-password" style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", fontWeight: "500" }}>Password</label>
               <div style={{ position: "relative" }}>
-                <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#9ca3af", display: "flex" }}>
+                <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", display: "flex" }}>
                   <Lock size={18} />
                 </span>
                 <input 
@@ -295,10 +293,10 @@ export const DoctorAuth = () => {
               {isLoading ? "Processing..." : isSignUp ? "Create Provider Account" : "Clinical Sign In"}
             </button>
             
-            <div style={{ display: "flex", alignItems: "center", margin: "1.5rem 0", color: "#e5e7eb" }}>
-              <div style={{ flex: 1, height: "1px", background: "#e5e7eb" }}></div>
-              <span style={{ padding: "0 0.75rem", fontSize: "0.75rem", color: "#9ca3af", fontWeight: "500", textTransform: "uppercase" }}>Demo Account</span>
-              <div style={{ flex: 1, height: "1px", background: "#e5e7eb" }}></div>
+            <div style={{ display: "flex", alignItems: "center", margin: "1.5rem 0", color: "var(--border-color)" }}>
+              <div style={{ flex: 1, height: "1px", background: "var(--border-color)" }}></div>
+              <span style={{ padding: "0 0.75rem", fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "500", textTransform: "uppercase" }}>Demo Account</span>
+              <div style={{ flex: 1, height: "1px", background: "var(--border-color)" }}></div>
             </div>
 
             <button 
@@ -307,9 +305,9 @@ export const DoctorAuth = () => {
               className="btn btn-secondary w-full" 
               style={{ 
                 padding: "0.75rem", 
-                borderColor: "rgba(34, 197, 94, 0.3)", 
-                color: "var(--success)", 
-                background: "rgba(34, 197, 94, 0.05)",
+                borderColor: "rgba(16, 185, 129, 0.2)", 
+                color: "var(--success-dark)", 
+                background: "rgba(16, 185, 129, 0.05)",
                 display: "flex",
                 alignItems: "center",
                 justifyContent: "center",
