@@ -199,20 +199,20 @@ export const ProfileSettingsForm = () => {
           <div className="grid-2" style={{ gap: "2rem", alignItems: "start" }}>
             
             {/* Column 1: Credentials & Clinical Identity */}
-            <div className="card" style={{ padding: "2rem", borderRadius: "1.25rem", background: "white", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
-                <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "rgba(14, 165, 233, 0.1)", color: "#0284c7", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="card" style={{ padding: "2rem", borderRadius: "1.25rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", borderBottom: "1px solid var(--border-color)", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
+                <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--primary-light)", color: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <Award size={18} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "600", color: "#1e293b" }}>Professional Identity</h3>
-                  <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748b" }}>Your medical licenses and clinical specializations</p>
+                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "600" }}>Professional Identity</h3>
+                  <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--text-muted)" }}>Your medical licenses and clinical specializations</p>
                 </div>
               </div>
 
               <div className="flex-column gap-4">
                 <div className="form-group">
-                  <label className="form-label" htmlFor="settings-doc-name" style={{ fontWeight: "600", fontSize: "0.85rem", color: "#334155" }}>Full Name (with Prefix)</label>
+                  <label className="form-label" htmlFor="settings-doc-name" style={{ fontWeight: "600", fontSize: "0.85rem" }}>Full Name (with Prefix)</label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
                       <User size={16} />
@@ -230,7 +230,7 @@ export const ProfileSettingsForm = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="settings-doc-specialty" style={{ fontWeight: "600", fontSize: "0.85rem", color: "#334155" }}>Medical Specialty</label>
+                  <label className="form-label" htmlFor="settings-doc-specialty" style={{ fontWeight: "600", fontSize: "0.85rem" }}>Medical Specialty</label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
                       <Stethoscope size={16} />
@@ -252,7 +252,7 @@ export const ProfileSettingsForm = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="settings-doc-license" style={{ fontWeight: "600", fontSize: "0.85rem", color: "#334155" }}>Medical License Number</label>
+                  <label className="form-label" htmlFor="settings-doc-license" style={{ fontWeight: "600", fontSize: "0.85rem" }}>Medical License Number</label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
                       <FileText size={16} />
@@ -271,7 +271,7 @@ export const ProfileSettingsForm = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="settings-doc-experience" style={{ fontWeight: "600", fontSize: "0.85rem", color: "#334155" }}>Years of Clinical Experience</label>
+                  <label className="form-label" htmlFor="settings-doc-experience" style={{ fontWeight: "600", fontSize: "0.85rem" }}>Years of Clinical Experience</label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
                       <Briefcase size={16} />
@@ -291,20 +291,20 @@ export const ProfileSettingsForm = () => {
             </div>
 
             {/* Column 2: Clinic Location & Consultation Rates */}
-            <div className="card" style={{ padding: "2rem", borderRadius: "1.25rem", background: "white", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)" }}>
-              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
-                <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "rgba(16, 185, 129, 0.1)", color: "#059669", display: "flex", alignItems: "center", justifyContent: "center" }}>
+            <div className="card" style={{ padding: "2rem", borderRadius: "1.25rem" }}>
+              <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", borderBottom: "1px solid var(--border-color)", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
+                <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--success-light)", color: "var(--success)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                   <MapPin size={18} />
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "600", color: "#1e293b" }}>Clinic & Rates</h3>
-                  <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748b" }}>Your practice location and consultation pricing</p>
+                  <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "600" }}>Clinic & Rates</h3>
+                  <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--text-muted)" }}>Your practice location and consultation pricing</p>
                 </div>
               </div>
 
               <div className="flex-column gap-4">
                 <div className="form-group">
-                  <label className="form-label" htmlFor="settings-doc-location" style={{ fontWeight: "600", fontSize: "0.85rem", color: "#334155" }}>Clinic/Hospital Name</label>
+                  <label className="form-label" htmlFor="settings-doc-location" style={{ fontWeight: "600", fontSize: "0.85rem" }}>Clinic/Hospital Name</label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
                       <MapPin size={16} />
@@ -323,7 +323,7 @@ export const ProfileSettingsForm = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="settings-doc-fee" style={{ fontWeight: "600", fontSize: "0.85rem", color: "#334155" }}>Consultation Fee (₹)</label>
+                  <label className="form-label" htmlFor="settings-doc-fee" style={{ fontWeight: "600", fontSize: "0.85rem" }}>Consultation Fee (₹)</label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
                       <IndianRupee size={16} />
@@ -341,7 +341,7 @@ export const ProfileSettingsForm = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="settings-doc-phone" style={{ fontWeight: "600", fontSize: "0.85rem", color: "#334155" }}>Clinical Contact Phone</label>
+                  <label className="form-label" htmlFor="settings-doc-phone" style={{ fontWeight: "600", fontSize: "0.85rem" }}>Clinical Contact Phone</label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
                       <Phone size={16} />
@@ -359,7 +359,7 @@ export const ProfileSettingsForm = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="settings-doc-email" style={{ fontWeight: "600", fontSize: "0.85rem", color: "#334155" }}>Login Email (Linked to Account)</label>
+                  <label className="form-label" htmlFor="settings-doc-email" style={{ fontWeight: "600", fontSize: "0.85rem" }}>Login Email (Linked to Account)</label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
                       <Mail size={16} />
@@ -370,7 +370,7 @@ export const ProfileSettingsForm = () => {
                       className="form-input" 
                       value={email}
                       disabled
-                      style={{ paddingLeft: "2.5rem", width: "100%", borderRadius: "0.5rem", backgroundColor: "#f8fafc", cursor: "not-allowed", color: "#94a3b8", border: "1px solid #e2e8f0" }}
+                      style={{ paddingLeft: "2.5rem", width: "100%", borderRadius: "0.5rem", backgroundColor: "rgba(255, 255, 255, 0.02)", cursor: "not-allowed", color: "var(--text-muted)", border: "1px solid var(--border-color)" }}
                       title="Account email cannot be modified"
                     />
                   </div>
@@ -380,25 +380,25 @@ export const ProfileSettingsForm = () => {
           </div>
 
           {/* Practice Hours & Availability Summary */}
-          <div className="card" style={{ padding: "2rem", borderRadius: "1.25rem", background: "white", border: "1px solid #e2e8f0", boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.05)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", borderBottom: "1px solid #f1f5f9", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
-              <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "rgba(217, 119, 6, 0.1)", color: "#d97706", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <div className="card" style={{ padding: "2rem", borderRadius: "1.25rem" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "0.75rem", borderBottom: "1px solid var(--border-color)", paddingBottom: "1rem", marginBottom: "1.5rem" }}>
+              <div style={{ width: "36px", height: "36px", borderRadius: "50%", background: "var(--warning-light)", color: "var(--warning)", display: "flex", alignItems: "center", justifyContent: "center" }}>
                 <Clock size={18} />
               </div>
               <div>
-                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "600", color: "#1e293b" }}>Consultation Hours & Schedule Preview</h3>
-                <p style={{ margin: 0, fontSize: "0.75rem", color: "#64748b" }}>Live preview of the working slots visible to booking patients</p>
+                <h3 style={{ margin: 0, fontSize: "1.1rem", fontWeight: "600" }}>Consultation Hours & Schedule Preview</h3>
+                <p style={{ margin: 0, fontSize: "0.75rem", color: "var(--text-muted)" }}>Live preview of the working slots visible to booking patients</p>
               </div>
             </div>
 
             <div style={{ display: "flex", gap: "2rem", flexWrap: "wrap", justifyContent: "space-between", alignItems: "center" }}>
               <div style={{ flex: 1, minWidth: "250px" }} className="flex-column gap-3">
                 <div>
-                  <span style={{ fontSize: "0.8rem", fontWeight: "600", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Active Days</span>
+                  <span style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Active Days</span>
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
                     {user?.availability && user.availability.length > 0 ? (
                       user.availability.map((day, idx) => (
-                        <span key={idx} style={{ padding: "0.35rem 0.75rem", background: "#f8fafc", border: "1px solid #e2e8f0", borderRadius: "var(--radius-full)", fontSize: "0.8rem", fontWeight: "600", color: "#334155" }}>
+                        <span key={idx} style={{ padding: "0.35rem 0.75rem", background: "rgba(255, 255, 255, 0.04)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-full)", fontSize: "0.8rem", fontWeight: "600", color: "var(--text-secondary)" }}>
                           {day}
                         </span>
                       ))
@@ -409,7 +409,7 @@ export const ProfileSettingsForm = () => {
                 </div>
 
                 <div>
-                  <span style={{ fontSize: "0.8rem", fontWeight: "600", color: "#64748b", textTransform: "uppercase", letterSpacing: "0.05em" }}>Active Time Slots</span>
+                  <span style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: "0.05em" }}>Active Time Slots</span>
                   <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", marginTop: "0.5rem" }}>
                     {user?.slots && user.slots.length > 0 ? (
                       user.slots.map((slot, idx) => (
@@ -425,16 +425,16 @@ export const ProfileSettingsForm = () => {
               </div>
 
               <div style={{
-                background: "#f8fafc",
-                border: "1px solid #e2e8f0",
+                background: "rgba(255, 255, 255, 0.03)",
+                border: "1px solid var(--border-color)",
                 padding: "1.25rem",
                 borderRadius: "1rem",
                 maxWidth: "340px",
                 fontSize: "0.825rem",
-                color: "#475569",
+                color: "var(--text-secondary)",
                 lineHeight: "1.4"
               }} className="flex-column gap-2">
-                <div style={{ fontWeight: "600", color: "#1e293b", display: "flex", alignItems: "center", gap: "0.35rem" }}>
+                <div style={{ fontWeight: "600", color: "var(--text-primary)", display: "flex", alignItems: "center", gap: "0.35rem" }}>
                   <Sparkles size={14} style={{ color: "#d97706" }} />
                   <span>How to adjust consultation hours?</span>
                 </div>
@@ -475,11 +475,11 @@ export const ProfileSettingsForm = () => {
           </div>
 
           {/* Action Row */}
-          <div className="flex-between align-center" style={{ borderTop: "1px solid #e2e8f0", paddingTop: "1.5rem" }}>
-            <span style={{ fontSize: "0.8rem", color: "#64748b", fontWeight: "500" }}>
+          <div className="flex-between align-center" style={{ borderTop: "1px solid var(--border-color)", paddingTop: "1.5rem" }}>
+            <span style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontWeight: "500" }}>
               {isGuestUser ? "Session Status: Local Clinical Demo" : "Directory Sync Status: Active Connected"}
             </span>
-            <button type="submit" className="btn btn-primary" style={{ padding: "0.75rem 2.5rem", borderRadius: "0.5rem", fontWeight: "600", fontSize: "0.9rem", boxShadow: "0 4px 6px -1px rgba(14, 165, 233, 0.2)" }} disabled={isLoading}>
+            <button type="submit" className="btn btn-primary" style={{ padding: "0.75rem 2.5rem", borderRadius: "0.5rem", fontWeight: "600", fontSize: "0.9rem" }} disabled={isLoading}>
               {isLoading ? "Saving changes..." : "Save Practitioner Record"}
             </button>
           </div>
@@ -586,7 +586,7 @@ export const ProfileSettingsForm = () => {
                   className="form-input" 
                   value={email}
                   disabled
-                  style={{ paddingLeft: "2.5rem", width: "100%", backgroundColor: "#f3f4f6", cursor: "not-allowed", color: "#6b7280" }}
+                  style={{ paddingLeft: "2.5rem", width: "100%", backgroundColor: "rgba(255, 255, 255, 0.02)", cursor: "not-allowed", color: "var(--text-muted)", border: "1px solid var(--border-color)" }}
                   title="Email cannot be modified directly (linked to auth account)"
                 />
               </div>

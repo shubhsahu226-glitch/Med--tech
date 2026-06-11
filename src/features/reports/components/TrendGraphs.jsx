@@ -128,7 +128,7 @@ export const TrendGraphs = ({ trendsData = [] }) => {
                   cursor: "pointer",
                   borderRadius: "var(--radius-sm)",
                   fontWeight: "600",
-                  backgroundColor: isActive ? "white" : "transparent",
+                  backgroundColor: isActive ? "var(--primary-light)" : "transparent",
                   color: isActive ? "var(--primary)" : "var(--text-secondary)",
                   boxShadow: isActive ? "var(--shadow-sm)" : "none",
                   transition: "all var(--transition-fast)"
@@ -141,8 +141,7 @@ export const TrendGraphs = ({ trendsData = [] }) => {
         </div>
       </div>
 
-      {/* SVG Trend Graph Canvas */}
-      <div className="chart-container" style={{ position: "relative", backgroundColor: "white", padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)" }}>
+      <div className="chart-container" style={{ position: "relative", backgroundColor: "var(--bg-secondary)", padding: "1rem", borderRadius: "var(--radius-md)", border: "1px solid var(--border-color)" }}>
         <svg viewBox={`0 0 ${width} ${height}`} width="100%" height="auto" style={{ overflow: "visible" }}>
           {/* Horizontal Grid lines with ticks */}
           {[0, 0.25, 0.5, 0.75, 1].map((ratio, idx) => {
@@ -214,7 +213,6 @@ export const TrendGraphs = ({ trendsData = [] }) => {
                   fontSize: "10px",
                   fontWeight: "700",
                   fill: "var(--text-primary)",
-                  backgroundColor: "white",
                   padding: "2px"
                 }}
               >
