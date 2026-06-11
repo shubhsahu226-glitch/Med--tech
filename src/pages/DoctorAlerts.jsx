@@ -57,8 +57,28 @@ export const DoctorAlerts = () => {
       setIsLoading(true);
       setErrorMsg("");
 
+      // Read local alerts from localStorage
+      const localAlerts = [];
+      try {
+        const localStr = localStorage.getItem("virtualvaidya_local_alerts") || "[]";
+        const parsed = JSON.parse(localStr);
+        parsed.forEach(la => {
+          localAlerts.push(la);
+        });
+      } catch (e) {
+        console.warn("Failed to load local alerts from storage:", e);
+      }
+
       if (isGuestUser) {
-        setAlertsList(getMockAlerts());
+        const patientNames = { pat1: "Alex Mercer", pat2: "Emily Watson", pat3: "Michael Vance" };
+        const enrichedLocal = localAlerts.map(a => ({
+          ...a,
+          patient_name: patientNames[a.patient_id] || a.patient_name || "Unknown Patient",
+          patient_age: a.patient_age || 34,
+          patient_gender: a.patient_gender || "Patient"
+        }));
+
+        setAlertsList([...enrichedLocal, ...getMockAlerts()]);
         setIsLoading(false);
         return;
       }
@@ -73,7 +93,15 @@ export const DoctorAlerts = () => {
         if (aptsErr) throw aptsErr;
 
         if (!aptsData || aptsData.length === 0) {
-          setAlertsList([]);
+          // No DB alerts, but check if local storage alerts apply
+          const rosterLocalAlerts = localAlerts
+            .map(la => ({
+              ...la,
+              patient_name: la.patient_name || "Unknown Patient",
+              patient_age: la.patient_age || 30,
+              patient_gender: la.patient_gender || "Patient"
+            }));
+          setAlertsList(rosterLocalAlerts);
           setIsLoading(false);
           return;
         }
@@ -89,12 +117,6 @@ export const DoctorAlerts = () => {
           .order("created_at", { ascending: false });
 
         if (alertsErr) throw alertsErr;
-
-        if (!alertsData || alertsData.length === 0) {
-          setAlertsList([]);
-          setIsLoading(false);
-          return;
-        }
 
         // 3. Fetch patient profile names & dob to match
         const { data: profilesData, error: profErr } = await supabase
@@ -121,7 +143,7 @@ export const DoctorAlerts = () => {
           return age;
         };
 
-        const enrichedAlerts = alertsData.map((a) => {
+        const enrichedAlerts = (alertsData || []).map((a) => {
           const profile = profilesMap[a.patient_id] || {};
           return {
             ...a,
@@ -131,7 +153,25 @@ export const DoctorAlerts = () => {
           };
         });
 
-        setAlertsList(enrichedAlerts);
+        // 4. Merge database alerts with local alerts belonging to our patient roster
+        const finalAlerts = [...enrichedAlerts];
+        
+        const rosterLocalAlerts = localAlerts
+          .filter(la => patientIds.includes(la.patient_id))
+          .map(la => ({
+            ...la,
+            patient_name: la.patient_name || "Unknown Patient",
+            patient_age: la.patient_age || 30,
+            patient_gender: la.patient_gender || "Patient"
+          }));
+
+        rosterLocalAlerts.forEach(la => {
+          if (!finalAlerts.find(fa => fa.id === la.id)) {
+            finalAlerts.unshift(la);
+          }
+        });
+
+        setAlertsList(finalAlerts);
       } catch (err) {
         console.error("Error fetching clinical alerts:", err);
         setErrorMsg("Failed to load active patient alerts from database.");
@@ -141,11 +181,40 @@ export const DoctorAlerts = () => {
     };
 
     fetchAlerts();
+
+    // Set up storage polling/syncing for real-time doctor alerts updates
+    const handleStorage = () => {
+      fetchAlerts();
+    };
+    window.addEventListener("storage", handleStorage);
+    const interval = setInterval(fetchAlerts, 3000);
+
+    return () => {
+      window.removeEventListener("storage", handleStorage);
+      clearInterval(interval);
+    };
   }, [user, isGuestUser]);
 
   const handleResolveAlert = async (alertId) => {
     setSuccessMsg("");
     setErrorMsg("");
+
+    // Resolve local alert if it exists in localStorage
+    try {
+      const localAlertsStr = localStorage.getItem("virtualvaidya_local_alerts") || "[]";
+      const localAlerts = JSON.parse(localAlertsStr);
+      const filtered = localAlerts.filter(a => a.id !== alertId);
+      if (filtered.length !== localAlerts.length) {
+        localStorage.setItem("virtualvaidya_local_alerts", JSON.stringify(filtered));
+        setAlertsList((prev) => prev.filter((a) => a.id !== alertId));
+        setSuccessMsg("Local alert resolved successfully.");
+        setTimeout(() => setSuccessMsg(""), 3000);
+        window.dispatchEvent(new Event("storage"));
+        return;
+      }
+    } catch (e) {
+      console.warn("Failed to update local storage on resolve:", e);
+    }
 
     if (isGuestUser) {
       setAlertsList((prev) => prev.filter((a) => a.id !== alertId));

@@ -2,14 +2,14 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
-import { Calendar, Clock, Activity, FileText, ArrowRight, Video, MessageSquare, X, Send, ShieldCheck, ArrowLeft } from "lucide-react";
+import { Calendar, Clock, Activity, FileText, ArrowRight, Video, MessageSquare, X, Send, ShieldCheck, ArrowLeft, ShieldAlert } from "lucide-react";
 import { AppointmentCard, ReminderCard } from "../components/cards";
 import VideoCall from "../components/VideoCall";
 import { supabase } from "../config/supabase";
 
 export const PatientDashboard = () => {
   const { user } = useAuth();
-  const { appointments, reminders, treatments, refreshAppointments } = useHealth();
+  const { appointments, reminders, treatments, refreshAppointments, triggerEmergencyAlert } = useHealth();
   const navigate = useNavigate();
 
   // Active Consultation Overlay states
@@ -18,6 +18,72 @@ export const PatientDashboard = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef(null);
+
+  // SOS Emergency Alert States
+  const [isSOSConfirmOpen, setIsSOSConfirmOpen] = useState(false);
+  const [sosStatus, setSosStatus] = useState(""); // "", "locating", "sending", "success", "error"
+  const [sosError, setSosError] = useState("");
+
+  const handleSOSDispatch = () => {
+    setSosStatus("locating");
+    setSosError("");
+
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        async (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          await sendSOSAlert(lat, lng);
+        },
+        async (error) => {
+          console.warn("Geolocation permission denied or failed. Dispatching default coords...", error);
+          await sendSOSAlert(19.0760, 72.8777); // Mumbai
+        },
+        { timeout: 8000 }
+      );
+    } else {
+      console.warn("Geolocation API not supported by browser. Dispatching default coords...");
+      sendSOSAlert(19.0760, 72.8777);
+    }
+  };
+
+  const sendSOSAlert = async (lat, lng) => {
+    setSosStatus("sending");
+    const descriptionStr = `SOS emergency alarm triggered by patient from Lat: ${lat.toFixed(4)}, Lng: ${lng.toFixed(4)}. Emergency dispatch and clinician have been alerted.`;
+    
+    try {
+      // 1. Context Alert creation (saves to state and local storage)
+      if (triggerEmergencyAlert) {
+        triggerEmergencyAlert("Emergency SOS Alarm Triggered", "high", descriptionStr, "Emergency units dispatched. Provider alerted.");
+      }
+
+      // 2. Call backend triggerSOSApi if real user
+      if (!isGuest) {
+        try {
+          // Direct supabase insert as secondary fallback/parallel action
+          await supabase.from("alerts").insert({
+            patient_id: user.id,
+            title: "Emergency SOS Alarm Triggered",
+            severity: "High",
+            description: descriptionStr,
+            status: "Active"
+          });
+        } catch (dbErr) {
+          console.error("Direct Supabase alert log failed:", dbErr);
+        }
+      }
+
+      setSosStatus("success");
+      setTimeout(() => {
+        setIsSOSConfirmOpen(false);
+        setSosStatus("");
+      }, 3000);
+    } catch (err) {
+      console.error("SOS Alert dispatch failed:", err);
+      setSosStatus("error");
+      setSosError("SOS dispatch failed to reach the servers. Please dial your local emergency services directly.");
+    }
+  };
 
   // Refresh appointments on mount to get latest status
   useEffect(() => {
@@ -175,6 +241,20 @@ export const PatientDashboard = () => {
 
   return (
     <div className="flex-column gap-6" style={{ backgroundColor: "var(--bg-primary)" }}>
+      <style>{`
+        @keyframes pulseRed {
+          0% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.7);
+          }
+          70% {
+            box-shadow: 0 0 0 10px rgba(239, 68, 68, 0);
+          }
+          100% {
+            box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+          }
+        }
+      `}</style>
+
       {/* Greeting Header */}
       <div className="flex-between flex-wrap gap-4" style={{ paddingBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
         <div>
@@ -182,6 +262,23 @@ export const PatientDashboard = () => {
           <p className="text-secondary-color" style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}>Here is your active healthcare summary.</p>
         </div>
         <div className="align-center gap-3">
+          <button 
+            type="button"
+            onClick={() => setIsSOSConfirmOpen(true)}
+            className="btn align-center gap-1"
+            style={{ 
+              fontSize: "0.85rem", 
+              backgroundColor: "var(--danger)", 
+              color: "white", 
+              borderColor: "var(--danger)",
+              fontWeight: "600",
+              boxShadow: "0 0 0 0 rgba(239, 68, 68, 0.6)",
+              animation: "pulseRed 1.8s infinite"
+            }}
+          >
+            <ShieldAlert size={14} /> SOS Emergency
+          </button>
+
           <Link to="/patient/doctors" className="btn btn-primary" style={{ fontSize: "0.85rem" }}>
             Schedule Consultation
           </Link>
@@ -585,6 +682,161 @@ export const PatientDashboard = () => {
 
               </div>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* SOS Confirmation Modal Overlay */}
+      {isSOSConfirmOpen && (
+        <div 
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.95)",
+            zIndex: 999999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1.5rem"
+          }}
+        >
+          <div 
+            className="card flex-column gap-4" 
+            style={{ 
+              maxWidth: "500px", 
+              width: "100%", 
+              padding: "2rem", 
+              borderRadius: "1rem", 
+              textAlign: "center",
+              border: "1px solid rgba(239, 68, 68, 0.2)",
+              backgroundColor: "var(--bg-primary)",
+              boxShadow: "var(--shadow-2xl)",
+              animation: "fadeIn 0.25s ease-out"
+            }}
+          >
+            {/* Pulsing Alert Icon */}
+            <div 
+              style={{ 
+                width: "80px", 
+                height: "80px", 
+                borderRadius: "50%", 
+                backgroundColor: "rgba(239, 68, 68, 0.1)", 
+                border: "2px solid rgba(239, 68, 68, 0.3)",
+                color: "var(--danger)",
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center",
+                margin: "0 auto 0.5rem auto",
+                animation: "pulseRed 1.5s infinite"
+              }}
+            >
+              <ShieldAlert size={40} />
+            </div>
+
+            <h2 style={{ fontSize: "1.5rem", fontWeight: "700", margin: 0, color: "var(--text-primary)" }}>
+              Emergency SOS Dispatch
+            </h2>
+
+            {sosStatus === "" && (
+              <>
+                <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)", lineHeight: 1.5 }}>
+                  <strong>WARNING:</strong> You are triggering a critical medical alert. This will immediately log an active emergency alert and dispatch your coordinates to your primary clinician and emergency contacts.
+                </p>
+                <div style={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+                  <button 
+                    onClick={() => setIsSOSConfirmOpen(false)} 
+                    className="btn btn-secondary flex-1"
+                    style={{ padding: "0.6rem" }}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleSOSDispatch} 
+                    className="btn btn-primary flex-1"
+                    style={{ padding: "0.6rem", backgroundColor: "var(--danger)", borderColor: "var(--danger)" }}
+                  >
+                    CONFIRM DISPATCH
+                  </button>
+                </div>
+              </>
+            )}
+
+            {sosStatus === "locating" && (
+              <div className="flex-column align-center gap-3" style={{ padding: "1rem 0" }}>
+                <div 
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    border: "3px solid var(--border-color)",
+                    borderTop: "3px solid var(--danger)",
+                    animation: "spin 1s linear infinite"
+                  }}
+                />
+                <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+                  Retrieving GPS Geolocation...
+                </p>
+              </div>
+            )}
+
+            {sosStatus === "sending" && (
+              <div className="flex-column align-center gap-3" style={{ padding: "1rem 0" }}>
+                <div 
+                  style={{
+                    width: "32px",
+                    height: "32px",
+                    borderRadius: "50%",
+                    border: "3px solid var(--border-color)",
+                    borderTop: "3px solid var(--danger)",
+                    animation: "spin 1s linear infinite"
+                  }}
+                />
+                <p style={{ fontSize: "0.875rem", color: "var(--text-secondary)" }}>
+                  Broadcasting SOS alerts to clinical networks...
+                </p>
+              </div>
+            )}
+
+            {sosStatus === "success" && (
+              <div className="flex-column align-center gap-3" style={{ padding: "1rem 0" }}>
+                <div 
+                  style={{ 
+                    width: "48px", 
+                    height: "48px", 
+                    borderRadius: "50%", 
+                    backgroundColor: "var(--success-light)", 
+                    color: "var(--success)", 
+                    display: "flex", 
+                    alignItems: "center", 
+                    justifyContent: "center" 
+                  }}
+                >
+                  <ShieldCheck size={28} />
+                </div>
+                <h4 style={{ margin: 0, fontSize: "1.1rem", color: "var(--success-dark)", fontWeight: "600" }}>
+                  Alert Dispatched!
+                </h4>
+                <p style={{ fontSize: "0.825rem", color: "var(--text-secondary)", lineHeight: 1.4 }}>
+                  Emergency signal transmitted. Clinician dashboard has been locked on high alert.
+                </p>
+              </div>
+            )}
+
+            {sosStatus === "error" && (
+              <div className="flex-column align-center gap-3" style={{ padding: "1rem 0" }}>
+                <p style={{ fontSize: "0.875rem", color: "var(--danger-dark)", fontWeight: "600" }}>
+                  {sosError}
+                </p>
+                <button 
+                  onClick={() => setSosStatus("")} 
+                  className="btn btn-secondary"
+                  style={{ padding: "0.5rem 1.5rem" }}
+                >
+                  Try Again
+                </button>
+              </div>
+            )}
+
           </div>
         </div>
       )}

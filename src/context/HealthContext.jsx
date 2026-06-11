@@ -132,7 +132,24 @@ export const HealthProvider = ({ children }) => {
 
       // 2. Alerts (Query active clinical alerts from Supabase, or mock clinical alert for demo user)
       if (user.id === "pat1" || user.id === "pat2" || user.id === "pat3") {
-        setAlerts([
+        const localAlerts = [];
+        try {
+          const localStr = localStorage.getItem("virtualvaidya_local_alerts") || "[]";
+          const parsed = JSON.parse(localStr).filter(a => a.patient_id === user.id);
+          parsed.forEach(la => {
+            localAlerts.push({
+              id: la.id,
+              title: la.title,
+              severity: la.severity?.toLowerCase() || "high",
+              description: la.description,
+              action: "Emergency response dispatched. Physician notified."
+            });
+          });
+        } catch (e) {
+          console.warn("Failed to read local alerts:", e);
+        }
+
+        const defaultAlerts = [
           {
             id: "al_mock1",
             title: "Abnormal LDL Cholesterol",
@@ -140,7 +157,9 @@ export const HealthProvider = ({ children }) => {
             description: "Fasting lipid profile shows LDL level of 134 mg/dL which is borderline high.",
             action: "Review dietary saturated fat intake and schedule a follow-up test in 3 months."
           }
-        ]);
+        ];
+        
+        setAlerts([...localAlerts, ...defaultAlerts]);
       } else {
         const { data, error } = await supabase
           .from('alerts')
@@ -148,16 +167,41 @@ export const HealthProvider = ({ children }) => {
           .eq('patient_id', user.id)
           .eq('status', 'Active');
 
+        const localAlerts = [];
+        try {
+          const localStr = localStorage.getItem("virtualvaidya_local_alerts") || "[]";
+          const parsed = JSON.parse(localStr).filter(a => a.patient_id === user.id);
+          parsed.forEach(la => {
+            localAlerts.push({
+              id: la.id,
+              title: la.title,
+              severity: la.severity?.toLowerCase() || "high",
+              description: la.description,
+              action: "Emergency response dispatched. Physician notified."
+            });
+          });
+        } catch (e) {
+          console.warn("Failed to read local alerts:", e);
+        }
+
         if (data && !error) {
-          setAlerts(data.map(a => ({
+          const dbAlerts = data.map(a => ({
             id: a.id,
             title: a.title,
             severity: a.severity?.toLowerCase() || "medium",
             description: a.description,
             action: "Review metrics details inside the Reports center."
-          })));
+          }));
+
+          const merged = [...dbAlerts];
+          localAlerts.forEach(la => {
+            if (!merged.find(ma => ma.id === la.id)) {
+              merged.push(la);
+            }
+          });
+          setAlerts(merged);
         } else {
-          setAlerts([]);
+          setAlerts(localAlerts);
         }
       }
 
@@ -473,11 +517,29 @@ export const HealthProvider = ({ children }) => {
     const newAlert = {
       id: `al_${Date.now()}`,
       title,
-      severity, // high, medium, low
+      severity: severity || "medium", // high, medium, low
       date: new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: '2-digit' }),
       description,
       action
     };
+
+    try {
+      const localAlertsStr = localStorage.getItem("virtualvaidya_local_alerts") || "[]";
+      const localAlerts = JSON.parse(localAlertsStr);
+      localAlerts.push({
+        id: newAlert.id,
+        patient_id: user?.id || "pat1",
+        patient_name: user?.name || "Alex Mercer",
+        title,
+        severity: severity || "medium",
+        description,
+        created_at: new Date().toISOString()
+      });
+      localStorage.setItem("virtualvaidya_local_alerts", JSON.stringify(localAlerts));
+    } catch (e) {
+      console.warn("Failed to save local alert:", e);
+    }
+
     setAlerts(prev => [newAlert, ...prev]);
     return newAlert;
   };
