@@ -326,7 +326,7 @@ export const HealthProvider = ({ children }) => {
       console.warn("Failed to read localStorage appointments:", e);
     }
 
-    const isGuest = user.id === "pat1" || user.id === "doc1";
+    const isGuest = String(user.id).startsWith("pat") || String(user.id).startsWith("doc");
     if (isGuest) {
       const filtered = localApts.filter(apt => isDoctor ? apt.doctorId === user.id : apt.patientId === user.id);
       setAppointments(filtered);
@@ -384,7 +384,7 @@ export const HealthProvider = ({ children }) => {
     window.addEventListener("storage", handleStorageChange);
 
     // Guest mode: poll less aggressively (every 10s) since there's no realtime subscription
-    const isGuest = user.id === "pat1" || user.id === "doc1";
+    const isGuest = String(user.id).startsWith("pat") || String(user.id).startsWith("doc");
     let interval = null;
     if (isGuest) {
       interval = setInterval(() => {
@@ -444,7 +444,7 @@ export const HealthProvider = ({ children }) => {
       doctorName: newAptObj.doctor_name
     };
 
-    const isGuest = patientId === "pat1" || doctorId === "doc1";
+    const isGuest = String(patientId).startsWith("pat") || String(doctorId).startsWith("doc");
     if (!isGuest) {
       // Omit meetingType from DB insert as the column does not exist
       const { meetingType: _, ...dbAptObj } = newAptObj;
@@ -483,7 +483,7 @@ export const HealthProvider = ({ children }) => {
       console.warn("Failed to update localStorage appointments:", e);
     }
 
-    const isGuest = user?.id === "pat1" || user?.id === "doc1";
+    const isGuest = String(user?.id).startsWith("pat") || String(user?.id).startsWith("doc");
     if (!isGuest) {
       try {
         await supabase.from('appointments').update({ status }).eq('id', aptId);

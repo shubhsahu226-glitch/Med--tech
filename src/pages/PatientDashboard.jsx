@@ -124,7 +124,7 @@ export const PatientDashboard = () => {
 
   // Find next upcoming appointment
   const nextAppointment = appointments
-    .filter(apt => apt.patientId === user.id && (apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending"))
+    .filter(apt => apt.patientId === user.id && (apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending" || apt.status === "Paid"))
     .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
 
   // Limit checklist reminders to 1 key upcoming medication
