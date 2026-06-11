@@ -163,6 +163,109 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
     if (remoteVideoRef.current) remoteVideoRef.current.srcObject = null;
   };
 
+  const createMockStream = (label) => {
+    addLog(`Creating simulated stream fallback for: ${label}`);
+    
+    const canvas = document.createElement("canvas");
+    canvas.width = 640;
+    canvas.height = 480;
+    const ctx = canvas.getContext("2d");
+    
+    let angle = 0;
+    const intervalId = setInterval(() => {
+      if (!ctx) return;
+      
+      // Gradient background
+      const gradient = ctx.createLinearGradient(0, 0, canvas.width, canvas.height);
+      gradient.addColorStop(0, "#1e293b");
+      gradient.addColorStop(1, "#0f172a");
+      ctx.fillStyle = gradient;
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Moving visualizer circle
+      angle += 0.05;
+      const radius = 50 + Math.sin(angle) * 15;
+      ctx.beginPath();
+      ctx.arc(canvas.width / 2, canvas.height / 2, radius, 0, 2 * Math.PI);
+      ctx.fillStyle = "rgba(59, 130, 246, 0.3)";
+      ctx.fill();
+      ctx.lineWidth = 3;
+      ctx.strokeStyle = "#3b82f6";
+      ctx.stroke();
+      
+      // Telehealth badge
+      ctx.fillStyle = "rgba(34, 197, 94, 0.1)";
+      ctx.fillRect(40, 40, canvas.width - 80, 50);
+      ctx.strokeStyle = "#22c55e";
+      ctx.lineWidth = 1;
+      ctx.strokeRect(40, 40, canvas.width - 80, 50);
+      
+      ctx.font = "bold 16px sans-serif";
+      ctx.fillStyle = "#22c55e";
+      ctx.textAlign = "center";
+      ctx.fillText("VIRTUAL VAIDYA Telehealth Session", canvas.width / 2, 72);
+      
+      // Main label
+      ctx.font = "bold 20px sans-serif";
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(label, canvas.width / 2, canvas.height / 2 + 5);
+      
+      // Subtext
+      ctx.font = "14px sans-serif";
+      ctx.fillStyle = "#94a3b8";
+      ctx.fillText("(Simulated Stream - Hardware Camera in Use)", canvas.width / 2, canvas.height / 2 + 100);
+      ctx.fillText(`Timestamp: ${new Date().toLocaleTimeString()}`, canvas.width / 2, canvas.height / 2 + 130);
+    }, 66); // ~15 FPS
+    
+    const canvasStream = canvas.captureStream ? canvas.captureStream(15) : canvas.webkitCaptureStream(15);
+    
+    let audioTrack;
+    let audioContext;
+    try {
+      const AudioCtx = window.AudioContext || window.webkitAudioContext;
+      audioContext = new AudioCtx();
+      const oscillator = audioContext.createOscillator();
+      const gainNode = audioContext.createGain();
+      gainNode.gain.setValueAtTime(0, audioContext.currentTime); // mute to avoid loud feedback/screeching
+      oscillator.connect(gainNode);
+      const destination = audioContext.createMediaStreamDestination();
+      gainNode.connect(destination);
+      oscillator.start();
+      audioTrack = destination.stream.getAudioTracks()[0];
+    } catch (e) {
+      addLog(`Failed to create simulated audio track: ${e.message}`);
+    }
+    
+    const mockTracks = [...canvasStream.getVideoTracks()];
+    if (audioTrack) {
+      mockTracks.push(audioTrack);
+    }
+    
+    const stream = new MediaStream(mockTracks);
+    
+    // Cleanup helper
+    const originalGetTracks = stream.getTracks;
+    stream.getTracks = function() {
+      const tracks = originalGetTracks.call(this);
+      tracks.forEach(track => {
+        if (!track.hasOwnProperty('_originalStop')) {
+          const originalStop = track.stop;
+          track._originalStop = originalStop;
+          track.stop = function() {
+            clearInterval(intervalId);
+            if (audioContext && audioContext.state !== "closed") {
+              try { audioContext.close(); } catch (err) {}
+            }
+            originalStop.call(this);
+          };
+        }
+      });
+      return tracks;
+    };
+    
+    return stream;
+  };
+
   const answerCall = () => {
     if (!incomingCall) return;
     addLog("Answering incoming call. Requesting media permissions...");
@@ -193,8 +296,29 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
         });
       })
       .catch(err => {
-        addLog(`getUserMedia permission failed: ${err.message}`);
-        alert("Failed to access camera/microphone. Please verify device permissions.");
+        addLog(`getUserMedia failed (${err.name}: ${err.message}). Falling back to simulated stream...`);
+        const stream = createMockStream(isPatient ? "Patient Room Stream" : "Doctor Portal Stream");
+        setLocalStream(stream);
+        
+        incomingCall.on("stream", (incomingRemoteStream) => {
+          addLog("Received remote stream track.");
+          setRemoteStream(incomingRemoteStream);
+        });
+
+        incomingCall.answer(stream);
+        activeCallRef.current = incomingCall;
+        setCallActive(true);
+        setIncomingCall(null);
+        
+        incomingCall.on("close", () => {
+          addLog("Call closed by remote peer.");
+          endCall();
+        });
+
+        incomingCall.on("error", (err) => {
+          addLog(`Call error from remote: ${err.message}`);
+          endCall();
+        });
       });
   };
 
@@ -247,8 +371,37 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
         }
       })
       .catch(err => {
-        addLog(`getUserMedia permission failed: ${err.message}`);
-        alert("Failed to access camera/microphone. Please verify device permissions.");
+        addLog(`getUserMedia failed (${err.name}: ${err.message}). Falling back to simulated stream...`);
+        const stream = createMockStream(isPatient ? "Patient Room Stream" : "Doctor Portal Stream");
+        setLocalStream(stream);
+        setCallActive(true);
+        
+        if (peerRef.current) {
+          addLog(`Calling target peer: ${targetPeerId} using mock stream...`);
+          const call = peerRef.current.call(targetPeerId, stream);
+          if (call) {
+            activeCallRef.current = call;
+            
+            call.on("stream", (incomingRemoteStream) => {
+              addLog("Received remote stream.");
+              setRemoteStream(incomingRemoteStream);
+            });
+            
+            call.on("close", () => {
+              addLog("Call closed by remote peer.");
+              endCall();
+            });
+
+            call.on("error", (err) => {
+              addLog(`Call connection error: ${err.message}`);
+              endCall();
+            });
+          } else {
+            addLog("Error: PeerJS failed to create call object.");
+          }
+        } else {
+          addLog("Error: PeerJS instance not ready.");
+        }
       });
   };
 

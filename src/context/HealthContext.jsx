@@ -324,9 +324,51 @@ export const HealthProvider = ({ children }) => {
     }
   };
 
+  // Real-time synchronization for appointments (Guest Mode polling/storage listener & Database Mode subscription)
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
+    if (!user?.id) return;
+
+    // Fetch immediately on mount or user change
     fetchAppointments();
+
+    // 1. Guest Mode / Local Storage sync (runs in both guest and database modes as fallback)
+    const handleStorageChange = (e) => {
+      if (e.key === "virtualvaidya_local_appointments") {
+        fetchAppointments();
+      }
+    };
+    window.addEventListener("storage", handleStorageChange);
+
+    // Poll local appointments/storage every 2.5 seconds to ensure fast sync between tabs
+    const interval = setInterval(() => {
+      fetchAppointments();
+    }, 2500);
+
+    // 2. Database Mode: Supabase Real-time Subscription
+    const isGuest = user.id === "pat1" || user.id === "doc1";
+    let channel = null;
+    
+    if (!isGuest) {
+      channel = supabase
+        .channel('realtime_appointments_sync')
+        .on('postgres_changes', { 
+          event: '*', 
+          schema: 'public', 
+          table: 'appointments' 
+        }, (payload) => {
+          console.log("Real-time appointment update received:", payload);
+          fetchAppointments();
+        })
+        .subscribe();
+    }
+
+    return () => {
+      window.removeEventListener("storage", handleStorageChange);
+      clearInterval(interval);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user, role]);
 
