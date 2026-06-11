@@ -50,6 +50,14 @@ export const PatientDoctors = () => {
   const [bookingStatus, setBookingStatus] = useState("");
   const [bookingError, setBookingError] = useState("");
 
+  // Payment States
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
+  const [cardNumber, setCardNumber] = useState("4111 1111 1111 1111");
+  const [cardExpiry, setCardExpiry] = useState("12/29");
+  const [cardCvv, setCardCvv] = useState("123");
+  const [cardName, setCardName] = useState(user?.name || "Patient Name");
+
   // Auto-initialize selectedDoctorId when doctors load if empty
   useEffect(() => {
     if (doctors && doctors.length > 0 && !selectedDoctorId) {
@@ -68,7 +76,7 @@ export const PatientDoctors = () => {
   // Chat Integration with Supabase
   const activeApt = patientApts.find(apt => apt.doctorId === activeDoctorId);
   const isGuestMode = !user?.id || user.id === "pat1" || activeDoctorId === "doc1";
-  const hasConfirmedApt = activeApt && (activeApt.status === "Confirmed" || activeApt.status === "Upcoming" || activeApt.status === "Pending");
+  const hasConfirmedApt = activeApt && (activeApt.status === "Confirmed" || activeApt.status === "Upcoming");
 
   useEffect(() => {
     if (!activeDoctorId || !user?.id || (!isGuestMode && !activeApt?.id)) return;
@@ -165,36 +173,49 @@ export const PatientDoctors = () => {
     return matchesSearch && matchesSpecialty;
   });
 
-  const handleBookingSubmit = async (e) => {
+  const handleBookingSubmit = (e) => {
     e.preventDefault();
     if (!selectedDoctorId || !bookingDate || !bookingSlot || !reason) return;
 
     setBookingError("");
-    setBookingStatus("Booking...");
+    setShowPaymentModal(true);
+  };
 
-    try {
-      await addAppointment({
-        patientId: user.id,
-        patientName: user.name,
-        doctorId: selectedDoctorId,
-        doctorName: activeDoctor.name,
-        doctorSpecialty: activeDoctor.specialty,
-        date: bookingDate,
-        time: bookingSlot,
-        reason,
-        meetingType
-      });
+  const handleConfirmPayment = async () => {
+    setIsProcessingPayment(true);
+    setBookingStatus("Processing payment...");
 
-      setBookingStatus("Booking confirmed!");
-      setReason("");
-      setBookingDate("");
-      setBookingSlot("");
-      setTimeout(() => setBookingStatus(""), 3000);
-    } catch (err) {
-      console.error("Failed to submit booking:", err);
-      setBookingStatus("");
-      setBookingError(err.message || "Failed to complete booking. Please try again.");
-    }
+    // Simulate payment gateway delay (1.5 seconds)
+    setTimeout(async () => {
+      try {
+        await addAppointment({
+          patientId: user.id,
+          patientName: user.name,
+          doctorId: selectedDoctorId,
+          doctorName: activeDoctor.name,
+          doctorSpecialty: activeDoctor.specialty,
+          date: bookingDate,
+          time: bookingSlot,
+          reason,
+          meetingType,
+          status: "Paid" // Save with status Paid
+        });
+
+        setBookingStatus("Booking requested & payment successful!");
+        setReason("");
+        setBookingDate("");
+        setBookingSlot("");
+        setShowPaymentModal(false);
+        setTimeout(() => setBookingStatus(""), 4000);
+      } catch (err) {
+        console.error("Failed to submit booking after payment:", err);
+        setBookingStatus("");
+        setBookingError(err.message || "Failed to complete booking. Please try again.");
+        setShowPaymentModal(false);
+      } finally {
+        setIsProcessingPayment(false);
+      }
+    }, 1500);
   };
 
   const handleSendMessage = async (e) => {
@@ -331,6 +352,7 @@ export const PatientDoctors = () => {
                   <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "0.5rem", fontSize: "0.75rem" }} className="flex-column gap-1">
                     <div className="align-center gap-1"><Star size={12} fill="var(--primary)" style={{ color: "var(--primary)" }} /> <strong>{doc.rating}</strong> ({doc.reviews} reviews)</div>
                     <div className="align-center gap-1"><MapPin size={12} /> {doc.location}</div>
+                    <div className="align-center gap-1" style={{ color: "var(--primary)", fontWeight: "600", marginTop: "2px" }}>💵 Fee: {doc.consultationFee || doc.fee || "$50"}</div>
                   </div>
 
                   <button 
@@ -395,6 +417,13 @@ export const PatientDoctors = () => {
                         ))}
                       </select>
                     </div>
+
+                    {activeDoctor && (
+                      <div className="card" style={{ padding: "0.75rem", backgroundColor: "var(--primary-light)", border: "1px solid var(--primary)", borderRadius: "var(--radius-md)", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
+                        <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--primary)" }}>Consultation Price:</span>
+                        <span style={{ fontSize: "1rem", fontWeight: "700", color: "var(--primary)" }}>{activeDoctor.consultationFee || activeDoctor.fee || "$50"}</span>
+                      </div>
+                    )}
 
                     <div className="form-group">
                       <label className="form-label" htmlFor="appt-date">Consultation Date</label>
@@ -537,7 +566,11 @@ export const PatientDoctors = () => {
                     <Video size={24} style={{ marginBottom: "8px", color: "var(--text-muted)" }} />
                     <p style={{ fontSize: "0.85rem", margin: 0, fontWeight: "600" }}>Video Consultation Locked</p>
                     <p style={{ fontSize: "0.7rem", color: "#64748b", marginTop: "4px", lineHeight: 1.3 }}>
-                      {activeApt ? "Awaiting confirmation from the medical provider." : "Please schedule an appointment to unlock video consultation."}
+                      {activeApt?.status === "Paid" 
+                        ? `Payment of ${activeDoctor?.consultationFee || activeDoctor?.fee || "$50"} received successfully! Awaiting provider's acceptance to start the consultation.` 
+                        : activeApt 
+                        ? "Awaiting confirmation from the medical provider." 
+                        : "Please schedule an appointment to unlock video consultation."}
                     </p>
                   </div>
                 )}
@@ -588,6 +621,111 @@ export const PatientDoctors = () => {
         )}
 
       </div>
+
+      {/* Secure Mock Payment Modal */}
+      {showPaymentModal && (
+        <div className="modal-overlay">
+          <div className="modal-content" style={{ maxWidth: "450px", padding: "1.5rem" }}>
+            <h3 style={{ margin: "0 0 0.5rem 0", fontSize: "1.2rem", fontWeight: "600", display: "flex", alignItems: "center", gap: "0.5rem", color: "var(--text-primary)" }}>
+              🔒 Secure Consultation Payment
+            </h3>
+            <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: "0 0 1.25rem 0" }}>
+              Verify details and complete the mock payment process to submit your booking request to the doctor.
+            </p>
+
+            <div className="card" style={{ padding: "0.75rem", backgroundColor: "var(--bg-secondary)", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", marginBottom: "1.25rem", fontSize: "0.85rem" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                <span className="text-secondary-color">Practitioner:</span>
+                <strong>{activeDoctor?.name}</strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.4rem" }}>
+                <span className="text-secondary-color">Date & Time:</span>
+                <strong>{bookingDate} at {bookingSlot}</strong>
+              </div>
+              <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px dashed var(--border-color)", paddingTop: "0.4rem", marginTop: "0.4rem" }}>
+                <span className="text-secondary-color">Consultation Fee:</span>
+                <strong style={{ color: "var(--primary)", fontSize: "1rem" }}>{activeDoctor?.consultationFee || activeDoctor?.fee || "$50"}</strong>
+              </div>
+            </div>
+
+            {isProcessingPayment ? (
+              <div className="flex-column flex-center text-center" style={{ padding: "2rem 1rem" }}>
+                <div style={{ width: "32px", height: "32px", borderRadius: "50%", border: "3px solid var(--border-color)", borderTop: "3px solid var(--primary)", animation: "spin 1s linear infinite" }} />
+                <h4 style={{ marginTop: "1rem", fontSize: "0.9rem", color: "var(--text-primary)" }}>Processing secure payment...</h4>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-muted)", marginTop: "0.25rem" }}>Verifying mock transactions with banking gateway.</p>
+              </div>
+            ) : (
+              <div className="flex-column gap-3">
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: "0.75rem" }} htmlFor="card-holder">Cardholder Name</label>
+                  <input
+                    type="text"
+                    id="card-holder"
+                    className="form-input"
+                    style={{ fontSize: "0.8rem", padding: "0.45rem" }}
+                    value={cardName}
+                    onChange={(e) => setCardName(e.target.value)}
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label className="form-label" style={{ fontSize: "0.75rem" }} htmlFor="card-number">Card Number</label>
+                  <input
+                    type="text"
+                    id="card-number"
+                    className="form-input"
+                    style={{ fontSize: "0.8rem", padding: "0.45rem" }}
+                    value={cardNumber}
+                    onChange={(e) => setCardNumber(e.target.value)}
+                    placeholder="4111 1111 1111 1111"
+                    required
+                  />
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: "0.75rem" }} htmlFor="card-exp">Expiry Date</label>
+                    <input
+                      type="text"
+                      id="card-exp"
+                      className="form-input"
+                      style={{ fontSize: "0.8rem", padding: "0.45rem" }}
+                      value={cardExpiry}
+                      onChange={(e) => setCardExpiry(e.target.value)}
+                      placeholder="MM/YY"
+                      required
+                    />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label" style={{ fontSize: "0.75rem" }} htmlFor="card-cvv">CVV</label>
+                    <input
+                      type="password"
+                      id="card-cvv"
+                      className="form-input"
+                      style={{ fontSize: "0.8rem", padding: "0.45rem" }}
+                      value={cardCvv}
+                      onChange={(e) => setCardCvv(e.target.value)}
+                      placeholder="123"
+                      maxLength={3}
+                      required
+                    />
+                  </div>
+                </div>
+
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+                  <button type="button" className="btn btn-secondary" style={{ padding: "0.5rem" }} onClick={() => setShowPaymentModal(false)}>
+                    Cancel
+                  </button>
+                  <button type="button" className="btn btn-primary" style={{ padding: "0.5rem" }} onClick={handleConfirmPayment}>
+                    Pay & Confirm
+                  </button>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 };

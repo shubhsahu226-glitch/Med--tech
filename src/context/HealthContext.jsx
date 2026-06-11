@@ -331,7 +331,7 @@ export const HealthProvider = ({ children }) => {
   }, [user, role]);
 
   const addAppointment = async (appointmentData) => {
-    const { patientId, doctorId, patientName, doctorName, date, time, reason, meetingType } = appointmentData;
+    const { patientId, doctorId, patientName, doctorName, date, time, reason, meetingType, status } = appointmentData;
     const newAptId = generateUUID();
     const newAptObj = {
       id: newAptId,
@@ -343,7 +343,7 @@ export const HealthProvider = ({ children }) => {
       time,
       reason,
       meetingType: meetingType || "Video",
-      status: 'Pending',
+      status: status || 'Pending',
       created_at: new Date().toISOString()
     };
 

@@ -9,6 +9,9 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
 
+  // Role Detection
+  const isPatient = myPeerId?.startsWith("pat_");
+
   // Controls state
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
@@ -519,15 +522,23 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
       }}
     >
       <div className="text-center" style={{ color: "#94a3b8" }}>
-        <Video size={24} style={{ marginBottom: "8px" }} />
-        <p style={{ fontSize: "0.85rem", margin: "0 0 10px 0" }}>Video Consultation Room</p>
-        <button 
-          onClick={initiateCall} 
-          className="btn btn-primary" 
-          style={{ padding: "0.5rem 1.5rem", borderRadius: "50px", display: "flex", alignItems: "center", gap: "0.5rem", margin: "0 auto" }}
-        >
-          <Video size={16} /> Start Call
-        </button>
+        <Video size={24} style={{ marginBottom: "8px", color: isPatient ? "#22c55e" : "#94a3b8", animation: isPatient ? "pulse 2s infinite" : "none" }} />
+        <p style={{ fontSize: "0.85rem", margin: "0 0 10px 0" }}>
+          {isPatient ? "Waiting for doctor to start the call..." : "Video Consultation Room"}
+        </p>
+        {!isPatient ? (
+          <button 
+            onClick={initiateCall} 
+            className="btn btn-primary" 
+            style={{ padding: "0.5rem 1.5rem", borderRadius: "50px", display: "flex", alignItems: "center", gap: "0.5rem", margin: "0 auto" }}
+          >
+            <Video size={16} /> Start Call
+          </button>
+        ) : (
+          <p style={{ fontSize: "0.7rem", color: "#64748b", margin: 0, padding: "0 1.5rem", lineHeight: 1.35 }}>
+            Keep this tab open. You will receive a call ring once the doctor initiates the session.
+          </p>
+        )}
       </div>
       
       {/* Global CSS for animations and hiding root layout when call is active */}
@@ -539,6 +550,10 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
         @keyframes wiggle {
           0%, 100% { transform: rotate(-15deg); }
           50% { transform: rotate(15deg); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 0.55; transform: scale(1); }
+          50% { opacity: 1; transform: scale(1.08); }
         }
         @keyframes pulse-border {
           0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }

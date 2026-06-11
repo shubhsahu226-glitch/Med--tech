@@ -39,7 +39,7 @@ export const DoctorAppointments = () => {
   const doctorAppointments = appointments.filter(apt => apt.doctorId === user.id || (isGuestUser && apt.doctorId === "doc1"));
   
   // Group appointments
-  const pendingApts = doctorAppointments.filter(apt => apt.status === "Pending");
+  const pendingApts = doctorAppointments.filter(apt => apt.status === "Pending" || apt.status === "Paid");
   const confirmedApts = doctorAppointments.filter(apt => apt.status === "Upcoming" || apt.status === "Confirmed");
 
   const activeApt = selectedAptId ? (doctorAppointments.find(a => a.id === selectedAptId) || null) : null;
@@ -346,15 +346,21 @@ export const DoctorAppointments = () => {
             
             <div className="flex-column gap-3">
               {pendingApts.map(apt => (
-                <div key={apt.id} className="card flex-column gap-3" style={{ padding: "1.25rem", borderLeft: "3px solid #d97706" }}>
+                <div key={apt.id} className="card flex-column gap-3" style={{ padding: "1.25rem", borderLeft: apt.status === "Paid" ? "3px solid #22c55e" : "3px solid #d97706" }}>
                   <div className="flex-between">
                     <div>
                       <h4 style={{ margin: 0, fontSize: "0.9rem", fontWeight: "600" }}>{apt.patientName}</h4>
                       <p style={{ fontSize: "0.7rem", color: "var(--text-muted)", margin: "0.15rem 0 0 0" }}>Wishes to consult for diagnostic review</p>
                     </div>
-                    <span className="badge" style={{ backgroundColor: "rgba(217, 119, 6, 0.1)", color: "#b45309", fontSize: "0.65rem", padding: "0.2rem 0.5rem", borderRadius: "var(--radius-sm)" }}>
-                      Pending Request
-                    </span>
+                    {apt.status === "Paid" ? (
+                      <span className="badge" style={{ backgroundColor: "rgba(34, 197, 94, 0.15)", color: "#22c55e", fontSize: "0.65rem", padding: "0.2rem 0.5rem", borderRadius: "var(--radius-sm)", fontWeight: "600" }}>
+                        Paid Request
+                      </span>
+                    ) : (
+                      <span className="badge" style={{ backgroundColor: "rgba(217, 119, 6, 0.1)", color: "#b45309", fontSize: "0.65rem", padding: "0.2rem 0.5rem", borderRadius: "var(--radius-sm)" }}>
+                        Pending Request
+                      </span>
+                    )}
                   </div>
 
                   <div className="align-center gap-4" style={{ fontSize: "0.75rem", color: "var(--text-secondary)", borderTop: "1px solid var(--border-color)", paddingTop: "0.6rem" }}>
