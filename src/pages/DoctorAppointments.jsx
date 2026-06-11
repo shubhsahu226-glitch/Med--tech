@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
-import { Calendar, Clock, Video, Send, Save, PhoneOff, Check, X, ShieldAlert } from "lucide-react";
+import { Calendar, Clock, Video, Send, Save, PhoneOff, Check, X, ShieldAlert, MessageSquare } from "lucide-react";
 import VideoCall from "../components/VideoCall";
 
 const generateTempId = () => `temp_${Date.now()}`;
