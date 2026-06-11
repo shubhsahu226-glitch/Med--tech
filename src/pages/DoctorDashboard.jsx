@@ -28,10 +28,10 @@ export const DoctorDashboard = () => {
     if (refreshAppointments) refreshAppointments();
   }, []);
 
-  const isGuestUser = !user?.id || user.id === "doc1";
+  const isGuestUser = !user?.id || user.id === "7a02fa0d-9719-4261-bd98-1c3d54238c2f";
 
-  // Filter clinician's schedule
-  const doctorAppointments = appointments.filter(apt => apt.doctorId === user.id || (isGuestUser && apt.doctorId === "doc1"));
+  // Filter doctor appointments
+  const doctorAppointments = appointments.filter(apt => apt.doctorId === user.id || (isGuestUser && apt.doctorId === "7a02fa0d-9719-4261-bd98-1c3d54238c2f"));
   const upcomingApts = doctorAppointments.filter(apt => apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending" || apt.status === "Paid");
 
   // Filter for today's appointments (Confirmed or Upcoming or Paid)
@@ -43,7 +43,7 @@ export const DoctorDashboard = () => {
     return [
       {
         id: "al_mock_1",
-        patient_id: "pat1",
+        patient_id: "6bbc3a1a-2b12-48cd-b04d-8974ca01264a",
         patient_name: "Alex Mercer",
         patient_age: 34,
         patient_gender: "Male",
@@ -82,7 +82,7 @@ export const DoctorDashboard = () => {
       }
 
       if (isGuestUser) {
-        const patientNames = { pat1: "Alex Mercer", pat2: "Emily Watson", pat3: "Michael Vance" };
+        const patientNames = { "6bbc3a1a-2b12-48cd-b04d-8974ca01264a": "Alex Mercer", pat2: "Emily Watson", pat3: "Michael Vance" };
         const enrichedLocal = localAlerts.map(a => ({
           ...a,
           patient_name: patientNames[a.patient_id] || a.patient_name || "Unknown Patient",

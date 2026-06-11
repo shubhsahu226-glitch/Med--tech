@@ -31,7 +31,7 @@ export const DoctorPatients = () => {
   const [notesStatus, setNotesStatus] = useState("");
   const [isSavingNotes, setIsSavingNotes] = useState(false);
 
-  const isGuestUser = !user?.id || user.id === "doc1";
+  const isGuestUser = !user?.id || user.id === "7a02fa0d-9719-4261-bd98-1c3d54238c2f";
 
   const selectedPatient = connectedPatients.find(p => p.id === selectedPatientId) || null;
   const selectedReport = selectedReportId ? (patientReports.find(r => r.id === selectedReportId) || null) : null;

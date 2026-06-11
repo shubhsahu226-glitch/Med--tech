@@ -15,7 +15,7 @@ export const VideoRoom = () => {
   const apptId = params.get("apptId");
 
   const appointment = appointments.find(a => a.id === apptId);
-  const isGuestMode = !user?.id || user.id === "pat1" || appointment?.doctorId === "doc1" || appointment?.patientId === "pat1";
+  const isGuestMode = !user?.id || user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a" || appointment?.doctorId === "7a02fa0d-9719-4261-bd98-1c3d54238c2f" || appointment?.patientId === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a";
 
   const chatEndRef = useRef(null);
 

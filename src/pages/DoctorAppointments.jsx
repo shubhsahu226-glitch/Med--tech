@@ -85,10 +85,10 @@ export const DoctorAppointments = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
-  const isGuestUser = !user?.id || user.id === "doc1";
+  const isGuestUser = !user?.id || user.id === "7a02fa0d-9719-4261-bd98-1c3d54238c2f";
 
   // Filter doctor appointments
-  const doctorAppointments = appointments.filter(apt => apt.doctorId === user.id || (isGuestUser && apt.doctorId === "doc1"));
+  const doctorAppointments = appointments.filter(apt => apt.doctorId === user.id || (isGuestUser && apt.doctorId === "7a02fa0d-9719-4261-bd98-1c3d54238c2f"));
   
   // Group appointments
   const pendingApts = doctorAppointments.filter(apt => apt.status === "Pending" || apt.status === "Paid");
@@ -207,7 +207,7 @@ export const DoctorAppointments = () => {
   };
 
   // Chat Integration with Supabase
-  const isGuestMode = !user?.id || user.id === "doc1" || activeApt?.patientId === "pat1";
+  const isGuestMode = !user?.id || user.id === "7a02fa0d-9719-4261-bd98-1c3d54238c2f" || activeApt?.patientId === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a";
 
   useEffect(() => {
     if (!activeApt?.patientId || !user?.id || activeTab !== "consult" || (!isGuestMode && !activeApt?.id)) return;

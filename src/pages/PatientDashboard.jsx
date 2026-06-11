@@ -131,7 +131,7 @@ export const PatientDashboard = () => {
   const activeReminders = reminders.filter(r => !r.taken).slice(0, 1);
 
   // Check if guest demo patient
-  const isGuest = !user?.id || user.id === "pat1";
+  const isGuest = !user?.id || user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a";
 
   // Fetch current treatment details from Supabase or fallback to mock for guest
   const currentTreatment = treatments && treatments.length > 0
@@ -158,7 +158,7 @@ export const PatientDashboard = () => {
   // Sync / Fetch Chat Messages when Session Hub Modal is open
   useEffect(() => {
     if (!activeSessionApt || !user?.id) return;
-    const isGuestSession = user.id === "pat1" || activeSessionApt.doctorId === "doc1";
+    const isGuestSession = user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a" || activeSessionApt.doctorId === "7a02fa0d-9719-4261-bd98-1c3d54238c2f";
 
     const fetchMessages = async () => {
       if (isGuestSession) {
@@ -244,7 +244,7 @@ export const PatientDashboard = () => {
 
     setChatMessages(prev => [...prev, newMsgObj]);
 
-    const isGuestSession = user.id === "pat1" || activeSessionApt.doctorId === "doc1";
+    const isGuestSession = user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a" || activeSessionApt.doctorId === "7a02fa0d-9719-4261-bd98-1c3d54238c2f";
     if (isGuestSession) {
       try {
         const key = `virtualvaidya_chat_${user.id}_${activeSessionApt.doctorId}`;

@@ -1,6 +1,6 @@
 export const mockDoctors = [
   {
-    id: "doc1",
+    id: "7a02fa0d-9719-4261-bd98-1c3d54238c2f",
     name: "Dr. Sarah Jenkins",
     specialty: "Cardiologist",
     hospital: "City Heart Institute",
@@ -14,7 +14,7 @@ export const mockDoctors = [
     fee: "₹1500"
   },
   {
-    id: "doc2",
+    id: "87c80d20-6401-4f07-a421-fd012c847992",
     name: "Dr. Amit Patel",
     specialty: "Neurologist",
     hospital: "NeuroCare Center",
@@ -31,7 +31,7 @@ export const mockDoctors = [
 
 export const mockPatients = [
   {
-    id: "pat1",
+    id: "6bbc3a1a-2b12-48cd-b04d-8974ca01264a",
     name: "Alex Mercer",
     age: 34,
     gender: "Male",

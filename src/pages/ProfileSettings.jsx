@@ -37,7 +37,7 @@ export const ProfileSettingsForm = () => {
   }
 
   // Determine if this is a Guest/Demo user (local-only state)
-  const isGuestUser = !user?.id || user.id === "pat1" || user.id === "doc1";
+  const isGuestUser = !user?.id || user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a" || user.id === "7a02fa0d-9719-4261-bd98-1c3d54238c2f";
 
   const handleSubmit = async (e) => {
     e.preventDefault();

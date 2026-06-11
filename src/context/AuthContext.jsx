@@ -467,25 +467,20 @@ export const AuthProvider = ({ children }) => {
     safeSetItem("virtualvaidya_user", JSON.stringify(updatedUser));
   };
 
-  const loginGuest = (loginRole = "patient") => {
+  const loginGuest = async (loginRole = "patient") => {
     setLoading(true);
-
+    let email, password;
     if (loginRole === "doctor") {
-      const doctor = mockDoctors[0];
-      setUser(doctor);
-      setRole("doctor");
-      safeSetItem("virtualvaidya_user", JSON.stringify(doctor));
-      safeSetItem("virtualvaidya_role", "doctor");
+      email = "guest.doctor@virtualvaidya.com";
+      password = "Password123";
     } else {
-      const patient = mockPatients[0];
-      setUser(patient);
-      setRole("patient");
-      safeSetItem("virtualvaidya_user", JSON.stringify(patient));
-      safeSetItem("virtualvaidya_role", "patient");
+      email = "guest.patient@virtualvaidya.com";
+      password = "Password123";
     }
 
+    const { data, error, role: resolvedRole } = await login(email, password, loginRole);
     setLoading(false);
-    return { error: null };
+    return { data, error, role: resolvedRole };
   };
 
   return (
