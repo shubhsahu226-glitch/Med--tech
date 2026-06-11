@@ -327,7 +327,17 @@ export const DoctorAppointments = () => {
 
                   <button 
                     onClick={() => {
-                      window.open(`/doctor/appointments?consult=${apt.id}`, '_blank');
+                      setSelectedAptId(apt.id);
+                      setActiveTab("consult");
+                      const width = 1100;
+                      const height = 700;
+                      const left = (window.screen.width - width) / 2;
+                      const top = (window.screen.height - height) / 2;
+                      window.open(
+                        `/room?apptId=${apt.id}`,
+                        `video_room_${apt.id}`,
+                        `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,location=no,resizable=yes`
+                      );
                     }}
                     className="btn btn-primary w-full align-center gap-2 justify-content-center"
                     style={{ padding: "0.5rem", fontSize: "0.8rem", fontWeight: "600" }}
@@ -427,12 +437,43 @@ export const DoctorAppointments = () => {
                 </div>
               </div>
 
-              {/* Video Call */}
-              <VideoCall 
-                myPeerId={`doc_${user.id}`} 
-                targetPeerId={`pat_${selectedPatient?.id}`} 
-                targetName={selectedPatient?.name}
-              />
+              {/* Video Call Window Launcher */}
+              <div 
+                style={{
+                  backgroundColor: "#1e293b",
+                  borderRadius: "var(--radius-md)",
+                  padding: "1.75rem",
+                  textAlign: "center",
+                  border: "1px dashed var(--border-color)",
+                  boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                }}
+              >
+                <div style={{ width: "44px", height: "44px", borderRadius: "50%", backgroundColor: "rgba(59, 130, 246, 0.15)", color: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.75rem auto" }}>
+                  <Video size={20} />
+                </div>
+                <h4 style={{ color: "white", margin: "0 0 0.4rem 0", fontSize: "0.95rem", fontWeight: "600" }}>Video Call Standalone Window</h4>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "1rem", lineHeight: "1.4" }}>
+                  The telehealth call is launched in a dedicated clean popup window. Use that window to converse with the patient, and fill out charting details below.
+                </p>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    const width = 1100;
+                    const height = 700;
+                    const left = (window.screen.width - width) / 2;
+                    const top = (window.screen.height - height) / 2;
+                    window.open(
+                      `/room?apptId=${activeApt.id}`,
+                      `video_room_${activeApt.id}`,
+                      `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,location=no,resizable=yes`
+                    );
+                  }}
+                  className="btn btn-secondary w-full"
+                  style={{ fontSize: "0.75rem", padding: "0.45rem" }}
+                >
+                  Launch Call Window
+                </button>
+              </div>
 
               {/* Secure Chat */}
               <div className="card flex-column gap-3" style={{ padding: "1rem" }}>

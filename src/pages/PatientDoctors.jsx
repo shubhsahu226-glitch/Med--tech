@@ -553,11 +553,42 @@ export const PatientDoctors = () => {
                 
                 {/* Video Call Session - unlocked only if appointment is confirmed */}
                 {hasConfirmedApt ? (
-                  <VideoCall 
-                    myPeerId={activeTab === "telehealth" ? `pat_${user.id}` : null} 
-                    targetPeerId={activeDoctor ? `doc_${activeDoctor.id}` : null} 
-                    targetName={activeDoctor?.name}
-                  />
+                  <div 
+                    style={{
+                      backgroundColor: "#1e293b",
+                      borderRadius: "var(--radius-md)",
+                      padding: "1.75rem",
+                      textAlign: "center",
+                      border: "1px dashed var(--border-color)",
+                      boxShadow: "0 4px 6px -1px rgba(0, 0, 0, 0.1)"
+                    }}
+                  >
+                    <div style={{ width: "44px", height: "44px", borderRadius: "50%", backgroundColor: "rgba(34, 197, 94, 0.15)", color: "#22c55e", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 0.75rem auto" }}>
+                      <Video size={20} />
+                    </div>
+                    <h4 style={{ color: "white", margin: "0 0 0.4rem 0", fontSize: "0.95rem", fontWeight: "600" }}>Launch Secure Video Room</h4>
+                    <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", marginBottom: "1rem", lineHeight: "1.4" }}>
+                      Your appointment is confirmed! Click below to start the video room in a dedicated popup window.
+                    </p>
+                    <button 
+                      type="button"
+                      onClick={() => {
+                        const width = 1100;
+                        const height = 700;
+                        const left = (window.screen.width - width) / 2;
+                        const top = (window.screen.height - height) / 2;
+                        window.open(
+                          `/room?apptId=${activeApt.id}`,
+                          `video_room_${activeApt.id}`,
+                          `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,location=no,resizable=yes`
+                        );
+                      }}
+                      className="btn btn-primary w-full"
+                      style={{ fontSize: "0.8rem", padding: "0.5rem" }}
+                    >
+                      Open Call Window
+                    </button>
+                  </div>
                 ) : (
                   <div 
                     style={{

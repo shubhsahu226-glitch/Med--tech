@@ -131,7 +131,17 @@ export const PatientDashboard = () => {
             {nextAppointment ? (
               <AppointmentCard 
                 appointment={nextAppointment} 
-                onStartConsultation={() => window.open(`/patient/doctors?tab=telehealth&doctor=${nextAppointment.doctorId}`, '_blank')} 
+                onStartConsultation={() => {
+                  const width = 1100;
+                  const height = 700;
+                  const left = (window.screen.width - width) / 2;
+                  const top = (window.screen.height - height) / 2;
+                  window.open(
+                    `/room?apptId=${nextAppointment.id}`,
+                    `video_room_${nextAppointment.id}`,
+                    `width=${width},height=${height},left=${left},top=${top},status=no,menubar=no,toolbar=no,location=no,resizable=yes`
+                  );
+                }} 
                 isDoctor={false}
               />
             ) : (

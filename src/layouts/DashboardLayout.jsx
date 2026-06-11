@@ -23,6 +23,7 @@ import { DoctorClinic } from "../pages/DoctorClinic";
 import { DoctorPatients } from "../pages/DoctorPatients";
 import { DoctorAppointments } from "../pages/DoctorAppointments";
 import { DoctorAlerts } from "../pages/DoctorAlerts";
+import { VideoRoom } from "../pages/VideoRoom";
 
 export const DashboardLayout = () => {
   const { user, profile, rawUser, role, loading } = useAuth();
@@ -48,12 +49,13 @@ export const DashboardLayout = () => {
   // Check if current route is an auth page or homepage where full dashboard frame is NOT needed
   const isAuthPage = location.pathname.includes("/auth");
   const isHomePage = location.pathname === "/";
-  const showDashboardFrame = user && !isAuthPage && !isHomePage;
+  const isRoomPage = location.pathname === "/room";
+  const showDashboardFrame = user && !isAuthPage && !isHomePage && !isRoomPage;
 
   return (
     <div className="app-container">
       {/* Show Navbar on all routes except isolated auth pages */}
-      {!isAuthPage && <Navbar />}
+      {!isAuthPage && !isRoomPage && <Navbar />}
 
       {showDashboardFrame ? (
         <div className="dashboard-layout">
@@ -85,6 +87,7 @@ export const DashboardLayout = () => {
             <Route path="/" element={<Home />} />
             <Route path="/patient/auth" element={<PatientAuth />} />
             <Route path="/doctor/auth" element={<DoctorAuth />} />
+            <Route path="/room" element={<VideoRoom />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
         </main>
