@@ -36,6 +36,28 @@ export const AuthProvider = ({ children }) => {
   };
 
   const restoreLocalUser = () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      const mockRole = params.get("mockRole");
+      const mockUserId = params.get("mockUserId");
+
+      if (mockRole && mockUserId) {
+        if (mockRole === "doctor") {
+          const doc = mockDoctors.find(d => d.id === mockUserId) || mockDoctors[0];
+          setUser(doc);
+          setRole("doctor");
+        } else {
+          const pat = mockPatients.find(p => p.id === mockUserId) || mockPatients[0];
+          setUser(pat);
+          setRole("patient");
+        }
+        setLoading(false);
+        return;
+      }
+    } catch (e) {
+      console.warn("Failed to parse URL mock query params:", e);
+    }
+
     const savedUser = safeGetItem("virtualvaidya_user");
     const savedRole = safeGetItem("virtualvaidya_role");
 
