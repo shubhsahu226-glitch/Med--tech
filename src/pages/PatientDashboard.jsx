@@ -256,7 +256,7 @@ export const PatientDashboard = () => {
       `}</style>
 
       {/* Greeting Header */}
-      <div className="flex-between flex-wrap gap-4" style={{ paddingBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+      <div className="flex-between flex-wrap gap-4 animate-slide-up" style={{ paddingBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
         <div>
           <h1 style={{ fontSize: "1.75rem", margin: 0, fontWeight: "600" }}>Hello, {user.name}</h1>
           <p className="text-secondary-color" style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}>Here is your active healthcare summary.</p>
@@ -265,7 +265,7 @@ export const PatientDashboard = () => {
           <button 
             type="button"
             onClick={() => setIsSOSConfirmOpen(true)}
-            className="btn align-center gap-1"
+            className="btn align-center gap-1 animate-pulse-scale"
             style={{ 
               fontSize: "0.85rem", 
               backgroundColor: "var(--danger)", 
@@ -273,7 +273,7 @@ export const PatientDashboard = () => {
               borderColor: "var(--danger)",
               fontWeight: "600",
               boxShadow: "0 0 0 0 rgba(239, 68, 68, 0.6)",
-              animation: "pulseRed 1.8s infinite"
+              animation: "pulseRed 1.8s infinite, pulseScale 2s infinite ease-in-out"
             }}
           >
             <ShieldAlert size={14} /> SOS Emergency
@@ -286,7 +286,7 @@ export const PatientDashboard = () => {
       </div>
 
       {/* Basic Info Banner */}
-      <div className="card grid-4" style={{ padding: "1.25rem", gap: "1.5rem", borderLeft: "4px solid var(--primary)" }}>
+      <div className="card grid-4 animate-slide-up delay-1" style={{ padding: "1.25rem", gap: "1.5rem", borderLeft: "4px solid var(--primary)" }}>
         <div>
           <div style={{ fontSize: "0.75rem", color: "var(--text-muted)", fontWeight: "500" }}>Age & Gender</div>
           <div style={{ fontSize: "0.95rem", fontWeight: "600", color: "var(--text-primary)", marginTop: "0.15rem" }}>
@@ -317,13 +317,13 @@ export const PatientDashboard = () => {
       <div className="split-layout split-layout-2-1" style={{ gap: "2.5rem" }}>
         
         {/* Left Column: Treatment & Upcoming Appointments */}
-        <div className="flex-column gap-6">
+        <div className="flex-column gap-6 animate-slide-up delay-2">
           
           {/* Current Treatment */}
           <div>
             <h3 style={{ fontSize: "1.15rem", marginBottom: "1rem", fontWeight: "600" }}>Current Treatment Course</h3>
             {currentTreatment ? (
-              <div className="card flex-column gap-3" style={{ padding: "1.5rem" }}>
+              <div className="card flex-column gap-3 list-item-interactive" style={{ padding: "1.5rem" }}>
                 <div className="flex-between">
                   <span className="badge badge-info" style={{ backgroundColor: "var(--primary-light)", color: "var(--primary)", fontSize: "0.7rem" }}>
                     Active Regimen
@@ -351,19 +351,21 @@ export const PatientDashboard = () => {
           <div>
             <div className="flex-between m-b-3">
               <h3 style={{ fontSize: "1.15rem", margin: 0, fontWeight: "600" }}>Upcoming Consultations</h3>
-              <Link to="/patient/doctors" className="btn-text align-center gap-1" style={{ fontSize: "0.8rem", fontWeight: "500", padding: 0 }}>
+              <Link to="/patient/doctors" className="btn-text align-center gap-1 btn-hover-arrow" style={{ fontSize: "0.8rem", fontWeight: "500", padding: 0 }}>
                 Manage Consults <ArrowRight size={14} />
               </Link>
             </div>
             {nextAppointment ? (
-              <AppointmentCard 
-                appointment={nextAppointment} 
-                onStartConsultation={() => {
-                  setActiveSessionApt(nextAppointment);
-                  setSessionTab("landing");
-                }} 
-                isDoctor={false}
-              />
+              <div className="list-item-interactive animate-slide-up delay-1">
+                <AppointmentCard 
+                  appointment={nextAppointment} 
+                  onStartConsultation={() => {
+                    setActiveSessionApt(nextAppointment);
+                    setSessionTab("landing");
+                  }} 
+                  isDoctor={false}
+                />
+              </div>
             ) : (
               <div className="card text-center" style={{ padding: "2.5rem 1.5rem" }}>
                 <Calendar size={28} style={{ color: "var(--text-muted)", marginBottom: "0.75rem" }} />
@@ -377,23 +379,24 @@ export const PatientDashboard = () => {
         </div>
 
         {/* Right Column: Medications */}
-        <div className="flex-column gap-6">
+        <div className="flex-column gap-6 animate-slide-up delay-3">
           
           <div>
             <div className="flex-between m-b-3">
               <h3 style={{ fontSize: "1.15rem", margin: 0, fontWeight: "600" }}>Upcoming Medication</h3>
-              <Link to="/patient/care" className="btn-text align-center gap-1" style={{ fontSize: "0.8rem", fontWeight: "500", padding: 0 }}>
+              <Link to="/patient/care" className="btn-text align-center gap-1 btn-hover-arrow" style={{ fontSize: "0.8rem", fontWeight: "500", padding: 0 }}>
                 Care Panel <ArrowRight size={14} />
               </Link>
             </div>
 
             <div className="flex-column gap-3">
               {activeReminders.map(rem => (
-                <ReminderCard 
-                  key={rem.id} 
-                  reminder={rem} 
-                  onToggle={() => {}} // Read-only checkbox on home dashboard
-                />
+                <div key={rem.id} className="list-item-interactive animate-slide-up delay-1">
+                  <ReminderCard 
+                    reminder={rem} 
+                    onToggle={() => {}} // Read-only checkbox on home dashboard
+                  />
+                </div>
               ))}
               {activeReminders.length === 0 && (
                 <div className="card text-center" style={{ padding: "1.5rem" }}>

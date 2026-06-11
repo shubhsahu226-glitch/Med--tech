@@ -263,7 +263,7 @@ export const DoctorDashboard = () => {
   return (
     <div className="flex-column gap-6" style={{ backgroundColor: "var(--bg-primary)" }}>
       {/* Greeting Header */}
-      <div className="flex-between flex-wrap gap-4" style={{ paddingBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
+      <div className="flex-between flex-wrap gap-4 animate-slide-up" style={{ paddingBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
         <div>
           <h1 style={{ fontSize: "1.75rem", margin: 0, fontWeight: "600" }}>Clinician Workspace</h1>
           <p className="text-secondary-color" style={{ fontSize: "0.875rem", marginTop: "0.25rem" }}>
@@ -278,8 +278,8 @@ export const DoctorDashboard = () => {
 
       {/* Stats Cards */}
       <div className="grid-3" style={{ gap: "1.5rem" }}>
-        <div className="card align-center gap-3" style={{ padding: "1.25rem" }}>
-          <div style={{ color: "var(--primary)", background: "var(--primary-light)", padding: "0.5rem", borderRadius: "var(--radius-md)" }}>
+        <div className="card align-center gap-3 animate-slide-up delay-1" style={{ padding: "1.25rem" }}>
+          <div className="icon-bounce" style={{ color: "var(--primary)", background: "var(--primary-light)", padding: "0.5rem", borderRadius: "var(--radius-md)" }}>
             <Users size={18} />
           </div>
           <div>
@@ -288,8 +288,8 @@ export const DoctorDashboard = () => {
           </div>
         </div>
 
-        <div className="card align-center gap-3" style={{ padding: "1.25rem" }}>
-          <div style={{ color: "var(--primary)", background: "var(--primary-light)", padding: "0.5rem", borderRadius: "var(--radius-md)" }}>
+        <div className="card align-center gap-3 animate-slide-up delay-2" style={{ padding: "1.25rem" }}>
+          <div className="icon-bounce" style={{ color: "var(--primary)", background: "var(--primary-light)", padding: "0.5rem", borderRadius: "var(--radius-md)" }}>
             <Calendar size={18} />
           </div>
           <div>
@@ -298,8 +298,8 @@ export const DoctorDashboard = () => {
           </div>
         </div>
 
-        <div className="card align-center gap-3" style={{ padding: "1.25rem" }}>
-          <div style={{ color: "var(--primary)", background: "var(--primary-light)", padding: "0.5rem", borderRadius: "var(--radius-md)" }}>
+        <div className="card align-center gap-3 animate-slide-up delay-3" style={{ padding: "1.25rem" }}>
+          <div className="icon-bounce" style={{ color: "var(--primary)", background: "var(--primary-light)", padding: "0.5rem", borderRadius: "var(--radius-md)" }}>
             <FileText size={18} />
           </div>
           <div>
@@ -313,10 +313,10 @@ export const DoctorDashboard = () => {
       <div className="split-layout split-layout-2-1" style={{ gap: "2.5rem" }}>
         
         {/* Left Column: Today's Clinical Schedule */}
-        <div className="flex-column gap-4">
+        <div className="flex-column gap-4 animate-slide-up delay-2">
           <div className="flex-between">
             <h3 style={{ fontSize: "1.2rem", margin: 0, fontWeight: "600" }}>Today's Clinical Schedule</h3>
-            <Link to="/doctor/appointments" className="btn-text align-center gap-1" style={{ fontSize: "0.8rem", fontWeight: "500", padding: 0 }}>
+            <Link to="/doctor/appointments" className="btn-text align-center gap-1 btn-hover-arrow" style={{ fontSize: "0.8rem", fontWeight: "500", padding: 0 }}>
               All Appointments <ArrowRight size={14} />
             </Link>
           </div>
@@ -325,7 +325,7 @@ export const DoctorDashboard = () => {
             {todaysApts.map(apt => {
               const isPendingAction = apt.status === "Pending" || apt.status === "Paid";
               return (
-                <div key={apt.id} className="card flex-column gap-3" style={{ padding: "1.25rem", borderLeft: isPendingAction ? "3px solid #d97706" : "3px solid var(--primary)" }}>
+                <div key={apt.id} className="card flex-column gap-3 list-item-interactive animate-slide-up delay-1" style={{ padding: "1.25rem", borderLeft: isPendingAction ? "3px solid #d97706" : "3px solid var(--primary)" }}>
                   <div className="flex-between">
                     <div className="align-center gap-2">
                       <div style={{ width: "32px", height: "32px", borderRadius: "50%", background: "var(--primary-light)", color: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "600", fontSize: "0.8rem" }}>
@@ -370,7 +370,7 @@ export const DoctorDashboard = () => {
             })}
 
             {todaysApts.length === 0 && (
-              <div className="card text-center" style={{ padding: "4rem 2rem", borderRadius: "1rem" }}>
+              <div className="card text-center animate-slide-up delay-2" style={{ padding: "4rem 2rem", borderRadius: "1rem" }}>
                 <Calendar size={36} style={{ color: "var(--text-muted)", marginBottom: "0.75rem", marginLeft: "auto", marginRight: "auto" }} />
                 <h4 style={{ margin: 0, fontSize: "1rem", fontWeight: "600" }}>No consultations scheduled today</h4>
                 <p className="text-secondary-color" style={{ fontSize: "0.8rem", marginTop: "0.25rem" }}>
@@ -382,10 +382,10 @@ export const DoctorDashboard = () => {
         </div>
 
         {/* Right Column: Recent Patient Alerts Feed */}
-        <div className="flex-column gap-4">
+        <div className="flex-column gap-4 animate-slide-up delay-3">
           <div className="flex-between">
             <h3 style={{ fontSize: "1.2rem", margin: 0, fontWeight: "600" }}>Active Alerts Feed</h3>
-            <Link to="/doctor/alerts" className="btn-text align-center gap-1" style={{ fontSize: "0.8rem", fontWeight: "500", padding: 0 }}>
+            <Link to="/doctor/alerts" className="btn-text align-center gap-1 btn-hover-arrow" style={{ fontSize: "0.8rem", fontWeight: "500", padding: 0 }}>
               Alerts Board <ArrowRight size={14} />
             </Link>
           </div>
@@ -405,7 +405,7 @@ export const DoctorDashboard = () => {
                 />
               </div>
             ) : alertsList.length === 0 ? (
-              <div className="card text-center" style={{ padding: "2.5rem 1.5rem" }}>
+              <div className="card text-center animate-slide-up delay-1" style={{ padding: "2.5rem 1.5rem" }}>
                 <div className="flex-center" style={{ width: "48px", height: "48px", borderRadius: "50%", background: "var(--success-light)", color: "var(--success)", margin: "0 auto 0.75rem auto" }}>
                   <CheckCircle2 size={24} />
                 </div>
@@ -415,12 +415,13 @@ export const DoctorDashboard = () => {
                 </p>
               </div>
             ) : (
-              alertsList.slice(0, 3).map(alert => {
+              alertsList.slice(0, 3).map((alert, idx) => {
                 const isHigh = alert.severity?.toLowerCase() === "high";
+                const delayClass = idx === 0 ? "delay-1" : idx === 1 ? "delay-2" : "delay-3";
                 return (
                   <div 
                     key={alert.id} 
-                    className="card flex-column gap-2" 
+                    className={`card flex-column gap-2 list-item-interactive animate-slide-up ${delayClass}`}
                     style={{ 
                       padding: "1rem", 
                       borderLeft: isHigh ? "3px solid var(--danger-dark)" : "3px solid var(--warning-dark)",
@@ -457,7 +458,7 @@ export const DoctorDashboard = () => {
                       </span>
                       <button
                         onClick={() => handleResolveAlert(alert.id)}
-                        className="btn btn-primary align-center gap-1"
+                        className="btn btn-primary align-center gap-1 btn-success-hover"
                         style={{ 
                           padding: "0.25rem 0.5rem", 
                           fontSize: "0.65rem",
@@ -468,8 +469,6 @@ export const DoctorDashboard = () => {
                           height: "auto",
                           borderRadius: "var(--radius-sm)"
                         }}
-                        onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "var(--success-dark)"}
-                        onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "var(--success)"}
                       >
                         <Check size={12} /> Resolve
                       </button>
