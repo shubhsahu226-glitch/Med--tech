@@ -69,7 +69,7 @@ export const Navbar = () => {
         </div>
 
         {/* Center top-level navigation links (Desktop) */}
-        {user && navLinks.length > 0 && (
+        {user && navLinks.length > 0 && location.pathname !== "/" && (
           <div className="desktop-nav" style={{ display: "flex", gap: "1rem" }}>
             {navLinks.map((link, idx) => (
               <Link
@@ -93,7 +93,7 @@ export const Navbar = () => {
         )}
 
         <div className="nav-actions">
-          {user ? (
+          {user && location.pathname !== "/" ? (
             <>
               {/* Notification Bell */}
               <div style={{ position: "relative" }}>

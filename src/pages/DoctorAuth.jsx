@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { Stethoscope, ArrowLeft, Mail, Lock, User, Sparkles } from "lucide-react";
@@ -6,8 +6,19 @@ import { Link } from "react-router-dom";
 import { supabase } from "../config/supabase";
 
 export const DoctorAuth = () => {
-  const { login, signup, loginGuest } = useAuth();
+  const { user, role, login, signup, loginGuest } = useAuth();
   const navigate = useNavigate();
+
+  // Auto-redirect if already logged in
+  useEffect(() => {
+    if (user) {
+      if (role === "doctor") {
+        navigate("/doctor/dashboard", { replace: true });
+      } else {
+        navigate("/patient/dashboard", { replace: true });
+      }
+    }
+  }, [user, role, navigate]);
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState("");
