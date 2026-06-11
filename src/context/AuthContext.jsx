@@ -117,59 +117,83 @@ export const AuthProvider = ({ children }) => {
     const isMetadataDoctor = session.user.user_metadata?.role === "doctor" || forcedRole === "doctor";
 
     try {
-      const { data: doctorData, error: doctorError } = await supabase
-        .from("doctors")
-        .select("*")
+      // PRIMARY role detection: check profiles.role column (fast, single query)
+      const { data: profileRoleData } = await supabase
+        .from("profiles")
+        .select("role")
         .eq("id", session.user.id)
         .maybeSingle();
 
-      if (!doctorError && doctorData?.id) {
+      if (profileRoleData?.role === "doctor" || isMetadataDoctor) {
         resolvedRole = "doctor";
-        doctorDetails = doctorData;
-      } else if (isMetadataDoctor) {
-        // Self-heal: doctor record is missing, let's insert it
-        resolvedRole = "doctor";
-        const formattedName = session.user.user_metadata?.name || "Dr. Clinician";
-        
-        // Ensure profile exists first
-        const { data: profData } = await supabase
-          .from("profiles")
-          .select("id")
+      } else if (profileRoleData?.role) {
+        resolvedRole = profileRoleData.role; // 'patient' or other
+      }
+
+      // If doctor, fetch doctor details
+      if (resolvedRole === "doctor") {
+        const { data: doctorData, error: doctorError } = await supabase
+          .from("doctors")
+          .select("*")
           .eq("id", session.user.id)
           .maybeSingle();
+
+        if (!doctorError && doctorData?.id) {
+          doctorDetails = doctorData;
+        } else {
+          // Self-heal: doctor record is missing, let's insert it
+          const formattedName = session.user.user_metadata?.name || "Dr. Clinician";
           
-        if (!profData) {
-          await supabase.from("profiles").insert({
+          // Ensure profile exists with role = 'doctor'
+          const { data: profData } = await supabase
+            .from("profiles")
+            .select("id")
+            .eq("id", session.user.id)
+            .maybeSingle();
+            
+          if (!profData) {
+            await supabase.from("profiles").insert({
+              id: session.user.id,
+              name: formattedName,
+              mobile_number: "Not provided",
+              dob: "1980-01-01",
+              location: "City Central Clinic",
+              role: "doctor"
+            });
+          } else {
+            // Update role to doctor if it was wrong
+            await supabase.from("profiles").update({ role: "doctor" }).eq("id", session.user.id);
+          }
+          
+          const newDoc = {
             id: session.user.id,
             name: formattedName,
-            mobile_number: "Not provided",
-            dob: "1980-01-01",
-            location: "City Central Clinic"
-          });
-        }
-        
-        const newDoc = {
-          id: session.user.id,
-          specialization: "General Physician",
-          license_number: "LIC-" + Math.floor(100000 + Math.random() * 900000),
-          hospital: "City Central Clinic",
-          slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"],
-          availability: ["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"],
-          rating: 5.0,
-          reviews_count: 0,
-          image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200"
-        };
-        
-        const { data: insertedDoc, error: insertError } = await supabase
-          .from("doctors")
-          .insert(newDoc)
-          .select()
-          .maybeSingle();
+            specialty: "General Physician",
+            specialization: "General Physician",
+            location: "City Central Clinic",
+            hospital: "City Central Clinic",
+            license_number: "LIC-" + Math.floor(100000 + Math.random() * 900000),
+            experience: "5 years",
+            education: "MBBS",
+            slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"],
+            availability: ["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"],
+            rating: 5.0,
+            reviews: 0,
+            reviews_count: 0,
+            image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200"
+          };
           
-        doctorDetails = (!insertError && insertedDoc) ? insertedDoc : newDoc;
+          const { data: insertedDoc, error: insertError } = await supabase
+            .from("doctors")
+            .insert(newDoc)
+            .select()
+            .maybeSingle();
+            
+          doctorDetails = (!insertError && insertedDoc) ? insertedDoc : newDoc;
+        }
       }
     } catch (err) {
-      console.error("Doctor role lookup / heal failed:", err);
+      console.error("Role detection / doctor heal failed:", err);
     }
 
     setRole(resolvedRole);
@@ -276,6 +300,7 @@ export const AuthProvider = ({ children }) => {
     }
 
     setLoading(false);
+    return resolvedRole;
   };
 
   const loginWithGoogle = async () => {
@@ -296,8 +321,10 @@ export const AuthProvider = ({ children }) => {
       password,
     });
 
+    let finalRole = forcedRole;
+
     if (data?.session) {
-      await handleSession(data.session, forcedRole);
+      finalRole = await handleSession(data.session, forcedRole);
     } else if (data?.user) {
       setUser(data.user);
       setRole(forcedRole || "patient");
@@ -308,7 +335,7 @@ export const AuthProvider = ({ children }) => {
       setLoading(false);
     }
 
-    return { data, error };
+    return { data, error, role: finalRole };
   };
 
   const signup = async (email, password, options = {}) => {
@@ -340,7 +367,8 @@ export const AuthProvider = ({ children }) => {
       name: profileData.name,
       mobile_number: profileData.phone || profileData.mobile_number,
       location: profileData.location,
-      dob: profileData.dob || null
+      dob: profileData.dob || null,
+      role: role // Persist role in profiles table
     };
 
     const { error: pError } = await supabase
@@ -353,15 +381,18 @@ export const AuthProvider = ({ children }) => {
       return false;
     }
 
-    // 2. Build doctor fields corresponding to public.doctors table
+    // 2. Build doctor fields — write BOTH old and new column names for compatibility
     if (role === "doctor") {
       const doctorFields = {
         id: user.id,
         name: profileData.name,
         specialty: profileData.specialty || "General Physician",
+        specialization: profileData.specialty || "General Physician",
         location: profileData.location || "City Central Clinic",
+        hospital: profileData.location || profileData.hospital || "City Central Clinic",
         experience: profileData.experience || "5 years",
         consultationFee: profileData.consultationFee || null,
+        license_number: profileData.licenseNumber || undefined,
         slots: profileData.slots || undefined,
         availability: profileData.availability || undefined
       };

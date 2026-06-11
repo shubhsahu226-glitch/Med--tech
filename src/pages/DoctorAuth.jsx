@@ -46,12 +46,16 @@ export const DoctorAuth = () => {
 
     if (!isSignUp) {
       // 1. Sign In Flow
-      const { error: loginError } = await login(email, password, "doctor");
+      const { error: loginError, role } = await login(email, password, "doctor");
       if (loginError) {
         setError(loginError.message || "Invalid clinical email or password.");
         setIsLoading(false);
       } else {
-        navigate("/doctor/dashboard");
+        if (role === "patient") {
+          navigate("/patient/dashboard");
+        } else {
+          navigate("/doctor/dashboard");
+        }
       }
       return;
     }
@@ -103,8 +107,9 @@ export const DoctorAuth = () => {
         id: doctorId,
         name: formattedName,
         mobile_number: "Not provided",
-        dob: "1980-01-01", // Default DOB for doctor
-        location: "City Central Clinic"
+        dob: "1980-01-01",
+        location: "City Central Clinic",
+        role: "doctor"
       });
 
       if (profileError) {
@@ -116,13 +121,17 @@ export const DoctorAuth = () => {
         id: doctorId,
         name: formattedName,
         specialty: "General Physician",
+        specialization: "General Physician",
         experience: "5 years",
         education: "MBBS",
         location: "City Central Clinic",
+        hospital: "City Central Clinic",
+        license_number: "LIC-" + Math.floor(100000 + Math.random() * 900000),
         slots: ["09:00 AM", "10:00 AM", "11:00 AM", "02:00 PM", "03:00 PM"],
         availability: ["Monday 09:00 - 17:00", "Wednesday 09:00 - 17:00"],
         rating: 5.0,
         reviews: 0,
+        reviews_count: 0,
         image: "https://images.unsplash.com/photo-1612349317150-e413f6a5b16d?auto=format&fit=crop&q=80&w=200"
       });
 

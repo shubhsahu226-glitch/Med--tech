@@ -339,13 +339,16 @@ export const HealthProvider = ({ children }) => {
     };
     window.addEventListener("storage", handleStorageChange);
 
-    // Poll local appointments/storage every 2.5 seconds to ensure fast sync between tabs
-    const interval = setInterval(() => {
-      fetchAppointments();
-    }, 2500);
+    // Guest mode: poll less aggressively (every 10s) since there's no realtime subscription
+    const isGuest = user.id === "pat1" || user.id === "doc1";
+    let interval = null;
+    if (isGuest) {
+      interval = setInterval(() => {
+        fetchAppointments();
+      }, 10000);
+    }
 
     // 2. Database Mode: Supabase Real-time Subscription
-    const isGuest = user.id === "pat1" || user.id === "doc1";
     let channel = null;
     
     if (!isGuest) {
@@ -364,7 +367,7 @@ export const HealthProvider = ({ children }) => {
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
-      clearInterval(interval);
+      if (interval) clearInterval(interval);
       if (channel) {
         supabase.removeChannel(channel);
       }

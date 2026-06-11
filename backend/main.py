@@ -518,7 +518,7 @@ def upload_report():
         "date": current_date,
         "status": "Reviewed",
         "ai_summary": summary,
-        "metrics_json": json.dumps(all_metrics)
+        "metrics_json": all_metrics
     }
 
     if supabase:

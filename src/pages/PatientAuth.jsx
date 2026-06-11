@@ -46,12 +46,16 @@ export const PatientAuth = () => {
 
     if (!isSignUp) {
       // 1. Sign In Flow
-      const { error: loginError } = await login(email, password, "patient");
+      const { error: loginError, role } = await login(email, password, "patient");
       if (loginError) {
         setError(loginError.message || "Invalid email or password.");
         setIsLoading(false);
       } else {
-        navigate("/patient/dashboard");
+        if (role === "doctor") {
+          navigate("/doctor/dashboard");
+        } else {
+          navigate("/patient/dashboard");
+        }
       }
       return;
     }
@@ -100,7 +104,8 @@ export const PatientAuth = () => {
         name: name,
         mobile_number: "Not provided",
         dob: "1990-01-01",
-        location: "Not provided"
+        location: "Not provided",
+        role: "patient"
       });
 
       if (profileError) {
