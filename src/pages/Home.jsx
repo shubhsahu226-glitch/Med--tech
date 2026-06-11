@@ -11,15 +11,7 @@ export const Home = () => {
   const { user, role } = useAuth();
   const navigate = useNavigate();
 
-  useEffect(() => {
-    if (user) {
-      if (role === "doctor") {
-        navigate("/doctor/dashboard");
-      } else if (role === "patient") {
-        navigate("/patient/dashboard");
-      }
-    }
-  }, [user, role, navigate]);
+
   const features = [
     {
       title: "AI Diagnostic Insights",
