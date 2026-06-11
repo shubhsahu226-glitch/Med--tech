@@ -15,7 +15,7 @@ export const Navbar = () => {
   // Active notifications count (uncompleted medication reminders + critical alerts + doctor pending appointments)
   const pendingReminders = reminders.filter(r => !r.taken).length;
   const activeAlerts = alerts.filter(a => a.severity === "high").length;
-  const pendingAptsCount = role === "doctor" ? (appointments || []).filter(apt => apt.doctorId === user?.id && apt.status === "Pending").length : 0;
+  const pendingAptsCount = role === "doctor" ? (appointments || []).filter(apt => apt.doctorId === user?.id && (apt.status === "Pending" || apt.status === "Paid")).length : 0;
   const totalNotifications = role === "doctor" ? pendingAptsCount + activeAlerts : pendingReminders + activeAlerts;
 
   const handleLogout = () => {
@@ -151,7 +151,7 @@ export const Navbar = () => {
                       <p className="text-secondary-color text-center" style={{ fontSize: "0.8rem", padding: "0.75rem 0" }}>No critical alerts</p>
                     ) : (
                       <div className="flex-column gap-2">
-                        {role === "doctor" && (appointments || []).filter(apt => apt.doctorId === user?.id && apt.status === "Pending").map(apt => (
+                        {role === "doctor" && (appointments || []).filter(apt => apt.doctorId === user?.id && (apt.status === "Pending" || apt.status === "Paid")).map(apt => (
                           <div 
                             key={apt.id} 
                             style={{

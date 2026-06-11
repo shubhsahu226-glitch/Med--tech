@@ -12,12 +12,56 @@ export const DoctorAppointments = () => {
   const { user } = useAuth();
   const { appointments, addTreatmentNotes, updateAppointmentStatus, refreshAppointments } = useHealth();
 
-  // Tab State: list, consult
-  const [activeTab, setActiveTab] = useState("list");
+  // Tab State: list, consult with sessionStorage persistence to survive page refreshes
+  const [activeTab, setActiveTabState] = useState(() => {
+    try {
+      return sessionStorage.getItem("virtualvaidya_doc_active_tab") || "list";
+    } catch (e) {
+      return "list";
+    }
+  });
 
   // Selection states
-  const [selectedAptId, setSelectedAptId] = useState("");
-  const [sessionTab, setSessionTab] = useState("landing"); // landing, video, or chat
+  const [selectedAptId, setSelectedAptIdState] = useState(() => {
+    try {
+      return sessionStorage.getItem("virtualvaidya_doc_selected_apt_id") || "";
+    } catch (e) {
+      return "";
+    }
+  });
+  const [sessionTab, setSessionTabState] = useState(() => {
+    try {
+      return sessionStorage.getItem("virtualvaidya_doc_session_tab") || "landing";
+    } catch (e) {
+      return "landing";
+    }
+  });
+
+  const setActiveTab = (tab) => {
+    setActiveTabState(tab);
+    try {
+      sessionStorage.setItem("virtualvaidya_doc_active_tab", tab);
+    } catch (e) {}
+  };
+
+  const setSelectedAptId = (aptId) => {
+    setSelectedAptIdState(aptId);
+    try {
+      if (aptId) {
+        sessionStorage.setItem("virtualvaidya_doc_selected_apt_id", aptId);
+      } else {
+        sessionStorage.removeItem("virtualvaidya_doc_selected_apt_id");
+        sessionStorage.removeItem("virtualvaidya_doc_session_tab");
+      }
+    } catch (e) {}
+  };
+
+  const setSessionTab = (tab) => {
+    setSessionTabState(tab);
+    try {
+      sessionStorage.setItem("virtualvaidya_doc_session_tab", tab);
+    } catch (e) {}
+  };
 
   // Refresh appointments on mount to get latest status and check for consult room redirection
   useEffect(() => {
@@ -41,10 +85,10 @@ export const DoctorAppointments = () => {
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
 
-  const isGuestUser = !user?.id || user.id === "doc1";
+  const isGuestUser = !user?.id || user.id === "7a02fa0d-9719-4261-bd98-1c3d54238c2f";
 
   // Filter doctor appointments
-  const doctorAppointments = appointments.filter(apt => apt.doctorId === user.id || (isGuestUser && apt.doctorId === "doc1"));
+  const doctorAppointments = appointments.filter(apt => apt.doctorId === user.id || (isGuestUser && apt.doctorId === "7a02fa0d-9719-4261-bd98-1c3d54238c2f"));
   
   // Group appointments
   const pendingApts = doctorAppointments.filter(apt => apt.status === "Pending" || apt.status === "Paid");
@@ -163,7 +207,7 @@ export const DoctorAppointments = () => {
   };
 
   // Chat Integration with Supabase
-  const isGuestMode = !user?.id || user.id === "doc1" || activeApt?.patientId === "pat1";
+  const isGuestMode = !user?.id || user.id === "7a02fa0d-9719-4261-bd98-1c3d54238c2f" || activeApt?.patientId === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a";
 
   useEffect(() => {
     if (!activeApt?.patientId || !user?.id || activeTab !== "consult" || (!isGuestMode && !activeApt?.id)) return;
@@ -415,6 +459,14 @@ export const DoctorAppointments = () => {
           </div>
         ) : (
           <div className="split-layout split-layout-1-2" style={{ gap: "2.5rem" }}>
+            {/* Background VideoCall listener (always mounted when consult room is open) */}
+            <VideoCall 
+              myPeerId={`doc_${user.id}`} 
+              targetPeerId={`pat_${selectedPatient?.id}`} 
+              targetName={selectedPatient?.name}
+              hideIdleUI={sessionTab !== "video"}
+              sessionTab={sessionTab}
+            />
             
             {/* Left: Stream + Chat */}
             <div className="flex-column gap-6">
@@ -513,13 +565,7 @@ export const DoctorAppointments = () => {
                   </div>
                 </div>
               ) : sessionTab === "video" ? (
-                <div style={{ flex: 1, minHeight: "300px", position: "relative" }}>
-                  <VideoCall 
-                    myPeerId={`doc_${user.id}`} 
-                    targetPeerId={`pat_${selectedPatient?.id}`} 
-                    targetName={selectedPatient?.name}
-                  />
-                </div>
+                <div id="telehealth-video-slot" style={{ flex: 1, minHeight: "300px", position: "relative", display: "flex", flexDirection: "column" }} />
               ) : (
                 <div className="card flex-column gap-3" style={{ padding: "1rem" }}>
                   <h3 style={{ fontSize: "0.95rem", margin: 0, fontWeight: "600" }}>Secured Consultation Chat</h3>

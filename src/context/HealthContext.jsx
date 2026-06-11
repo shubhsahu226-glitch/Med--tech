@@ -124,14 +124,14 @@ export const HealthProvider = ({ children }) => {
       }
 
       // 1. Reminders (Show mock reminders ONLY for demo patient, otherwise start empty)
-      if (user.id === "pat1") {
+      if (user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a") {
         setReminders(mockMedicationReminders);
       } else {
         setReminders([]);
       }
 
       // 2. Alerts (Query active clinical alerts from Supabase, or mock clinical alert for demo user)
-      if (user.id === "pat1" || user.id === "pat2" || user.id === "pat3") {
+      if (user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a" || user.id === "pat2" || user.id === "pat3") {
         const localAlerts = [];
         try {
           const localStr = localStorage.getItem("virtualvaidya_local_alerts") || "[]";
@@ -206,7 +206,7 @@ export const HealthProvider = ({ children }) => {
       }
 
       // 3. Treatments (Query active treatments from Supabase, or mock treatment for demo user)
-      if (user.id === "pat1") {
+      if (user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a") {
         setTreatments([
           {
             id: "t_mock1",
@@ -330,7 +330,7 @@ export const HealthProvider = ({ children }) => {
       console.warn("Failed to read localStorage appointments:", e);
     }
 
-    const isGuest = user.id === "pat1" || user.id === "doc1";
+    const isGuest = String(user.id).startsWith("pat") || String(user.id).startsWith("doc");
     if (isGuest) {
       const filtered = localApts.filter(apt => isDoctor ? apt.doctorId === user.id : apt.patientId === user.id);
       setAppointments(filtered);
@@ -388,7 +388,7 @@ export const HealthProvider = ({ children }) => {
     window.addEventListener("storage", handleStorageChange);
 
     // Guest mode: poll less aggressively (every 10s) since there's no realtime subscription
-    const isGuest = user.id === "pat1" || user.id === "doc1";
+    const isGuest = String(user.id).startsWith("pat") || String(user.id).startsWith("doc");
     let interval = null;
     if (isGuest) {
       interval = setInterval(() => {
@@ -446,7 +446,7 @@ export const HealthProvider = ({ children }) => {
       doctorName: doctorName
     };
 
-    const isGuest = patientId === "pat1" || doctorId === "doc1";
+    const isGuest = String(patientId).startsWith("pat") || String(doctorId).startsWith("doc");
     if (!isGuest) {
       // Omit meetingType from DB insert as the column does not exist
       const { meetingType: _, ...dbAptObj } = newAptObj;
@@ -485,7 +485,7 @@ export const HealthProvider = ({ children }) => {
       console.warn("Failed to update localStorage appointments:", e);
     }
 
-    const isGuest = user?.id === "pat1" || user?.id === "doc1";
+    const isGuest = String(user?.id).startsWith("pat") || String(user?.id).startsWith("doc");
     if (!isGuest) {
       try {
         await supabase.from('appointments').update({ status }).eq('id', aptId);
@@ -533,7 +533,7 @@ export const HealthProvider = ({ children }) => {
       const localAlerts = JSON.parse(localAlertsStr);
       localAlerts.push({
         id: newAlert.id,
-        patient_id: user?.id || "pat1",
+        patient_id: user?.id || "6bbc3a1a-2b12-48cd-b04d-8974ca01264a",
         patient_name: user?.name || "Alex Mercer",
         title,
         severity: severity || "medium",
@@ -573,7 +573,7 @@ export const HealthProvider = ({ children }) => {
     );
 
     // If prescription has a medicine, automatically add to reminders list for patients!
-    if (prescription && patientId === "pat1") {
+    if (prescription && patientId === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a") {
       // Simple parse for demo: e.g., "Metformin 500mg" -> name: Metformin, dosage: 500mg
       const parts = prescription.split(" ");
       const name = parts[0] || "New Medication";

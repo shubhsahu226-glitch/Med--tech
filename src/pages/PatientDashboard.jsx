@@ -12,9 +12,41 @@ export const PatientDashboard = () => {
   const { appointments, reminders, treatments, refreshAppointments, triggerEmergencyAlert } = useHealth();
   const navigate = useNavigate();
 
-  // Active Consultation Overlay states
-  const [activeSessionApt, setActiveSessionApt] = useState(null);
-  const [sessionTab, setSessionTab] = useState("landing"); // landing, video, or chat
+  // Active Consultation Overlay states with sessionStorage persistence to survive page refreshes
+  const [activeSessionApt, setActiveSessionAptState] = useState(() => {
+    try {
+      const saved = sessionStorage.getItem("virtualvaidya_active_session_apt");
+      return saved ? JSON.parse(saved) : null;
+    } catch (e) {
+      return null;
+    }
+  });
+  const [sessionTab, setSessionTabState] = useState(() => {
+    try {
+      return sessionStorage.getItem("virtualvaidya_session_tab") || "landing";
+    } catch (e) {
+      return "landing";
+    }
+  });
+
+  const setActiveSessionApt = (apt) => {
+    setActiveSessionAptState(apt);
+    try {
+      if (apt) {
+        sessionStorage.setItem("virtualvaidya_active_session_apt", JSON.stringify(apt));
+      } else {
+        sessionStorage.removeItem("virtualvaidya_active_session_apt");
+        sessionStorage.removeItem("virtualvaidya_session_tab");
+      }
+    } catch (e) {}
+  };
+
+  const setSessionTab = (tab) => {
+    setSessionTabState(tab);
+    try {
+      sessionStorage.setItem("virtualvaidya_session_tab", tab);
+    } catch (e) {}
+  };
   const [chatMessages, setChatMessages] = useState([]);
   const [newMessage, setNewMessage] = useState("");
   const chatEndRef = useRef(null);
@@ -92,14 +124,14 @@ export const PatientDashboard = () => {
 
   // Find next upcoming appointment
   const nextAppointment = appointments
-    .filter(apt => apt.patientId === user.id && (apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending"))
+    .filter(apt => apt.patientId === user.id && (apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending" || apt.status === "Paid"))
     .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
 
   // Limit checklist reminders to 1 key upcoming medication
   const activeReminders = reminders.filter(r => !r.taken).slice(0, 1);
 
   // Check if guest demo patient
-  const isGuest = !user?.id || user.id === "pat1";
+  const isGuest = !user?.id || user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a";
 
   // Fetch current treatment details from Supabase or fallback to mock for guest
   const currentTreatment = treatments && treatments.length > 0
@@ -126,7 +158,7 @@ export const PatientDashboard = () => {
   // Sync / Fetch Chat Messages when Session Hub Modal is open
   useEffect(() => {
     if (!activeSessionApt || !user?.id) return;
-    const isGuestSession = user.id === "pat1" || activeSessionApt.doctorId === "doc1";
+    const isGuestSession = user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a" || activeSessionApt.doctorId === "7a02fa0d-9719-4261-bd98-1c3d54238c2f";
 
     const fetchMessages = async () => {
       if (isGuestSession) {
@@ -212,7 +244,7 @@ export const PatientDashboard = () => {
 
     setChatMessages(prev => [...prev, newMsgObj]);
 
-    const isGuestSession = user.id === "pat1" || activeSessionApt.doctorId === "doc1";
+    const isGuestSession = user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a" || activeSessionApt.doctorId === "7a02fa0d-9719-4261-bd98-1c3d54238c2f";
     if (isGuestSession) {
       try {
         const key = `virtualvaidya_chat_${user.id}_${activeSessionApt.doctorId}`;
@@ -423,6 +455,14 @@ export const PatientDashboard = () => {
             animation: "fadeIn 0.2s ease-out"
           }}
         >
+          {/* Background VideoCall listener (always mounted when telehealth room is open) */}
+          <VideoCall 
+            myPeerId={`pat_${user.id}`}
+            targetPeerId={`doc_${activeSessionApt.doctorId}`}
+            targetName={activeSessionApt.doctorName}
+            hideIdleUI={sessionTab !== "video"}
+            sessionTab={sessionTab}
+          />
           {/* Header */}
           <div 
             style={{ 
@@ -634,13 +674,7 @@ export const PatientDashboard = () => {
               </div>
             ) : sessionTab === "video" ? (
               /* VIDEO STREAM */
-              <div style={{ flex: 1, position: "relative", minHeight: 0, padding: "1.5rem" }}>
-                <VideoCall 
-                  myPeerId={`pat_${user.id}`}
-                  targetPeerId={`doc_${activeSessionApt.doctorId}`}
-                  targetName={activeSessionApt.doctorName}
-                />
-              </div>
+              <div id="telehealth-video-slot" style={{ flex: 1, position: "relative", minHeight: 0, padding: "1.5rem", display: "flex", flexDirection: "column" }} />
             ) : (
               /* SECURED CHAT */
               <div style={{ flex: 1, display: "flex", flexDirection: "column", height: "100%", backgroundColor: "#0f172a" }}>

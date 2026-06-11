@@ -240,6 +240,8 @@ export const PatientDoctors = () => {
                   <button 
                     onClick={() => {
                       setSelectedDoctorId(doc.id);
+                      setBookingStatus("");
+                      setBookingError("");
                       setActiveTab("telehealth");
                     }} 
                     className="btn btn-primary w-full"
@@ -269,7 +271,15 @@ export const PatientDoctors = () => {
                     <h4 style={{ marginTop: "1rem", color: "var(--success-dark)", fontWeight: "600" }}>{bookingStatus}</h4>
                     <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginTop: "0.25rem" }}>Your consultation slot has been booked successfully!</p>
                     <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", marginTop: "0.5rem" }}>Go to your Dashboard to start the video call or messaging when the session is confirmed.</p>
-                    <button onClick={() => setActiveTab("search")} className="btn btn-secondary m-t-4" style={{ padding: "0.5rem 1.5rem" }}>
+                    <button 
+                      onClick={() => {
+                        setBookingStatus("");
+                        setBookingError("");
+                        setActiveTab("search");
+                      }} 
+                      className="btn btn-secondary m-t-4" 
+                      style={{ padding: "0.5rem 1.5rem" }}
+                    >
                       Back to Specialists
                     </button>
                   </div>

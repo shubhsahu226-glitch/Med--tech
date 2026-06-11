@@ -22,7 +22,7 @@ export const PatientCare = () => {
   const activeReminders = reminders;
 
   // Check if guest demo patient
-  const isGuest = !user?.id || user.id === "pat1";
+  const isGuest = !user?.id || user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a";
 
   // Load primary active treatment from Supabase or mock for guest
   const activeTreatment = treatments && treatments.length > 0 

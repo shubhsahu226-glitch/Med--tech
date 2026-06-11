@@ -1,13 +1,33 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
-import Peer from "peerjs";
+import * as PeerModule from "peerjs";
 import { Video, VideoOff, PhoneOff, Mic, MicOff, PhoneCall } from "lucide-react";
 
-const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
+const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, sessionTab = "landing" }) => {
   const [callActive, setCallActive] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null);
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
+  const [portalTarget, setPortalTarget] = useState(null);
+
+  useEffect(() => {
+    if (!hideIdleUI) {
+      const findTarget = () => {
+        const el = document.getElementById("telehealth-video-slot");
+        if (el) {
+          setPortalTarget(el);
+        } else {
+          setTimeout(() => {
+            const retryEl = document.getElementById("telehealth-video-slot");
+            if (retryEl) setPortalTarget(retryEl);
+          }, 50);
+        }
+      };
+      findTarget();
+    } else {
+      setPortalTarget(null);
+    }
+  }, [hideIdleUI, sessionTab]);
 
   // Role Detection
   const isPatient = myPeerId?.startsWith("pat_");
@@ -113,30 +133,50 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
       }
     };
 
-    if (!peerRef.current && myPeerId) {
-      addLog(`Initializing PeerJS with ID: ${myPeerId}`);
-      const PeerConstructor = Peer.default || Peer;
+    let isRetryingLocal = false;
+    let isRetryingCloud = false;
+    const isLocal = window.location.hostname === "localhost" || window.location.hostname === "127.0.0.1";
+
+    const initializePeer = (useCloud = true) => {
+      if (!myPeerId) return;
+      addLog(`Initializing PeerJS (${useCloud ? "Cloud" : "Local"}) with ID: ${myPeerId}`);
+      const PeerConstructor = PeerModule.Peer || PeerModule.default || PeerModule;
       
       try {
-        const peer = new PeerConstructor(myPeerId, {
-          debug: 3,
-          host: "0.peerjs.com",
-          port: 443,
-          secure: true,
-          config: {
-            iceServers: [
-              { urls: "stun:stun.l.google.com:19302" },
-              { urls: "stun:stun1.l.google.com:19302" },
-              { urls: "stun:stun2.l.google.com:19302" },
-              { urls: "stun:stun3.l.google.com:19302" },
-              { urls: "stun:stun4.l.google.com:19302" }
-            ]
-          }
-        });
+        const options = useCloud 
+          ? {
+              debug: 3,
+              host: "0.peerjs.com",
+              port: 443,
+              secure: true,
+              config: {
+                iceServers: [
+                  { urls: "stun:stun.l.google.com:19302" },
+                  { urls: "stun:stun1.l.google.com:19302" },
+                  { urls: "stun:stun2.l.google.com:19302" },
+                  { urls: "stun:stun3.l.google.com:19302" },
+                  { urls: "stun:stun4.l.google.com:19302" }
+                ]
+              }
+            }
+          : {
+              debug: 3,
+              host: "localhost",
+              port: 9000,
+              path: "/myapp",
+              secure: false,
+              config: {
+                iceServers: [
+                  { urls: "stun:stun.l.google.com:19302" }
+                ]
+              }
+            };
+
+        const peer = new PeerConstructor(myPeerId, options);
         peerRef.current = peer;
         
         peer.on("open", (id) => {
-          addLog(`Peer registered successfully on server. ID: ${id}`);
+          addLog(`Peer registered successfully on ${useCloud ? "Cloud" : "Local"} server. ID: ${id}`);
         });
 
         peer.on("call", (call) => {
@@ -145,7 +185,29 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
         });
 
         peer.on("error", (err) => {
-          addLog(`PeerJS error: ${err.type} - ${err.message}`);
+          addLog(`PeerJS error (${useCloud ? "Cloud" : "Local"}): ${err.type} - ${err.message}`);
+          
+          if (useCloud && !isRetryingLocal) {
+            isRetryingLocal = true;
+            addLog("Cloud server connection failed. Attempting local peerjs server fallback at localhost:9000/myapp...");
+            try {
+              peer.destroy();
+            } catch (e) {}
+            setTimeout(() => {
+              initializePeer(false);
+            }, 1000);
+          } else if (!useCloud && !isRetryingCloud) {
+            isRetryingCloud = true;
+            addLog("Local server connection failed. Attempting cloud peerjs server fallback...");
+            try {
+              peer.destroy();
+            } catch (e) {}
+            setTimeout(() => {
+              initializePeer(true);
+            }, 1000);
+          } else {
+            addLog("All connection attempts failed. Please ensure either internet is available or 'npx -p peer peerjs --port 9000 --path /myapp' is running in your terminal.");
+          }
         });
 
         peer.on("disconnected", () => {
@@ -153,10 +215,15 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
           peer.reconnect();
         });
 
-        window.addEventListener("beforeunload", handleBeforeUnload);
       } catch (err) {
-        addLog(`PeerJS constructor exception: ${err.message}`);
+        addLog(`PeerJS initialization exception: ${err.message}`);
       }
+    };
+
+    if (!peerRef.current && myPeerId) {
+      // If on localhost, default to local peerjs server first for 100% reliable local testing
+      initializePeer(!isLocal);
+      window.addEventListener("beforeunload", handleBeforeUnload);
     }
     
     return () => {
@@ -491,6 +558,16 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
           overflow: "hidden"
         }}
       >
+        <style>{`
+          body.video-call-active #root,
+          body.video-call-active .app-container {
+            display: none !important;
+          }
+          @keyframes pulse {
+            0%, 100% { opacity: 0.55; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.08); }
+          }
+        `}</style>
         <div style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden", animation: "fadeIn 0.3s ease-in-out" }}>
           {/* Main Remote Video */}
           <video 
@@ -594,20 +671,22 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
         {/* Controls Bar */}
         <div style={{ 
           height: "90px", 
-          backgroundColor: "#1e293b", 
+          backgroundColor: "rgba(255, 255, 255, 0.95)", 
           display: "flex", 
           alignItems: "center", 
           justifyContent: "center", 
           gap: "1.5rem",
-          borderTop: "1px solid rgba(255,255,255,0.1)",
+          borderTop: "1px solid var(--border-color)",
           animation: "fadeIn 0.3s ease-in-out"
         }}>
           <button 
             onClick={toggleAudio}
             style={{ 
               width: "56px", height: "56px", borderRadius: "50%", 
-              backgroundColor: isMuted ? "#ef4444" : "#334155", 
-              color: "white", border: "none", cursor: "pointer",
+              backgroundColor: isMuted ? "var(--primary)" : "var(--bg-tertiary)", 
+              color: isMuted ? "white" : "var(--text-primary)", 
+              border: "1px solid var(--border-color)", 
+              cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "all 0.2s"
             }}
@@ -620,10 +699,10 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
             onClick={endCall}
             style={{ 
               width: "64px", height: "64px", borderRadius: "50%", 
-              backgroundColor: "#ef4444", 
+              backgroundColor: "var(--danger)", 
               color: "white", border: "none", cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
-              boxShadow: "0 4px 12px rgba(239, 68, 68, 0.4)",
+              boxShadow: "0 4px 12px rgba(239, 68, 68, 0.3)",
               transition: "transform 0.2s"
             }}
             title="End Call"
@@ -637,8 +716,10 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
             onClick={toggleVideo}
             style={{ 
               width: "56px", height: "56px", borderRadius: "50%", 
-              backgroundColor: isVideoOff ? "#ef4444" : "#334155", 
-              color: "white", border: "none", cursor: "pointer",
+              backgroundColor: isVideoOff ? "var(--primary)" : "var(--bg-tertiary)", 
+              color: isVideoOff ? "white" : "var(--text-primary)", 
+              border: "1px solid var(--border-color)", 
+              cursor: "pointer",
               display: "flex", alignItems: "center", justifyContent: "center",
               transition: "all 0.2s"
             }}
@@ -652,101 +733,128 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName }) => {
     );
   };
 
-  // Incoming Call Ringing UI
-  if (incomingCall) {
-    return (
-      <div 
-        style={{
-          backgroundColor: "#1e293b",
-          height: "160px",
-          borderRadius: "var(--radius-md)",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          border: "2px solid #3b82f6",
-          animation: "pulse-border 2s infinite",
-          boxShadow: "0 0 15px rgba(59, 130, 246, 0.5)"
-        }}
-      >
-        <PhoneCall size={32} color="#3b82f6" style={{ animation: "wiggle 1s infinite" }} />
-        <h4 style={{ color: "white", margin: "10px 0", fontSize: "1rem" }}>Incoming Video Call...</h4>
-        <div style={{ display: "flex", gap: "1rem" }}>
-          <button 
-            onClick={answerCall} 
-            className="btn btn-primary" 
-            style={{ backgroundColor: "#22c55e", borderColor: "#22c55e", padding: "0.5rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
-          >
-            <Video size={16} /> Accept
-          </button>
-          <button 
-            onClick={declineCall} 
-            className="btn btn-danger" 
-            style={{ padding: "0.5rem 1rem", display: "flex", alignItems: "center", gap: "0.5rem" }}
-          >
-            <PhoneOff size={16} /> Decline
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  // Idle UI (Ready to call)
-  return (
+  const idleContent = (
     <div 
       style={{
-        backgroundColor: "#1e293b",
-        height: "140px",
+        backgroundColor: "var(--bg-primary)",
         borderRadius: "var(--radius-md)",
+        border: "1px solid var(--border-color)",
         position: "relative",
         display: "flex",
         alignItems: "center",
-        justifyContent: "center"
+        justifyContent: "center",
+        width: "100%",
+        height: "100%",
+        minHeight: "240px",
+        padding: "2rem"
       }}
     >
-      <div className="text-center" style={{ color: "#94a3b8" }}>
-        <Video size={24} style={{ marginBottom: "8px", color: isPatient ? "#22c55e" : "#94a3b8", animation: isPatient ? "pulse 2s infinite" : "none" }} />
-        <p style={{ fontSize: "0.85rem", margin: "0 0 10px 0" }}>
+      <div className="text-center" style={{ color: "var(--text-secondary)" }}>
+        <Video size={36} style={{ marginBottom: "12px", color: isPatient ? "var(--primary)" : "var(--text-muted)", animation: isPatient ? "pulse 2s infinite" : "none" }} />
+        <p style={{ fontSize: "1rem", margin: "0 0 12px 0", fontWeight: "600", color: "var(--text-primary)" }}>
           {isPatient ? "Waiting for doctor to start the call..." : "Video Consultation Room"}
         </p>
         {!isPatient ? (
           <button 
             onClick={initiateCall} 
-            className="btn btn-primary" 
-            style={{ padding: "0.5rem 1.5rem", borderRadius: "50px", display: "flex", alignItems: "center", gap: "0.5rem", margin: "0 auto" }}
+            className="btn btn-primary animate-pulse-scale" 
+            style={{ padding: "0.6rem 2rem", borderRadius: "50px", display: "flex", alignItems: "center", gap: "0.5rem", margin: "0 auto", fontWeight: "600" }}
           >
-            <Video size={16} /> Start Call
+            <Video size={18} /> Start Call
           </button>
         ) : (
-          <p style={{ fontSize: "0.7rem", color: "#64748b", margin: 0, padding: "0 1.5rem", lineHeight: 1.35 }}>
+          <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0, padding: "0 1.5rem", lineHeight: 1.45 }}>
             Keep this tab open. You will receive a call ring once the doctor initiates the session.
           </p>
         )}
       </div>
       
-      {/* Global CSS for animations and hiding root layout when call is active */}
       <style>{`
-        body.video-call-active #root,
-        body.video-call-active .app-container {
-          display: none !important;
-        }
-        @keyframes wiggle {
-          0%, 100% { transform: rotate(-15deg); }
-          50% { transform: rotate(15deg); }
-        }
         @keyframes pulse {
           0%, 100% { opacity: 0.55; transform: scale(1); }
           50% { opacity: 1; transform: scale(1.08); }
         }
-        @keyframes pulse-border {
-          0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.7); }
-          70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
-          100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
-        }
       `}</style>
-      {renderOverlay()}
     </div>
   );
+
+  if (callActive) {
+    return renderOverlay();
+  }
+
+  if (incomingCall) {
+    return createPortal(
+      <div 
+        style={{
+          position: "fixed",
+          bottom: "30px",
+          left: "50%",
+          transform: "translateX(-50%)",
+          zIndex: 999999,
+          width: "90%",
+          maxWidth: "400px",
+          backgroundColor: "var(--bg-primary)",
+          borderRadius: "var(--radius-md)",
+          padding: "1.5rem",
+          border: "2px solid var(--primary)",
+          animation: "pulse-border-red 2s infinite, slideUp 0.3s ease-out",
+          boxShadow: "var(--shadow-2xl)",
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
+          justifyContent: "center"
+        }}
+      >
+        <PhoneCall size={32} color="var(--primary)" style={{ animation: "wiggle 1s infinite" }} />
+        <h4 style={{ color: "var(--text-primary)", margin: "10px 0", fontSize: "1rem", fontWeight: "600" }}>Incoming Video Call...</h4>
+        <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: "0 0 1rem 0", textAlign: "center" }}>
+          <strong>{targetName || "Doctor"}</strong> is calling you for the consultation.
+        </p>
+        <div style={{ display: "flex", gap: "1rem", width: "100%" }}>
+          <button 
+            onClick={answerCall} 
+            className="btn btn-primary flex-1 align-center gap-2 justify-content-center" 
+            style={{ backgroundColor: "var(--success)", borderColor: "var(--success)", padding: "0.6rem" }}
+          >
+            <Video size={16} /> Accept
+          </button>
+          <button 
+            onClick={declineCall} 
+            className="btn btn-danger flex-1 align-center gap-2 justify-content-center" 
+            style={{ padding: "0.6rem" }}
+          >
+            <PhoneOff size={16} /> Decline
+          </button>
+        </div>
+        <style>{`
+          @keyframes wiggle {
+            0%, 100% { transform: rotate(-15deg); }
+            50% { transform: rotate(15deg); }
+          }
+          @keyframes pulse-border-red {
+            0% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(225, 29, 72, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(225, 29, 72, 0); }
+          }
+          @keyframes slideUp {
+            from { transform: translate(-50%, 20px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+          }
+        `}</style>
+      </div>,
+      document.body
+    );
+  }
+
+  if (hideIdleUI) {
+    return null;
+  }
+
+  if (portalTarget) {
+    return createPortal(idleContent, portalTarget);
+  }
+
+  return idleContent;
 };
 
 export default VideoCall;

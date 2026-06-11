@@ -29,11 +29,16 @@ export const PatientAuth = () => {
   const [successMsg, setSuccessMsg] = useState("");
   const [isLoading, setIsLoading] = useState(false);
 
-  const handleGuestLogin = () => {
+  const handleGuestLogin = async () => {
     setIsLoading(true);
-    loginGuest("patient");
-    navigate("/patient/dashboard");
-    setIsLoading(false);
+    try {
+      await loginGuest("patient");
+      navigate("/patient/dashboard");
+    } catch (err) {
+      console.error("Guest login failed:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleKeyDown = (e) => {

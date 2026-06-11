@@ -15,7 +15,7 @@ export const VideoRoom = () => {
   const apptId = params.get("apptId");
 
   const appointment = appointments.find(a => a.id === apptId);
-  const isGuestMode = !user?.id || user.id === "pat1" || appointment?.doctorId === "doc1" || appointment?.patientId === "pat1";
+  const isGuestMode = !user?.id || user.id === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a" || appointment?.doctorId === "7a02fa0d-9719-4261-bd98-1c3d54238c2f" || appointment?.patientId === "6bbc3a1a-2b12-48cd-b04d-8974ca01264a";
 
   const chatEndRef = useRef(null);
 
@@ -141,9 +141,9 @@ export const VideoRoom = () => {
 
   if (!user || !appointment) {
     return (
-      <div className="flex-center" style={{ height: "100vh", backgroundColor: "#0f172a", color: "white", flexDirection: "column", gap: "1rem" }}>
-        <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "3px solid rgba(255,255,255,0.1)", borderTop: "3px solid #3b82f6", animation: "spin 1s linear infinite" }} />
-        <p style={{ fontSize: "0.9rem", color: "#94a3b8" }}>Initializing consultation room...</p>
+      <div className="flex-center" style={{ height: "100vh", backgroundColor: "var(--bg-primary)", color: "var(--text-primary)", flexDirection: "column", gap: "1rem" }}>
+        <div style={{ width: "40px", height: "40px", borderRadius: "50%", border: "3px solid var(--border-color)", borderTop: "3px solid var(--primary)", animation: "spin 1s linear infinite" }} />
+        <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)" }}>Initializing consultation room...</p>
       </div>
     );
   }
@@ -154,24 +154,24 @@ export const VideoRoom = () => {
   const targetName = isPatient ? appointment.doctorName : appointment.patientName;
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw", backgroundColor: "#0f172a", color: "white", overflow: "hidden" }}>
+    <div style={{ display: "flex", height: "100vh", width: "100vw", backgroundColor: "var(--bg-tertiary)", color: "var(--text-primary)", overflow: "hidden" }}>
       {/* Left side: Video stream wrapper */}
       <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "1.5rem", position: "relative" }}>
         
         {/* Header bar */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", backgroundColor: "#1e293b", padding: "0.75rem 1.25rem", borderRadius: "12px", border: "1px solid rgba(255,255,255,0.05)" }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", backgroundColor: "var(--bg-primary)", padding: "0.75rem 1.25rem", borderRadius: "12px", border: "1px solid var(--border-color)", boxShadow: "var(--shadow-sm)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-            <div style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "#3b82f6", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "0.9rem" }}>
+            <div style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "var(--primary-light)", color: "var(--primary)", border: "1px solid rgba(225, 29, 72, 0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "0.9rem" }}>
               {targetName ? targetName.charAt(0) : "U"}
             </div>
             <div>
-              <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "600" }}>{targetName}</h4>
-              <p style={{ margin: 0, fontSize: "0.7rem", color: "#94a3b8", display: "flex", alignItems: "center", gap: "4px" }}>
-                <ShieldCheck size={12} color="#22c55e" /> Secure Telehealth Consultation
+              <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "600", color: "var(--text-primary)" }}>{targetName}</h4>
+              <p style={{ margin: 0, fontSize: "0.7rem", color: "var(--text-secondary)", display: "flex", alignItems: "center", gap: "4px" }}>
+                <ShieldCheck size={12} color="var(--success)" /> Secure Telehealth Consultation
               </p>
             </div>
           </div>
-          <span style={{ fontSize: "0.75rem", backgroundColor: "rgba(59,130,246,0.15)", color: "#3b82f6", padding: "0.25rem 0.75rem", borderRadius: "50px", fontWeight: "600" }}>
+          <span style={{ fontSize: "0.75rem", backgroundColor: "var(--primary-light)", color: "var(--primary)", border: "1px solid rgba(225, 29, 72, 0.15)", padding: "0.25rem 0.75rem", borderRadius: "50px", fontWeight: "600" }}>
             Status: {appointment.status}
           </span>
         </div>
@@ -187,12 +187,12 @@ export const VideoRoom = () => {
       </div>
 
       {/* Right side: Chat panel */}
-      <div style={{ width: "350px", backgroundColor: "#1e293b", borderLeft: "1px solid rgba(255,255,255,0.08)", display: "flex", flexDirection: "column", height: "100%" }}>
+      <div style={{ width: "350px", backgroundColor: "var(--bg-primary)", borderLeft: "1px solid var(--border-color)", display: "flex", flexDirection: "column", height: "100%" }}>
         
         {/* Chat Header */}
-        <div style={{ padding: "1.25rem", borderBottom: "1px solid rgba(255,255,255,0.08)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
-          <MessageSquare size={18} color="#3b82f6" />
-          <span style={{ fontWeight: "600", fontSize: "0.95rem" }}>Secured Live Chat</span>
+        <div style={{ padding: "1.25rem", borderBottom: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
+          <MessageSquare size={18} color="var(--primary)" />
+          <span style={{ fontWeight: "600", fontSize: "0.95rem", color: "var(--text-primary)" }}>Secured Live Chat</span>
         </div>
 
         {/* Chat Feed */}
@@ -204,17 +204,17 @@ export const VideoRoom = () => {
                 key={i} 
                 style={{ 
                   alignSelf: isMe ? "flex-end" : "flex-start",
-                  backgroundColor: isMe ? "#3b82f6" : "#334155",
-                  color: "white",
+                  backgroundColor: isMe ? "var(--primary)" : "var(--bg-tertiary)",
+                  color: isMe ? "white" : "var(--text-primary)",
                   padding: "0.5rem 0.8rem",
                   borderRadius: "12px",
                   maxWidth: "85%",
                   fontSize: "0.8rem",
-                  boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+                  boxShadow: "var(--shadow-sm)"
                 }}
               >
                 <p style={{ margin: 0, lineHeight: 1.4, wordBreak: "break-word" }}>{msg.text}</p>
-                <span style={{ fontSize: "0.6rem", color: isMe ? "rgba(255,255,255,0.7)" : "#94a3b8", float: "right", marginTop: "4px" }}>
+                <span style={{ fontSize: "0.6rem", color: isMe ? "rgba(255,255,255,0.8)" : "var(--text-muted)", float: "right", marginTop: "4px" }}>
                   {msg.time}
                 </span>
               </div>
@@ -224,16 +224,16 @@ export const VideoRoom = () => {
         </div>
 
         {/* Chat Form */}
-        <form onSubmit={handleSendMessage} style={{ padding: "1rem", borderTop: "1px solid rgba(255,255,255,0.08)", display: "flex", gap: "0.5rem", backgroundColor: "#0f172a" }}>
+        <form onSubmit={handleSendMessage} style={{ padding: "1rem", borderTop: "1px solid var(--border-color)", display: "flex", gap: "0.5rem", backgroundColor: "var(--bg-secondary)" }}>
           <input 
             type="text" 
             className="form-input" 
             placeholder="Type your message..." 
-            style={{ fontSize: "0.8rem", padding: "0.5rem 0.75rem", borderRadius: "8px", backgroundColor: "#1e293b", border: "1px solid rgba(255,255,255,0.1)", color: "white", flex: 1 }}
+            style={{ fontSize: "0.8rem", padding: "0.5rem 0.75rem", borderRadius: "8px", backgroundColor: "var(--bg-primary)", border: "1px solid var(--border-solid)", color: "var(--text-primary)", flex: 1 }}
             value={newMessage}
             onChange={(e) => setNewMessage(e.target.value)}
           />
-          <button type="submit" className="btn btn-primary" style={{ padding: "0.5rem", borderRadius: "8px", backgroundColor: "#3b82f6", borderColor: "#3b82f6", display: "flex", alignItems: "center", justifyContent: "center" }}>
+          <button type="submit" className="btn btn-primary" style={{ padding: "0.5rem", borderRadius: "8px", display: "flex", alignItems: "center", justifyContent: "center" }}>
             <Send size={14} />
           </button>
         </form>

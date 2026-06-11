@@ -38,7 +38,7 @@ export const DoctorClinic = () => {
     );
   };
 
-  const isGuestUser = !user?.id || user.id === "doc1";
+  const isGuestUser = !user?.id || user.id === "7a02fa0d-9719-4261-bd98-1c3d54238c2f";
 
   const handleSubmit = async (e) => {
     e.preventDefault();
