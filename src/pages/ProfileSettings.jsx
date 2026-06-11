@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useAuth } from "../context/AuthContext";
-import { User, Phone, Mail, MapPin, CheckCircle2, ShieldCheck, Calendar, FileText, AlertCircle, Heart, Stethoscope, Award, DollarSign, Clock, Briefcase, Sparkles } from "lucide-react";
+import { User, Phone, Mail, MapPin, CheckCircle2, ShieldCheck, Calendar, FileText, AlertCircle, Heart, Stethoscope, Award, IndianRupee, Clock, Briefcase, Sparkles } from "lucide-react";
 
 export const ProfileSettingsForm = () => {
   const { user, role, updateUserProfile, saveProfile } = useAuth();
@@ -323,18 +323,18 @@ export const ProfileSettingsForm = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="settings-doc-fee" style={{ fontWeight: "600", fontSize: "0.85rem", color: "#334155" }}>Consultation Fee ($)</label>
+                  <label className="form-label" htmlFor="settings-doc-fee" style={{ fontWeight: "600", fontSize: "0.85rem", color: "#334155" }}>Consultation Fee (₹)</label>
                   <div style={{ position: "relative" }}>
                     <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "#94a3b8", display: "flex" }}>
-                      <DollarSign size={16} />
+                      <IndianRupee size={16} />
                     </span>
                     <input 
                       type="number" 
                       id="settings-doc-fee"
                       className="form-input" 
-                      placeholder="e.g. 120"
-                      value={consultationFee ? consultationFee.replace("$", "") : ""}
-                      onChange={(e) => setConsultationFee(e.target.value ? `$${e.target.value}` : "")}
+                      placeholder="e.g. 500"
+                      value={consultationFee ? consultationFee.replace("$", "").replace("₹", "") : ""}
+                      onChange={(e) => setConsultationFee(e.target.value ? `₹${e.target.value}` : "")}
                       style={{ paddingLeft: "2.5rem", width: "100%", borderRadius: "0.5rem" }}
                     />
                   </div>
@@ -762,14 +762,14 @@ export const ProfileSettingsForm = () => {
                 </div>
 
                 <div className="form-group">
-                  <label className="form-label" htmlFor="settings-fee" style={{ fontWeight: "500" }}>Consultation Fee ($)</label>
+                  <label className="form-label" htmlFor="settings-fee" style={{ fontWeight: "500" }}>Consultation Fee (₹)</label>
                   <input 
                     type="number" 
                     id="settings-fee"
                     className="form-input" 
-                    placeholder="e.g. 150"
-                    value={consultationFee.replace("$", "")}
-                    onChange={(e) => setConsultationFee(e.target.value ? `$${e.target.value}` : "")}
+                    placeholder="e.g. 500"
+                    value={consultationFee ? consultationFee.replace("$", "").replace("₹", "") : ""}
+                    onChange={(e) => setConsultationFee(e.target.value ? `₹${e.target.value}` : "")}
                     style={{ width: "100%" }}
                   />
                 </div>

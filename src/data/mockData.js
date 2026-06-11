@@ -11,7 +11,7 @@ export const mockDoctors = [
     about: "Dr. Jenkins is a board-certified cardiologist specializing in preventive cardiology and hypertension management.",
     slots: ["09:00 AM", "10:30 AM", "02:00 PM", "04:30 PM"],
     availability: ["Monday", "Wednesday", "Friday"],
-    fee: "$150"
+    fee: "₹1500"
   },
   {
     id: "doc2",
@@ -25,7 +25,7 @@ export const mockDoctors = [
     about: "Specializing in neurological disorders, migraines, and nerve health. Known for thorough diagnostic approaches.",
     slots: ["10:00 AM", "11:30 AM", "01:00 PM", "03:30 PM"],
     availability: ["Tuesday", "Thursday", "Saturday"],
-    fee: "$180"
+    fee: "₹1800"
   }
 ];
 

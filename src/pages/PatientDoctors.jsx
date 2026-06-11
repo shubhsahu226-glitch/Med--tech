@@ -11,6 +11,16 @@ import {
 const generateTempId = () => `temp_${Date.now()}`;
 const getCurrentTimeString = () => new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
+const formatFee = (fee) => {
+  if (!fee) return "₹500";
+  if (typeof fee === "number") return `₹${fee}`;
+  const str = String(fee).trim();
+  if (str.startsWith("₹") || str.startsWith("$")) {
+    return str.replace("$", "₹");
+  }
+  return `₹${str}`;
+};
+
 export const PatientDoctors = () => {
   const { user } = useAuth();
   const { doctors, appointments, addAppointment, refreshDoctors, refreshAppointments } = useHealth();
@@ -352,7 +362,7 @@ export const PatientDoctors = () => {
                   <div style={{ borderTop: "1px solid var(--border-color)", paddingTop: "0.5rem", fontSize: "0.75rem" }} className="flex-column gap-1">
                     <div className="align-center gap-1"><Star size={12} fill="var(--primary)" style={{ color: "var(--primary)" }} /> <strong>{doc.rating}</strong> ({doc.reviews} reviews)</div>
                     <div className="align-center gap-1"><MapPin size={12} /> {doc.location}</div>
-                    <div className="align-center gap-1" style={{ color: "var(--primary)", fontWeight: "600", marginTop: "2px" }}>💵 Fee: {doc.consultationFee || doc.fee || "$50"}</div>
+                    <div className="align-center gap-1" style={{ color: "var(--primary)", fontWeight: "600", marginTop: "2px" }}>💵 Fee: {formatFee(doc.consultationFee || doc.fee)}</div>
                   </div>
 
                   <button 
@@ -421,7 +431,7 @@ export const PatientDoctors = () => {
                     {activeDoctor && (
                       <div className="card" style={{ padding: "0.75rem", backgroundColor: "var(--primary-light)", border: "1px solid var(--primary)", borderRadius: "var(--radius-md)", display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.5rem" }}>
                         <span style={{ fontSize: "0.85rem", fontWeight: "600", color: "var(--primary)" }}>Consultation Price:</span>
-                        <span style={{ fontSize: "1rem", fontWeight: "700", color: "var(--primary)" }}>{activeDoctor.consultationFee || activeDoctor.fee || "$50"}</span>
+                        <span style={{ fontSize: "1rem", fontWeight: "700", color: "var(--primary)" }}>{formatFee(activeDoctor.consultationFee || activeDoctor.fee)}</span>
                       </div>
                     )}
 
@@ -567,7 +577,7 @@ export const PatientDoctors = () => {
                     <p style={{ fontSize: "0.85rem", margin: 0, fontWeight: "600" }}>Video Consultation Locked</p>
                     <p style={{ fontSize: "0.7rem", color: "#64748b", marginTop: "4px", lineHeight: 1.3 }}>
                       {activeApt?.status === "Paid" 
-                        ? `Payment of ${activeDoctor?.consultationFee || activeDoctor?.fee || "$50"} received successfully! Awaiting provider's acceptance to start the consultation.` 
+                        ? `Payment of ${formatFee(activeDoctor?.consultationFee || activeDoctor?.fee)} received successfully! Awaiting provider's acceptance to start the consultation.` 
                         : activeApt 
                         ? "Awaiting confirmation from the medical provider." 
                         : "Please schedule an appointment to unlock video consultation."}
@@ -644,7 +654,7 @@ export const PatientDoctors = () => {
               </div>
               <div style={{ display: "flex", justifyContent: "space-between", borderTop: "1px dashed var(--border-color)", paddingTop: "0.4rem", marginTop: "0.4rem" }}>
                 <span className="text-secondary-color">Consultation Fee:</span>
-                <strong style={{ color: "var(--primary)", fontSize: "1rem" }}>{activeDoctor?.consultationFee || activeDoctor?.fee || "$50"}</strong>
+                <strong style={{ color: "var(--primary)", fontSize: "1rem" }}>{formatFee(activeDoctor?.consultationFee || activeDoctor?.fee)}</strong>
               </div>
             </div>
 

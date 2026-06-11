@@ -12,16 +12,23 @@ export const DoctorAppointments = () => {
   const { user } = useAuth();
   const { appointments, addTreatmentNotes, updateAppointmentStatus, refreshAppointments } = useHealth();
 
-  // Refresh appointments on mount to get latest status
-  useEffect(() => {
-    if (refreshAppointments) refreshAppointments();
-  }, []);
-
   // Tab State: list, consult
   const [activeTab, setActiveTab] = useState("list");
 
   // Selection states
   const [selectedAptId, setSelectedAptId] = useState("");
+
+  // Refresh appointments on mount to get latest status and check for consult room redirection
+  useEffect(() => {
+    if (refreshAppointments) refreshAppointments();
+    
+    const params = new URLSearchParams(window.location.search);
+    const consultAptId = params.get("consult");
+    if (consultAptId) {
+      setSelectedAptId(consultAptId);
+      setActiveTab("consult");
+    }
+  }, [refreshAppointments]);
 
   // Consultation Room States
   const [notesDiagnosis, setNotesDiagnosis] = useState("");
@@ -320,8 +327,7 @@ export const DoctorAppointments = () => {
 
                   <button 
                     onClick={() => {
-                      setSelectedAptId(apt.id);
-                      setActiveTab("consult");
+                      window.open(`/doctor/appointments?consult=${apt.id}`, '_blank');
                     }}
                     className="btn btn-primary w-full align-center gap-2 justify-content-center"
                     style={{ padding: "0.5rem", fontSize: "0.8rem", fontWeight: "600" }}

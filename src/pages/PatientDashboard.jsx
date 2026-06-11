@@ -131,7 +131,7 @@ export const PatientDashboard = () => {
             {nextAppointment ? (
               <AppointmentCard 
                 appointment={nextAppointment} 
-                onStartConsultation={() => navigate(`/patient/doctors?tab=telehealth&doctor=${nextAppointment.doctorId}`)} 
+                onStartConsultation={() => window.open(`/patient/doctors?tab=telehealth&doctor=${nextAppointment.doctorId}`, '_blank')} 
                 isDoctor={false}
               />
             ) : (
