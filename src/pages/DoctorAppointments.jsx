@@ -171,7 +171,7 @@ export const DoctorAppointments = () => {
       const { error: treatErr } = await supabase.from('treatments').insert([{
         patient_id: selectedPatient.id,
         doctor_id: user.id,
-        doctor_name: user.name,
+        appointment_id: selectedAptId,
         diagnosis: notesDiagnosis,
         notes: notesDetails,
         prescription: notesPrescription || "None Prescribed",
