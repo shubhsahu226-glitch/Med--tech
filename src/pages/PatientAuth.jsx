@@ -6,19 +6,19 @@ import { Link } from "react-router-dom";
 import { supabase } from "../config/supabase";
 
 export const PatientAuth = () => {
-  const { user, role, login, signup, loginGuest } = useAuth();
+  const { user, role, login, signup, loginGuest, logout } = useAuth();
   const navigate = useNavigate();
   
   // Auto-redirect if already logged in
   useEffect(() => {
     if (user) {
       if (role === "doctor") {
-        navigate("/doctor/dashboard", { replace: true });
+        logout();
       } else {
         navigate("/patient/dashboard", { replace: true });
       }
     }
-  }, [user, role, navigate]);
+  }, [user, role, navigate, logout]);
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState("");
