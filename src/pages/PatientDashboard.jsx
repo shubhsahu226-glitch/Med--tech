@@ -894,15 +894,6 @@ export const PatientDashboard = () => {
           </div>
         </div>
       )}
-      {/* MOBILE DEBUG OVERLAY */}
-      <div style={{ position: "fixed", bottom: 0, right: 0, left: 0, backgroundColor: "rgba(0,0,0,0.9)", color: "#22c55e", padding: "10px", fontSize: "11px", zIndex: 999999, fontFamily: "monospace", borderTop: "2px solid #22c55e", maxHeight: "150px", overflowY: "auto" }}>
-        <strong>DEBUG INFO:</strong><br />
-        User ID: {user?.id || "null"}<br />
-        User Name: {user?.name || "null"}<br />
-        Total Appointments: {appointments?.length || 0}<br />
-        Next Appointment Status: {nextAppointment ? `${nextAppointment.id.substring(0,6)} (Status: ${nextAppointment.status}, Pat: ${nextAppointment.patientId?.substring(0,6)}, Doc: ${nextAppointment.doctorId?.substring(0,6)})` : "null"}<br />
-        All Apts: {appointments?.map(a => `${a.id.substring(0,4)}:${a.status}:${a.patientId?.substring(0,4)}`).join(', ')}
-      </div>
     </div>
   );
 };
