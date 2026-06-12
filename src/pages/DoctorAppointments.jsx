@@ -17,7 +17,7 @@ export const DoctorAppointments = () => {
   const handleExitRoom = () => {
     setActiveTab("list");
     setSelectedAptId("");
-    navigate("/doctor/appointments", { replace: true });
+    navigate("/doctor/dashboard");
   };
 
   // Tab State: list, consult with sessionStorage persistence to survive page refreshes
