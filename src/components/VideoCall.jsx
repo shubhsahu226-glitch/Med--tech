@@ -187,26 +187,30 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
         peer.on("error", (err) => {
           addLog(`PeerJS error (${useCloud ? "Cloud" : "Local"}): ${err.type} - ${err.message}`);
           
-          if (useCloud && !isRetryingLocal) {
-            isRetryingLocal = true;
-            addLog("Cloud server connection failed. Attempting local peerjs server fallback at localhost:9000/myapp...");
-            try {
-              peer.destroy();
-            } catch (e) {}
-            setTimeout(() => {
-              initializePeer(false);
-            }, 1000);
-          } else if (!useCloud && !isRetryingCloud) {
-            isRetryingCloud = true;
-            addLog("Local server connection failed. Attempting cloud peerjs server fallback...");
-            try {
-              peer.destroy();
-            } catch (e) {}
-            setTimeout(() => {
-              initializePeer(true);
-            }, 1000);
-          } else {
-            addLog("All connection attempts failed. Please ensure either internet is available or 'npx -p peer peerjs --port 9000 --path /myapp' is running in your terminal.");
+          // Only attempt fallback for connection failures to signaling server
+          const isConnectionError = ["server-error", "socket-error", "socket-closed", "network"].includes(err.type);
+          if (isConnectionError) {
+            if (useCloud && !isRetryingLocal) {
+              isRetryingLocal = true;
+              addLog("Cloud server connection failed. Attempting local peerjs server fallback at localhost:9000/myapp...");
+              try {
+                peer.destroy();
+              } catch (e) {}
+              setTimeout(() => {
+                initializePeer(false);
+              }, 1000);
+            } else if (!useCloud && !isRetryingCloud) {
+              isRetryingCloud = true;
+              addLog("Local server connection failed. Attempting cloud peerjs server fallback...");
+              try {
+                peer.destroy();
+              } catch (e) {}
+              setTimeout(() => {
+                initializePeer(true);
+              }, 1000);
+            } else {
+              addLog("All connection attempts failed. Please ensure either internet is available or 'npx -p peer peerjs --port 9000 --path /myapp' is running in your terminal.");
+            }
           }
         });
 
@@ -221,8 +225,8 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
     };
 
     if (!peerRef.current && myPeerId) {
-      // If on localhost, default to local peerjs server first for 100% reliable local testing
-      initializePeer(!isLocal);
+      // Default to Cloud server first for all environments to ensure mobile & desktop match
+      initializePeer(true);
       window.addEventListener("beforeunload", handleBeforeUnload);
     }
     
