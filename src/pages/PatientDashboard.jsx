@@ -122,6 +122,11 @@ export const PatientDashboard = () => {
     if (refreshAppointments) refreshAppointments();
   }, []);
 
+  // Find next upcoming appointment
+  const nextAppointment = appointments
+    .filter(apt => apt.patientId === user?.id && (apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending" || apt.status === "Paid"))
+    .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+
   // Handle auto-join from global background call receiver redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
@@ -140,11 +145,7 @@ export const PatientDashboard = () => {
     }
   }, [appointments, nextAppointment, navigate]);
 
-  // Find next upcoming appointment
   console.log("PatientDashboard debug:", { userId: user?.id, appointments, filtered: appointments.filter(apt => apt.patientId === user?.id) });
-  const nextAppointment = appointments
-    .filter(apt => apt.patientId === user?.id && (apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending" || apt.status === "Paid"))
-    .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
 
   // Limit checklist reminders to 1 key upcoming medication
   const activeReminders = reminders.filter(r => !r.taken).slice(0, 1);
