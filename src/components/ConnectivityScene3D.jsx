@@ -223,8 +223,8 @@ export default function ConnectivityScene3D() {
     <Canvas
       camera={{ position: [0, 0, 8.5], fov: 56 }}
       style={{ width: "100%", height: "100%", background: "transparent" }}
-      gl={{ alpha: true, antialias: true }}
-      dpr={[1, 2]}
+      gl={{ alpha: true, antialias: true, powerPreference: "high-performance" }}
+      dpr={Math.min(window.devicePixelRatio, 1.5)}
     >
       <ambientLight intensity={0.68} />
       <directionalLight position={[5, 7, 5]} intensity={1.5} color="#ffffff" />
