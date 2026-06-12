@@ -4,6 +4,7 @@ import { useAuth } from "../context/AuthContext";
 
 // Components
 import { Navbar } from "../components/Navbar";
+import VideoCall from "../components/VideoCall";
 
 // Pages
 import { Home } from "../pages/Home";
@@ -56,6 +57,16 @@ export const DashboardLayout = () => {
     <div className="app-container">
       {/* Show Navbar on all routes except isolated auth pages */}
       {!isAuthPage && !isRoomPage && <Navbar />}
+
+      {/* Global background call receiver for patient when not on the dashboard page */}
+      {role === "patient" && user && location.pathname !== "/patient/dashboard" && location.pathname !== "/" && !isAuthPage && !isRoomPage && (
+        <VideoCall 
+          myPeerId={`pat_${user.id}`}
+          targetPeerId=""
+          targetName=""
+          hideIdleUI={true}
+        />
+      )}
 
       {showDashboardFrame ? (
         <div className="dashboard-layout">
