@@ -136,10 +136,12 @@ export const AuthProvider = ({ children }) => {
 
     let resolvedRole = "patient";
     let doctorDetails = null;
+    let patientDetails = null;
+    let profileData = null;
     const isMetadataDoctor = session.user.user_metadata?.role === "doctor" || forcedRole === "doctor";
 
     try {
-      // PRIMARY role detection: check profiles.role column (fast, single query)
+      // 1. PRIMARY role detection: check profiles.role column (fast, single query)
       const { data: profileRoleData } = await supabase
         .from("profiles")
         .select("role")
@@ -151,49 +153,72 @@ export const AuthProvider = ({ children }) => {
       } else if (profileRoleData?.role) {
         resolvedRole = profileRoleData.role; // 'patient' or other
       }
+    } catch (err) {
+      console.error("Role detection failed:", err);
+    }
 
-      // If doctor, fetch doctor details
+    setRole(resolvedRole);
+
+    try {
+      // 2. Fetch or self-heal the base profile record
+      const { data: existingProfile, error: profileErr } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", session.user.id)
+        .maybeSingle();
+
+      if (existingProfile) {
+        profileData = existingProfile;
+      } else {
+        // Self-heal: profile record is missing, let's insert it
+        const formattedName = session.user.user_metadata?.name || session.user.email?.split("@")[0] || "Patient";
+        const newProfile = {
+          id: session.user.id,
+          name: formattedName,
+          mobile_number: "Not provided",
+          dob: resolvedRole === "doctor" ? "1980-01-01" : "1990-01-01",
+          location: resolvedRole === "doctor" ? "City Central Clinic" : "Not provided",
+          role: resolvedRole
+        };
+        
+        const { data: insertedProfile, error: insertProfErr } = await supabase
+          .from("profiles")
+          .insert(newProfile)
+          .select()
+          .maybeSingle();
+
+        if (insertProfErr) {
+          console.error("Self-heal profile record insert failed:", insertProfErr);
+          profileData = newProfile;
+        } else {
+          profileData = insertedProfile || newProfile;
+        }
+      }
+    } catch (err) {
+      console.error("Profile fetch/healing failed:", err);
+    }
+
+    // 3. Ensure role-specific database record exists (self-healing)
+    try {
       if (resolvedRole === "doctor") {
-        const { data: doctorData, error: doctorError } = await supabase
+        const { data: existingDoctor, error: doctorError } = await supabase
           .from("doctors")
           .select("*")
           .eq("id", session.user.id)
           .maybeSingle();
 
-        if (!doctorError && doctorData?.id) {
-          doctorDetails = doctorData;
+        if (existingDoctor) {
+          doctorDetails = existingDoctor;
         } else {
           // Self-heal: doctor record is missing, let's insert it
-          const formattedName = session.user.user_metadata?.name || "Dr. Clinician";
-          
-          // Ensure profile exists with role = 'doctor'
-          const { data: profData } = await supabase
-            .from("profiles")
-            .select("id")
-            .eq("id", session.user.id)
-            .maybeSingle();
-            
-          if (!profData) {
-            await supabase.from("profiles").insert({
-              id: session.user.id,
-              name: formattedName,
-              mobile_number: "Not provided",
-              dob: "1980-01-01",
-              location: "City Central Clinic",
-              role: "doctor"
-            });
-          } else {
-            // Update role to doctor if it was wrong
-            await supabase.from("profiles").update({ role: "doctor" }).eq("id", session.user.id);
-          }
-          
+          const formattedName = profileData?.name || session.user.user_metadata?.name || "Dr. Clinician";
           const newDoc = {
             id: session.user.id,
             name: formattedName,
             specialty: "General Physician",
             specialization: "General Physician",
-            location: "City Central Clinic",
-            hospital: "City Central Clinic",
+            location: profileData?.location || "City Central Clinic",
+            hospital: profileData?.location || "City Central Clinic",
             license_number: "LIC-" + Math.floor(100000 + Math.random() * 900000),
             experience: "5 years",
             education: "MBBS",
@@ -213,31 +238,47 @@ export const AuthProvider = ({ children }) => {
             
           doctorDetails = (!insertError && insertedDoc) ? insertedDoc : newDoc;
         }
+      } else {
+        // resolvedRole === "patient"
+        const { data: existingPatient, error: patientError } = await supabase
+          .from("patients")
+          .select("*")
+          .eq("id", session.user.id)
+          .maybeSingle();
+
+        if (existingPatient) {
+          patientDetails = existingPatient;
+        } else {
+          // Self-heal: patient record is missing, let's insert it
+          const newPat = {
+            id: session.user.id,
+            blood_type: null,
+            emergency_contact_name: null,
+            emergency_contact_phone: null
+          };
+          
+          const { data: insertedPat, error: insertError } = await supabase
+            .from("patients")
+            .insert(newPat)
+            .select()
+            .maybeSingle();
+            
+          patientDetails = (!insertError && insertedPat) ? insertedPat : newPat;
+        }
       }
-    } catch (err) {
-      console.error("Role detection / doctor heal failed:", err);
+    } catch (roleErr) {
+      console.error("Role details lookup / heal failed:", roleErr);
     }
 
-    setRole(resolvedRole);
-
-    const { data, error } = await supabase
-      .from("profiles")
-      .select("*")
-      .eq("id", session.user.id)
-      .single();
-
-    if (error) {
-      console.error("Error fetching profiles:", error);
-    }
-
-    if (data) {
+    // 4. Update the local profile state using the healed records
+    if (profileData) {
       if (resolvedRole === "doctor") {
         setProfile({
           id: session.user.id,
-          name: data.name,
+          name: profileData.name,
           email: session.user.email,
-          phone: data.mobile_number,
-          location: data.location || doctorDetails?.location || "City Central Clinic",
+          phone: profileData.mobile_number,
+          location: profileData.location || doctorDetails?.location || "City Central Clinic",
           specialty: doctorDetails?.specialty || "General Physician",
           experience: doctorDetails?.experience || "5 years",
           slots: typeof doctorDetails?.slots === "string" ? JSON.parse(doctorDetails.slots) : doctorDetails?.slots || [],
@@ -249,66 +290,16 @@ export const AuthProvider = ({ children }) => {
           consultationFee: doctorDetails?.consultationFee || ""
         });
       } else {
-        let patientDetails = null;
-        try {
-          const { data: patData, error: patError } = await supabase
-            .from("patients")
-            .select("*")
-            .eq("id", session.user.id)
-            .maybeSingle();
-
-          if (!patError && patData?.id) {
-            patientDetails = patData;
-          } else {
-            // Self-heal patient record
-            const formattedName = session.user.user_metadata?.name || data.name || "Patient";
-            
-            // Ensure profile exists first
-            const { data: profData } = await supabase
-              .from("profiles")
-              .select("id")
-              .eq("id", session.user.id)
-              .maybeSingle();
-              
-            if (!profData) {
-              await supabase.from("profiles").insert({
-                id: session.user.id,
-                name: formattedName,
-                mobile_number: "Not provided",
-                dob: "1990-01-01",
-                location: "Not provided"
-              });
-            }
-            
-            const newPat = {
-              id: session.user.id,
-              blood_type: null,
-              emergency_contact_name: null,
-              emergency_contact_phone: null
-            };
-            
-            const { data: insertedPat } = await supabase
-              .from("patients")
-              .insert(newPat)
-              .select()
-              .maybeSingle();
-              
-            patientDetails = insertedPat || newPat;
-          }
-        } catch (patErr) {
-          console.error("Patient details lookup / heal failed:", patErr);
-        }
-
         const basePatient = mockPatients[0];
         setProfile({
           ...basePatient,
           id: session.user.id,
-          name: data.name,
+          name: profileData.name,
           email: session.user.email,
-          phone: data.mobile_number,
-          location: data.location,
-          dob: data.dob,
-          age: calculateAge(data.dob),
+          phone: profileData.mobile_number,
+          location: profileData.location,
+          dob: profileData.dob,
+          age: calculateAge(profileData.dob),
           bloodGroup: patientDetails?.blood_type || null,
           emergencyContactName: patientDetails?.emergency_contact_name || null,
           emergencyContactPhone: patientDetails?.emergency_contact_phone || null,
