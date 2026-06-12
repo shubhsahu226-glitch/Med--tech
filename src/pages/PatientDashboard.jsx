@@ -288,6 +288,26 @@ export const PatientDashboard = () => {
         }
       `}</style>
 
+      {/* Global Background VideoCall listener (always mounted when dashboard is open to receive calls) */}
+      <VideoCall 
+        myPeerId={user ? `pat_${user.id}` : ""}
+        targetPeerId={activeSessionApt ? `doc_${activeSessionApt.doctorId}` : ""}
+        targetName={activeSessionApt ? activeSessionApt.doctorName : ""}
+        hideIdleUI={!activeSessionApt || sessionTab !== "video"}
+        sessionTab={activeSessionApt ? sessionTab : "landing"}
+        onIncomingCallAccepted={(callerPeerId) => {
+          const docId = callerPeerId.replace("doc_", "");
+          const matchingApt = appointments.find(a => a.doctorId === docId && (a.status === "Upcoming" || a.status === "Confirmed" || a.status === "Paid"));
+          if (matchingApt) {
+            setActiveSessionApt(matchingApt);
+            setSessionTab("video");
+          } else if (nextAppointment) {
+            setActiveSessionApt(nextAppointment);
+            setSessionTab("video");
+          }
+        }}
+      />
+
       {/* Greeting Header */}
       <div className="flex-between flex-wrap gap-4 animate-slide-up" style={{ paddingBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
         <div>
@@ -456,14 +476,6 @@ export const PatientDashboard = () => {
             animation: "fadeIn 0.2s ease-out"
           }}
         >
-          {/* Background VideoCall listener (always mounted when telehealth room is open) */}
-          <VideoCall 
-            myPeerId={`pat_${user.id}`}
-            targetPeerId={`doc_${activeSessionApt.doctorId}`}
-            targetName={activeSessionApt.doctorName}
-            hideIdleUI={sessionTab !== "video"}
-            sessionTab={sessionTab}
-          />
           {/* Header */}
           <div 
             style={{ 

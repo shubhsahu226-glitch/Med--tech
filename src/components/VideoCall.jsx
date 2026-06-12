@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import * as PeerModule from "peerjs";
 import { Video, VideoOff, PhoneOff, Mic, MicOff, PhoneCall } from "lucide-react";
 
-const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, sessionTab = "landing" }) => {
+const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, sessionTab = "landing", onIncomingCallAccepted }) => {
   const [callActive, setCallActive] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null);
   const [localStream, setLocalStream] = useState(null);
@@ -366,6 +366,10 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
   const answerCall = () => {
     if (!incomingCall) return;
     addLog("Answering incoming call. Requesting media permissions...");
+    
+    if (onIncomingCallAccepted) {
+      onIncomingCallAccepted(incomingCall.peer);
+    }
     
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then((stream) => {
