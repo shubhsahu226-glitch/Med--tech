@@ -122,6 +122,24 @@ export const PatientDashboard = () => {
     if (refreshAppointments) refreshAppointments();
   }, []);
 
+  // Handle auto-join from global background call receiver redirect
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get("joinSession") === "true") {
+      const caller = params.get("caller") || "";
+      const docId = caller.replace("doc_", "");
+      const matchingApt = appointments.find(a => a.doctorId === docId && (a.status === "Upcoming" || a.status === "Confirmed" || a.status === "Paid"));
+      if (matchingApt) {
+        setActiveSessionApt(matchingApt);
+        setSessionTab("video");
+      } else if (nextAppointment) {
+        setActiveSessionApt(nextAppointment);
+        setSessionTab("video");
+      }
+      navigate("/patient/dashboard", { replace: true });
+    }
+  }, [appointments, nextAppointment, navigate]);
+
   // Find next upcoming appointment
   console.log("PatientDashboard debug:", { userId: user?.id, appointments, filtered: appointments.filter(apt => apt.patientId === user?.id) });
   const nextAppointment = appointments
@@ -306,6 +324,9 @@ export const PatientDashboard = () => {
             setSessionTab("video");
           }
         }}
+        onCallEnded={() => {
+          setSessionTab("chat");
+        }}
       />
 
       {/* Greeting Header */}
@@ -414,7 +435,7 @@ export const PatientDashboard = () => {
                   appointment={nextAppointment} 
                   onStartConsultation={() => {
                     setActiveSessionApt(nextAppointment);
-                    setSessionTab("landing");
+                    setSessionTab("chat");
                   }} 
                   isDoctor={false}
                 />
@@ -488,26 +509,6 @@ export const PatientDashboard = () => {
             }}
           >
             <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
-              {sessionTab !== "landing" && (
-                <button 
-                  onClick={() => setSessionTab("landing")}
-                  style={{
-                    background: "rgba(255,255,255,0.08)",
-                    border: "1px solid rgba(255,255,255,0.12)",
-                    borderRadius: "6px",
-                    padding: "0.4rem 0.6rem",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: "0.3rem",
-                    color: "#e2e8f0",
-                    fontSize: "0.75rem",
-                    fontWeight: "500",
-                    marginRight: "0.5rem"
-                  }}
-                >
-                  <ArrowLeft size={14} /> Options
-                </button>
-              )}
               <div style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "#ef4444", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>
                 {activeSessionApt.doctorName ? activeSessionApt.doctorName.charAt(0) : "D"}
               </div>
@@ -529,51 +530,7 @@ export const PatientDashboard = () => {
             </button>
           </div>
 
-          {/* Sub Navigation Tabs (Visible only when in active Video/Chat session) */}
-          {sessionTab !== "landing" && (
-            <div style={{ display: "flex", backgroundColor: "#0f172a", borderBottom: "1px solid rgba(255,255,255,0.05)" }}>
-              <button
-                onClick={() => setSessionTab("video")}
-                style={{
-                  flex: 1,
-                  padding: "1rem",
-                  background: "none",
-                  border: "none",
-                  color: sessionTab === "video" ? "#ef4444" : "#94a3b8",
-                  borderBottom: sessionTab === "video" ? "3px solid #ef4444" : "3px solid transparent",
-                  fontWeight: "600",
-                  fontSize: "0.9rem",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem"
-                }}
-              >
-                <Video size={16} /> Video Call
-              </button>
-              <button
-                onClick={() => setSessionTab("chat")}
-                style={{
-                  flex: 1,
-                  padding: "1rem",
-                  background: "none",
-                  border: "none",
-                  color: sessionTab === "chat" ? "#ef4444" : "#94a3b8",
-                  borderBottom: sessionTab === "chat" ? "3px solid #ef4444" : "3px solid transparent",
-                  fontWeight: "600",
-                  fontSize: "0.9rem",
-                  cursor: "pointer",
-                  display: "flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  gap: "0.5rem"
-                }}
-              >
-                <MessageSquare size={16} /> Chat
-              </button>
-            </div>
-          )}
+
 
           {/* Tab Content */}
           <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>

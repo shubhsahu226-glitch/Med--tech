@@ -3,7 +3,7 @@ import { createPortal } from "react-dom";
 import * as PeerModule from "peerjs";
 import { Video, VideoOff, PhoneOff, Mic, MicOff, PhoneCall } from "lucide-react";
 
-const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, sessionTab = "landing", onIncomingCallAccepted }) => {
+const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, sessionTab = "landing", onIncomingCallAccepted, onCallEnded }) => {
   const [callActive, setCallActive] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null);
   const [localStream, setLocalStream] = useState(null);
@@ -524,6 +524,9 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
     cleanupMedia();
     setIsMuted(false);
     setIsVideoOff(false);
+    if (onCallEnded) {
+      onCallEnded();
+    }
   };
 
   const toggleAudio = () => {
