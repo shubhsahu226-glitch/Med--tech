@@ -64,7 +64,8 @@ export const Navbar = () => {
           
           <Link to="/" className="nav-brand" onClick={() => setMobileMenuOpen(false)} style={{ color: "var(--primary)", fontWeight: "700" }}>
             <Heart fill="currentColor" size={22} style={{ color: "var(--primary)" }} />
-            <span>Virtual Vaidya</span>
+            <span className="brand-text-full">Virtual Vaidya</span>
+            <span className="brand-text-mobile">Vaidya</span>
           </Link>
         </div>
 
@@ -324,6 +325,9 @@ export const Navbar = () => {
       {/* CSS overrides */}
       <style>
         {`
+          .brand-text-mobile {
+            display: none;
+          }
           @media (max-width: 768px) {
             .desktop-nav {
               display: none !important;
@@ -333,6 +337,31 @@ export const Navbar = () => {
             }
             .navbar-user-text {
               display: none !important;
+            }
+          }
+          @media (max-width: 520px) {
+            .brand-text-full {
+              display: none !important;
+            }
+            .brand-text-mobile {
+              display: inline !important;
+            }
+            .nav-brand {
+              font-size: 1.15rem !important;
+              gap: 0.35rem !important;
+            }
+            .nav-brand svg {
+              width: 18px !important;
+              height: 18px !important;
+            }
+            /* Make login buttons smaller to fit alongside logo */
+            .nav-actions .btn {
+              padding: 0.35rem 0.65rem !important;
+              font-size: 0.72rem !important;
+              border-radius: var(--radius-md) !important;
+            }
+            .nav-actions {
+              gap: 0.5rem !important;
             }
           }
         `}

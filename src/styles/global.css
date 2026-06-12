@@ -649,3 +649,56 @@ h4 { font-size: 1.05rem; }
   animation: pulseScale 2s infinite ease-in-out;
 }
 
+/* --- Mobile View Responsiveness & Layout Improvements --- */
+
+@media (max-width: 768px) {
+  .card {
+    padding: 1.25rem !important;
+  }
+  .main-content {
+    padding: 1.5rem 1rem !important;
+  }
+  
+  /* Hide scrollbars on subnav tabs but keep horizontal swipe behavior */
+  .subnav-tabs {
+    scrollbar-width: none; /* Firefox */
+    margin-bottom: 1.5rem;
+  }
+  .subnav-tabs::-webkit-scrollbar {
+    display: none; /* Chrome, Safari, Opera */
+  }
+  
+  /* Doctor Patients mobile directory layout toggle */
+  .doctor-patient-list-sidebar.mobile-hidden {
+    display: none !important;
+  }
+  .doctor-patient-details-panel.mobile-hidden {
+    display: none !important;
+  }
+  .mobile-back-button {
+    display: inline-flex !important;
+  }
+}
+
+@media (max-width: 480px) {
+  /* Smaller heading typography hierarchy on mobile */
+  h1 { font-size: 1.5rem !important; }
+  h2 { font-size: 1.3rem !important; }
+  h3 { font-size: 1.15rem !important; }
+  h4 { font-size: 1.0rem !important; }
+
+  /* Compact form fields to fit tiny screen heights */
+  .form-group {
+    margin-bottom: 1.25rem !important;
+  }
+  .form-label {
+    font-size: 0.825rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+  .form-input {
+    padding: 0.75rem 1rem !important;
+    font-size: 0.9rem !important;
+  }
+}
+
+

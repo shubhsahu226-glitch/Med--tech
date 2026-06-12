@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
-import { User, ClipboardList, TrendingUp, ChevronRight, FileText, Save } from "lucide-react";
+import { User, ClipboardList, TrendingUp, ChevronRight, FileText, Save, ArrowLeft } from "lucide-react";
 import ReportSections from "../features/reports/components/ReportSections";
 import TrendGraphs from "../features/reports/components/TrendGraphs";
 
@@ -12,6 +12,7 @@ export const DoctorPatients = () => {
 
   const [connectedPatients, setConnectedPatients] = useState([]);
   const [selectedPatientId, setSelectedPatientId] = useState("");
+  const [isMobileListClosed, setIsMobileListClosed] = useState(false);
   
   // Tab within details view: profile, reports, trends
   const [activeTab, setActiveTab] = useState("profile");
@@ -275,7 +276,7 @@ export const DoctorPatients = () => {
         <div className="split-layout split-layout-1-3" style={{ gap: "2rem" }}>
           
           {/* Left Panel: Patients Directory List */}
-          <div className="flex-column gap-3">
+          <div className={`flex-column gap-3 doctor-patient-list-sidebar ${isMobileListClosed ? "mobile-hidden" : ""}`}>
             <h3 style={{ fontSize: "1.1rem", margin: 0, fontWeight: "600" }}>Patient List</h3>
             <div className="flex-column gap-2" style={{ maxHeight: "600px", overflowY: "auto" }}>
               {connectedPatients.map(pat => {
@@ -287,6 +288,7 @@ export const DoctorPatients = () => {
                       setSelectedPatientId(pat.id);
                       setActiveTab("profile");
                       setSelectedReportId("");
+                      setIsMobileListClosed(true); // Close the list on mobile to show details
                     }}
                     className="card text-left"
                     style={{
@@ -317,7 +319,16 @@ export const DoctorPatients = () => {
 
           {/* Right Panel: Patient Chart Details */}
           {selectedPatient && (
-            <div className="flex-column gap-5">
+            <div className={`flex-column gap-5 doctor-patient-details-panel ${!isMobileListClosed ? "mobile-hidden" : ""}`}>
+              {/* Mobile Back Button */}
+              <button 
+                type="button"
+                onClick={() => setIsMobileListClosed(false)}
+                className="btn btn-secondary mobile-back-button"
+                style={{ display: "none", alignSelf: "flex-start", marginBottom: "0.5rem" }}
+              >
+                <ArrowLeft size={16} /> Back to Patients
+              </button>
               
               {/* Profile Bio Header */}
               <div className="card flex-between flex-wrap gap-4" style={{ padding: "1.5rem 2rem", borderRadius: "1rem", borderLeft: "4px solid var(--primary)" }}>
