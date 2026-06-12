@@ -2,7 +2,8 @@ import { useState } from "react";
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
-import { Heart, Bell, Menu, X, LogOut } from "lucide-react";
+import { Bell, Menu, X, LogOut } from "lucide-react";
+import { BrandWordmark } from "./BrandLogo";
 
 export const Navbar = () => {
   const { user, role, logout } = useAuth();
@@ -62,10 +63,19 @@ export const Navbar = () => {
             </button>
           )}
           
-          <Link to="/" className="nav-brand" onClick={() => setMobileMenuOpen(false)} style={{ color: "var(--primary)", fontWeight: "700" }}>
-            <Heart fill="currentColor" size={22} style={{ color: "var(--primary)" }} />
-            <span className="brand-text-full">Virtual Vaidya</span>
-            <span className="brand-text-mobile">Vaidya</span>
+          <Link to="/" className="nav-brand" onClick={() => setMobileMenuOpen(false)}>
+            <span className="brand-text-full">
+              <span className="brand-logo">
+                <img className="brand-mark brand-mark--uploaded" src="/logo-vv.svg" alt="Virtual Vaidya logo" />
+                <BrandWordmark />
+              </span>
+            </span>
+            <span className="brand-text-mobile">
+              <span className="brand-logo">
+                <img className="brand-mark brand-mark--uploaded" src="/logo-vv.svg" alt="Virtual Vaidya logo" />
+                <BrandWordmark compact />
+              </span>
+            </span>
           </Link>
         </div>
 
@@ -350,9 +360,9 @@ export const Navbar = () => {
               font-size: 1.15rem !important;
               gap: 0.35rem !important;
             }
-            .nav-brand svg {
-              width: 18px !important;
-              height: 18px !important;
+            .nav-brand .brand-mark {
+              width: 30px !important;
+              height: 30px !important;
             }
             /* Make login buttons smaller to fit alongside logo */
             .nav-actions .btn {

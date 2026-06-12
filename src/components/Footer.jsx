@@ -1,6 +1,5 @@
-import React from "react";
 import { Link } from "react-router-dom";
-import { Heart } from "lucide-react";
+import { BrandLogo } from "./BrandLogo";
 
 export const Footer = () => {
   return (
@@ -26,8 +25,7 @@ export const Footer = () => {
         }}
       >
         <div className="align-center gap-2">
-          <Heart fill="currentColor" size={16} style={{ color: "var(--primary)" }} />
-          <span style={{ fontWeight: "700" }}>Virtual Vaidya</span>
+          <BrandLogo markSize={30} className="brand-logo--footer" />
           <span>© {new Date().getFullYear()} All Rights Reserved.</span>
         </div>
         
