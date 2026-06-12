@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../config/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
@@ -11,6 +12,13 @@ const getCurrentTimeString = () => new Date().toLocaleTimeString([], { hour: '2-
 export const DoctorAppointments = () => {
   const { user } = useAuth();
   const { appointments, addTreatmentNotes, updateAppointmentStatus, refreshAppointments } = useHealth();
+  const navigate = useNavigate();
+
+  const handleExitRoom = () => {
+    setActiveTab("list");
+    setSelectedAptId("");
+    navigate("/doctor/appointments", { replace: true });
+  };
 
   // Tab State: list, consult with sessionStorage persistence to survive page refreshes
   const [activeTab, setActiveTabState] = useState(() => {
@@ -167,8 +175,7 @@ export const DoctorAppointments = () => {
       setNotesFollowUp("");
       setTimeout(() => {
         setNotesStatus("");
-        setActiveTab("list");
-        setSelectedAptId("");
+        handleExitRoom();
       }, 2000);
       return;
     }
@@ -204,8 +211,7 @@ export const DoctorAppointments = () => {
       
       setTimeout(() => {
         setNotesStatus("");
-        setActiveTab("list");
-        setSelectedAptId("");
+        handleExitRoom();
       }, 2000);
     } catch (err) {
       console.error("Failed to complete consultation:", err);
@@ -464,7 +470,7 @@ export const DoctorAppointments = () => {
           <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", marginTop: "0.5rem" }}>
             The consultation room is currently open in fullscreen mode.
           </p>
-          <button className="btn btn-secondary m-t-4" onClick={() => { setActiveTab("list"); setSelectedAptId(""); }}>
+          <button className="btn btn-secondary m-t-4" onClick={handleExitRoom}>
             Return to List
           </button>
         </div>
@@ -540,7 +546,7 @@ export const DoctorAppointments = () => {
             
             {/* Close Button */}
             <button 
-              onClick={() => { setActiveTab("list"); setSelectedAptId(""); }}
+              onClick={handleExitRoom}
               style={{ background: "none", border: "none", color: "#94a3b8", cursor: "pointer", display: "flex", alignItems: "center", padding: "4px" }}
               title="Close Room"
             >
@@ -798,7 +804,7 @@ export const DoctorAppointments = () => {
                         <button type="submit" className="btn btn-primary align-center gap-1 justify-content-center" style={{ backgroundColor: "#ef4444", borderColor: "#ef4444" }}>
                           <Save size={14} /> Complete & Save
                         </button>
-                        <button type="button" onClick={() => { setActiveTab("list"); setSelectedAptId(""); }} className="btn btn-secondary align-center gap-1 justify-content-center" style={{ borderColor: "#ef4444", color: "#ef4444", background: "none" }}>
+                        <button type="button" onClick={handleExitRoom} className="btn btn-secondary align-center gap-1 justify-content-center" style={{ borderColor: "#ef4444", color: "#ef4444", background: "none" }}>
                           <PhoneOff size={14} /> Exit Consult Room
                         </button>
                       </div>
