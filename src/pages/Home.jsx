@@ -1,15 +1,14 @@
-import { useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
-import { useAuth } from "../context/AuthContext";
+import { Link } from "react-router-dom";
 import { 
   Sparkles, Calendar, MessageSquare, Clock, 
-  ShieldAlert, History, ArrowRight, ShieldCheck, Zap, HeartPulse 
+  ShieldAlert, History, ShieldCheck, Zap, HeartPulse 
 } from "lucide-react";
 import { FeatureCard, WorkflowCard } from "../components/cards";
+import { HeroBanner } from "../components/HeroBanner";
+import ConnectivitySection from "../components/ConnectivitySection";
+import AnalyticsSection from "../components/AnalyticsSection";
 
 export const Home = () => {
-  const { user, role } = useAuth();
-  const navigate = useNavigate();
 
 
   const features = [
@@ -75,104 +74,12 @@ export const Home = () => {
   ];
 
   return (
-    <div style={{ background: "transparent", position: "relative", overflow: "hidden" }}>
-      {/* Decorative Glow Elements */}
-      <div style={{
-        position: "absolute",
-        top: "-100px",
-        left: "50%",
-        transform: "translateX(-50%)",
-        width: "600px",
-        height: "600px",
-        background: "radial-gradient(circle, rgba(225, 29, 72, 0.08) 0%, transparent 70%)",
-        zIndex: -1,
-        pointerEvents: "none"
-      }} />
-      <div style={{
-        position: "absolute",
-        top: "300px",
-        left: "15%",
-        width: "400px",
-        height: "400px",
-        background: "radial-gradient(circle, rgba(244, 63, 94, 0.06) 0%, transparent 70%)",
-        zIndex: -1,
-        pointerEvents: "none"
-      }} />
+    <div style={{ background: "transparent", position: "relative" }}>
+      <HeroBanner />
 
-      {/* Hero Section */}
-      <section 
-        className="animate-slide-up"
-        style={{
-          padding: "6rem 2rem",
-          maxWidth: "1200px",
-          margin: "0 auto",
-          textAlign: "center",
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          gap: "1.75rem",
-          position: "relative",
-          zIndex: 1
-        }}
-      >
-        <div 
-          style={{
-            display: "inline-flex",
-            alignItems: "center",
-            gap: "0.5rem",
-            background: "var(--primary-light)",
-            color: "var(--primary)",
-            padding: "0.6rem 1.2rem",
-            borderRadius: "var(--radius-full)",
-            fontSize: "0.875rem",
-            fontWeight: "600",
-            border: "1px solid rgba(225, 29, 72, 0.2)",
-            boxShadow: "0 4px 20px rgba(225, 29, 72, 0.1)"
-          }}
-        >
-          <HeartPulse size={16} className="animate-pulse" style={{ color: "var(--primary)" }} />
-          <span>Intelligent Healthcare Network</span>
-        </div>
-        
-        <h1 style={{ maxWidth: "900px", fontSize: "3.5rem", fontWeight: "800", lineHeight: 1.1, letterSpacing: "-0.02em" }}>
-          Connecting Patients & Doctors through <span style={{ background: "var(--primary-gradient)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent" }}>AI-Powered</span> Clinical Insights
-        </h1>
-        
-        <p className="text-secondary-color" style={{ maxWidth: "700px", fontSize: "1.2rem", lineHeight: 1.6 }}>
-          Upload reports for instant AI-generated explanations, manage medications, and consult certified doctors on a single, secure platform.
-        </p>
+      <ConnectivitySection />
 
-        {/* Call to Actions - Side by Side Entry Points */}
-        <div className="flex-center flex-wrap gap-6 m-t-4" style={{ width: "100%" }}>
-          <div 
-            className="card flex-column align-center text-center animate-slide-up delay-2" 
-            style={{ width: "340px", padding: "2.5rem 2rem", border: "1px solid var(--border-color)", background: "rgba(255, 255, 255, 0.9)" }}
-          >
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>👤</div>
-            <h3 style={{ fontSize: "1.35rem", fontWeight: "700", marginBottom: "0.5rem" }}>For Patients</h3>
-            <p className="text-secondary-color" style={{ fontSize: "0.875rem", marginBottom: "1.75rem", minHeight: "60px", lineHeight: 1.5 }}>
-              Upload lab reports, view AI summaries, schedule consultations, and log daily medications.
-            </p>
-            <Link to="/patient/auth" className="btn btn-primary w-full btn-hover-arrow">
-              Patient Portal <ArrowRight size={16} />
-            </Link>
-          </div>
-
-          <div 
-            className="card flex-column align-center text-center animate-slide-up delay-3" 
-            style={{ width: "340px", padding: "2.5rem 2rem", border: "1px solid var(--border-color)", background: "rgba(255, 255, 255, 0.9)" }}
-          >
-            <div style={{ fontSize: "2.5rem", marginBottom: "0.75rem" }}>🩺</div>
-            <h3 style={{ fontSize: "1.35rem", fontWeight: "700", marginBottom: "0.5rem" }}>For Medical Doctors</h3>
-            <p className="text-secondary-color" style={{ fontSize: "0.875rem", marginBottom: "1.75rem", minHeight: "60px", lineHeight: 1.5 }}>
-              Review connected patient charts, manage incoming consultations, and write prescriptions.
-            </p>
-            <Link to="/doctor/auth" className="btn btn-secondary w-full btn-hover-arrow">
-              Doctor Dashboard <ArrowRight size={16} />
-            </Link>
-          </div>
-        </div>
-      </section>
+      <AnalyticsSection />
 
       {/* Trust Elements */}
       <section style={{ backgroundColor: "var(--bg-secondary)", padding: "2.5rem 2rem" }}>

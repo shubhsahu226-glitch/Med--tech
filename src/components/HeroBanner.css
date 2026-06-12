@@ -1,0 +1,235 @@
+/* Hero Banner – Virtual Vaidya landing hero */
+
+.hero-banner {
+  position: relative;
+  width: 100%;
+  min-height: calc(100vh - var(--navbar-height));
+  background:
+    radial-gradient(ellipse 80% 60% at 20% 30%, rgba(225, 29, 72, 0.09) 0%, transparent 55%),
+    radial-gradient(ellipse 70% 50% at 85% 70%, rgba(244, 63, 94, 0.07) 0%, transparent 50%),
+    linear-gradient(165deg, #fff5f5 0%, #fde8ea 40%, #fef2f4 100%);
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  padding: 3rem 1.5rem 4rem;
+}
+
+.hero-banner__inner {
+  max-width: 1280px;
+  margin: 0 auto;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 3rem;
+  align-items: center;
+}
+
+@media (min-width: 900px) {
+  .hero-banner__inner {
+    grid-template-columns: 1fr 1.05fr;
+    gap: 2rem;
+    position: relative;   /* anchor for absolute scene */
+  }
+}
+
+/* ── Left column ── */
+
+.hero-banner__content {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  z-index: 2;
+}
+
+.hero-banner__eyebrow {
+  font-size: 0.7rem;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #9a8f85;
+}
+
+.hero-banner__title {
+  font-family: 'Playfair Display', Georgia, 'Times New Roman', serif;
+  font-size: clamp(2.75rem, 6vw, 4.25rem);
+  font-weight: 700;
+  line-height: 1.05;
+  color: #8f3d2e;
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.hero-banner__subtitle {
+  font-size: clamp(1rem, 2vw, 1.2rem);
+  font-weight: 500;
+  color: #3d2b28;
+  margin: 0;
+  line-height: 1.5;
+}
+
+.hero-banner__bullets {
+  list-style: none;
+  padding: 0;
+  margin: 0.5rem 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.65rem;
+}
+
+.hero-banner__bullets li {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.65rem;
+  font-size: 0.95rem;
+  color: #4a3835;
+  line-height: 1.5;
+}
+
+.hero-banner__bullet-dot {
+  flex-shrink: 0;
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #a0523d;
+  margin-top: 0.5rem;
+}
+
+.hero-banner__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  margin-top: 1.25rem;
+}
+
+.hero-banner__btn-patient {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.75rem;
+  background: linear-gradient(135deg, #a0523d 0%, #8f3d2e 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: var(--radius-full);
+  border: none;
+  box-shadow: 0 6px 24px rgba(143, 61, 46, 0.35);
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast);
+  text-decoration: none;
+}
+
+.hero-banner__btn-patient:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 32px rgba(143, 61, 46, 0.45);
+  color: #fff;
+}
+
+.hero-banner__btn-doctor {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.85rem 1.75rem;
+  background: transparent;
+  color: #3d2b28;
+  font-weight: 600;
+  font-size: 0.95rem;
+  border-radius: var(--radius-full);
+  border: 1.5px solid #c4a99a;
+  transition: background var(--transition-fast), transform var(--transition-fast);
+  text-decoration: none;
+}
+
+.hero-banner__btn-doctor:hover {
+  background: rgba(255, 255, 255, 0.6);
+  transform: translateY(-2px);
+  color: #3d2b28;
+}
+
+/* ── Right column – 3D scene ── */
+
+.hero-banner__scene {
+  position: relative;
+  display: flex;
+  align-self: stretch;        /* fill full grid row height */
+  min-height: 480px;
+  z-index: 1;
+}
+
+@media (min-width: 900px) {
+  .hero-banner__scene {
+    /* stretch to full section height */
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 52%;
+    height: 100%;
+    min-height: unset;
+    pointer-events: none;
+  }
+}
+
+.hero-scene-3d-canvas {
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  background: transparent;
+}
+
+@media (min-width: 900px) {
+  .hero-scene-3d-canvas {
+    min-height: unset;
+  }
+}
+
+.hero-3d-loader {
+  width: 100%;
+  height: 100%;
+  min-height: 480px;
+  background: linear-gradient(145deg, #fff5f5 0%, #fde8ea 100%);
+  animation: heroPulse 1.5s ease-in-out infinite;
+}
+
+@keyframes heroPulse {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
+
+/* Ambient glow behind scene */
+.hero-banner__glow {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.hero-banner__glow--1 {
+  width: 500px;
+  height: 500px;
+  top: -10%;
+  right: -5%;
+  background: radial-gradient(circle, rgba(225, 29, 72, 0.1) 0%, transparent 70%);
+}
+
+.hero-banner__glow--2 {
+  width: 350px;
+  height: 350px;
+  bottom: 5%;
+  left: 30%;
+  background: radial-gradient(circle, rgba(244, 63, 94, 0.08) 0%, transparent 70%);
+}
+
+/* Mobile adjustments */
+@media (max-width: 899px) {
+  .hero-banner {
+    min-height: auto;
+    padding: 2.5rem 1.25rem 3rem;
+  }
+
+  .hero-banner__scene {
+    min-height: 360px;
+  }
+
+  .hero-scene-3d-canvas,
+  .hero-3d-loader {
+    min-height: 360px;
+  }
+}
