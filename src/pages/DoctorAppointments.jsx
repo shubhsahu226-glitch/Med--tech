@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { supabase } from "../config/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
-import { Calendar, Clock, Video, Send, Save, PhoneOff, Check, X, ShieldAlert, MessageSquare } from "lucide-react";
+import { Calendar, Clock, Video, Send, Save, PhoneOff, Check, X, ShieldAlert, ShieldCheck, MessageSquare } from "lucide-react";
 import VideoCall from "../components/VideoCall";
 
 const generateTempId = () => `temp_${Date.now()}`;
@@ -542,25 +542,111 @@ export const DoctorAppointments = () => {
               {/* Tab Content Rendering */}
               {sessionTab === "landing" ? (
                 /* CHOICE SCREEN (LANDING) */
-                <div className="card flex-column gap-4" style={{ padding: "2rem", textAlign: "center", minHeight: "300px", justifyContent: "center", alignItems: "center" }}>
-                  <h3 style={{ fontSize: "1.05rem", margin: 0, fontWeight: "600", color: "var(--text-primary)" }}>Choose Consultation Method</h3>
-                  <p style={{ fontSize: "0.8rem", color: "var(--text-secondary)", margin: 0, maxWidth: "300px" }}>
-                    Select how you would like to connect with <strong>{selectedPatient?.name}</strong> today:
-                  </p>
-                  <div className="flex-column gap-3" style={{ width: "100%", maxWidth: "320px" }}>
+                <div 
+                  style={{ 
+                    flex: 1, 
+                    display: "flex", 
+                    flexDirection: "column", 
+                    alignItems: "center", 
+                    justifyContent: "center", 
+                    padding: "3rem 2rem",
+                    backgroundColor: "#0f172a",
+                    borderRadius: "12px",
+                    color: "white",
+                    minHeight: "450px"
+                  }}
+                >
+                  <div style={{ textAlign: "center", marginBottom: "2.5rem", maxWidth: "480px" }}>
+                    <div style={{ width: "72px", height: "72px", borderRadius: "50%", backgroundColor: "rgba(239, 68, 68, 0.1)", border: "1px solid rgba(239, 68, 68, 0.2)", color: "#ef4444", display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 1rem auto" }}>
+                      <ShieldCheck size={36} />
+                    </div>
+                    <h2 style={{ color: "white", fontSize: "1.5rem", fontWeight: "700", margin: "0 0 0.5rem 0" }}>Start Consultation Session</h2>
+                    <p style={{ color: "#94a3b8", fontSize: "0.85rem", lineHeight: "1.4" }}>
+                      You are connecting with <strong>{selectedPatient?.name}</strong>. Choose your consultation channel below:
+                    </p>
+                  </div>
+
+                  <div 
+                    style={{ 
+                      display: "grid", 
+                      gridTemplateColumns: "repeat(auto-fit, minmax(240px, 1fr))", 
+                      gap: "1.5rem", 
+                      width: "100%", 
+                      maxWidth: "560px" 
+                    }}
+                  >
+                    {/* Option 1: Video Call */}
                     <button
                       onClick={() => setSessionTab("video")}
-                      className="btn btn-primary align-center gap-2 justify-content-center"
-                      style={{ padding: "0.65rem", fontSize: "0.8rem", fontWeight: "600", width: "100%" }}
+                      style={{
+                        background: "#ffffff",
+                        border: "1px solid var(--border-color)",
+                        borderRadius: "12px",
+                        padding: "2rem 1.5rem",
+                        textAlign: "center",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "1rem",
+                        transition: "all 0.2s ease-in-out",
+                        boxShadow: "var(--shadow-md)"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "var(--primary)";
+                        e.currentTarget.style.transform = "translateY(-4px)";
+                        e.currentTarget.style.boxShadow = "var(--shadow-lg)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "var(--border-color)";
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                      }}
                     >
-                      <Video size={14} /> Start Video Call
+                      <div style={{ width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "var(--primary-light)", color: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <Video size={24} />
+                      </div>
+                      <div>
+                        <h3 style={{ color: "var(--text-primary)", fontSize: "1.1rem", fontWeight: "600", margin: "0 0 0.25rem 0" }}>Start Video Call</h3>
+                        <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", lineHeight: "1.3" }}>Connect face-to-face via high definition secure video stream.</p>
+                      </div>
                     </button>
+
+                    {/* Option 2: Live Chat */}
                     <button
                       onClick={() => setSessionTab("chat")}
-                      className="btn btn-secondary align-center gap-2 justify-content-center"
-                      style={{ padding: "0.65rem", fontSize: "0.8rem", fontWeight: "600", width: "100%", borderColor: "var(--border-solid)" }}
+                      style={{
+                        background: "#ffffff",
+                        border: "1px solid var(--border-color)",
+                        borderRadius: "12px",
+                        padding: "2rem 1.5rem",
+                        textAlign: "center",
+                        cursor: "pointer",
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        gap: "1rem",
+                        transition: "all 0.2s ease-in-out",
+                        boxShadow: "var(--shadow-md)"
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.borderColor = "var(--success)";
+                        e.currentTarget.style.transform = "translateY(-4px)";
+                        e.currentTarget.style.boxShadow = "var(--shadow-lg)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.borderColor = "var(--border-color)";
+                        e.currentTarget.style.transform = "translateY(0)";
+                        e.currentTarget.style.boxShadow = "var(--shadow-md)";
+                      }}
                     >
-                      <MessageSquare size={14} /> Open Chat Feed
+                      <div style={{ width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "var(--success-light)", color: "var(--success-dark)", display: "flex", alignItems: "center", justifyContent: "center" }}>
+                        <MessageSquare size={24} />
+                      </div>
+                      <div>
+                        <h3 style={{ color: "var(--text-primary)", fontSize: "1.1rem", fontWeight: "600", margin: "0 0 0.25rem 0" }}>Chat</h3>
+                        <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", lineHeight: "1.3" }}>Text messaging system for live discussions and prescriptions.</p>
+                      </div>
                     </button>
                   </div>
                 </div>

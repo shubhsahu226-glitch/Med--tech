@@ -550,7 +550,7 @@ export const PatientDashboard = () => {
                   gap: "0.5rem"
                 }}
               >
-                <Video size={16} /> Start Video Call
+                <Video size={16} /> Video Call
               </button>
               <button
                 onClick={() => setSessionTab("chat")}
@@ -603,51 +603,13 @@ export const PatientDashboard = () => {
 
                 <div 
                   style={{ 
-                    display: "grid", 
-                    gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", 
-                    gap: "1.5rem", 
+                    display: "flex", 
+                    justifyContent: "center", 
                     width: "100%", 
-                    maxWidth: "600px" 
+                    maxWidth: "320px" 
                   }}
                 >
-                  {/* Option 1: Video Call */}
-                  <button
-                    onClick={() => setSessionTab("video")}
-                    style={{
-                      background: "#ffffff",
-                      border: "1px solid var(--border-color)",
-                      borderRadius: "12px",
-                      padding: "2rem 1.5rem",
-                      textAlign: "center",
-                      cursor: "pointer",
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      gap: "1rem",
-                      transition: "all 0.2s ease-in-out",
-                      boxShadow: "var(--shadow-md)"
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.borderColor = "var(--primary)";
-                      e.currentTarget.style.transform = "translateY(-4px)";
-                      e.currentTarget.style.boxShadow = "var(--shadow-lg)";
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.borderColor = "var(--border-color)";
-                      e.currentTarget.style.transform = "translateY(0)";
-                      e.currentTarget.style.boxShadow = "var(--shadow-md)";
-                    }}
-                  >
-                    <div style={{ width: "52px", height: "52px", borderRadius: "50%", backgroundColor: "var(--primary-light)", color: "var(--primary)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                      <Video size={24} />
-                    </div>
-                    <div>
-                      <h3 style={{ color: "var(--text-primary)", fontSize: "1.1rem", fontWeight: "600", margin: "0 0 0.25rem 0" }}>Start Video Call</h3>
-                      <p style={{ color: "var(--text-secondary)", fontSize: "0.75rem", lineHeight: "1.3" }}>Connect face-to-face via high definition secure video stream.</p>
-                    </div>
-                  </button>
-
-                  {/* Option 2: Live Chat */}
+                  {/* Option: Live Chat */}
                   <button
                     onClick={() => setSessionTab("chat")}
                     style={{
@@ -662,7 +624,8 @@ export const PatientDashboard = () => {
                       alignItems: "center",
                       gap: "1rem",
                       transition: "all 0.2s ease-in-out",
-                      boxShadow: "var(--shadow-md)"
+                      boxShadow: "var(--shadow-md)",
+                      width: "100%"
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.borderColor = "var(--success)";
