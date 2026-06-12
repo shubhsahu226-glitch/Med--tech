@@ -214,17 +214,14 @@ export const PatientDashboard = () => {
 
     fetchMessages();
 
-    if (isGuestSession) {
-      const interval = setInterval(() => {
-        try {
-          const key = `virtualvaidya_chat_${user.id}_${activeSessionApt.doctorId}`;
-          const localMsgs = JSON.parse(localStorage.getItem(key) || "[]");
-          setChatMessages(localMsgs);
-        } catch (err) {}
-      }, 1500);
-      return () => clearInterval(interval);
-    } else {
-      const channel = supabase
+    // Poll every 2 seconds to ensure real-time chat updates on both sides
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, 2000);
+
+    let channel = null;
+    if (!isGuestSession) {
+      channel = supabase
         .channel(`dashboard_chat_room_${activeSessionApt.id}`)
         .on('postgres_changes', {
           event: 'INSERT',
@@ -244,11 +241,14 @@ export const PatientDashboard = () => {
           });
         })
         .subscribe();
-
-      return () => {
-        supabase.removeChannel(channel);
-      };
     }
+
+    return () => {
+      clearInterval(interval);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
+    };
   }, [activeSessionApt, user?.id]);
 
   const handleSendChatMessage = async (e) => {

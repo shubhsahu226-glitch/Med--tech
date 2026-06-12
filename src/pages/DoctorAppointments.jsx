@@ -260,43 +260,41 @@ export const DoctorAppointments = () => {
     
     fetchMessages();
 
-    if (isGuestMode) {
-      const interval = setInterval(() => {
-        try {
-          const key = `virtualvaidya_chat_${activeApt.patientId}_${user.id}`;
-          const localMsgs = JSON.parse(localStorage.getItem(key) || "[]");
-          setChatMessages(localMsgs);
-        } catch (err) {
-          console.debug("Failed to retrieve chat updates in poll", err);
-        }
-      }, 1500);
-      return () => clearInterval(interval);
+    // Poll every 2 seconds to ensure real-time chat updates on both sides
+    const interval = setInterval(() => {
+      fetchMessages();
+    }, 2000);
+
+    let channel = null;
+    if (!isGuestMode) {
+      // Subscribe to new messages for this doctor
+      channel = supabase
+        .channel(`chat_${activeApt.id}`)
+        .on('postgres_changes', { 
+          event: 'INSERT', 
+          schema: 'public', 
+          table: 'messages', 
+          filter: `appointment_id=eq.${activeApt.id}` 
+        }, payload => {
+          const m = payload.new;
+          setChatMessages(prev => {
+            if (prev.find(msg => msg.id === m.id)) return prev;
+            return [...prev, {
+              id: m.id,
+              sender: m.sender_role,
+              text: m.text,
+              time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+            }];
+          });
+        })
+        .subscribe();
     }
 
-    // Subscribe to new messages for this doctor
-    const channel = supabase
-      .channel(`chat_${activeApt.id}`)
-      .on('postgres_changes', { 
-        event: 'INSERT', 
-        schema: 'public', 
-        table: 'messages', 
-        filter: `appointment_id=eq.${activeApt.id}` 
-      }, payload => {
-        const m = payload.new;
-        setChatMessages(prev => {
-          if (prev.find(msg => msg.id === m.id)) return prev;
-          return [...prev, {
-            id: m.id,
-            sender: m.sender_role,
-            text: m.text,
-            time: new Date(m.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-          }];
-        });
-      })
-      .subscribe();
-
     return () => {
-      supabase.removeChannel(channel);
+      clearInterval(interval);
+      if (channel) {
+        supabase.removeChannel(channel);
+      }
     };
   }, [activeApt?.patientId, user?.id, activeTab, isGuestMode, activeApt?.id]);
 

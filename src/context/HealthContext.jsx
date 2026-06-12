@@ -387,16 +387,13 @@ export const HealthProvider = ({ children }) => {
     };
     window.addEventListener("storage", handleStorageChange);
 
-    // Guest mode: poll less aggressively (every 10s) since there's no realtime subscription
-    const isGuest = String(user.id).startsWith("pat") || String(user.id).startsWith("doc");
-    let interval = null;
-    if (isGuest) {
-      interval = setInterval(() => {
-        fetchAppointments();
-      }, 10000);
-    }
+    // Poll every 4 seconds to ensure real-time auto-refresh across all sessions
+    const interval = setInterval(() => {
+      fetchAppointments();
+    }, 4000);
 
     // 2. Database Mode: Supabase Real-time Subscription
+    const isGuest = String(user.id).startsWith("pat") || String(user.id).startsWith("doc");
     let channel = null;
     
     if (!isGuest) {
@@ -415,7 +412,7 @@ export const HealthProvider = ({ children }) => {
 
     return () => {
       window.removeEventListener("storage", handleStorageChange);
-      if (interval) clearInterval(interval);
+      clearInterval(interval);
       if (channel) {
         supabase.removeChannel(channel);
       }
