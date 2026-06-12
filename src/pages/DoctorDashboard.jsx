@@ -34,9 +34,17 @@ export const DoctorDashboard = () => {
   const doctorAppointments = appointments.filter(apt => apt.doctorId === user.id || (isGuestUser && apt.doctorId === "7a02fa0d-9719-4261-bd98-1c3d54238c2f"));
   const upcomingApts = doctorAppointments.filter(apt => apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending" || apt.status === "Paid");
 
-  // Filter for today's appointments (Confirmed or Upcoming or Paid)
-  const todayStr = new Date().toLocaleDateString("en-US", { year: 'numeric', month: 'short', day: '2-digit' });
-  const todaysApts = upcomingApts.filter(apt => apt.date === todayStr || apt.status === "Confirmed" || apt.status === "Paid");
+  // Filter for today's appointments (robust timezone-safe date comparison)
+  const todayLocalString = new Date().toLocaleDateString("en-US");
+  const isToday = (dateStr) => {
+    if (!dateStr) return false;
+    try {
+      return new Date(dateStr).toLocaleDateString("en-US") === todayLocalString;
+    } catch (e) {
+      return false;
+    }
+  };
+  const todaysApts = upcomingApts.filter(apt => isToday(apt.date));
 
   // Mock clinical alerts for guest/demo doctor
   const getMockAlerts = () => {

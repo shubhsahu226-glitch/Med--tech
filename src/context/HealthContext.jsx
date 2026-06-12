@@ -430,6 +430,8 @@ export const HealthProvider = ({ children }) => {
       id: newAptId,
       patient_id: patientId,
       doctor_id: doctorId,
+      patient_name: patientName,
+      doctor_name: doctorName,
       date,
       time,
       reason,
