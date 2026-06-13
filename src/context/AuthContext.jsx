@@ -65,9 +65,8 @@ export const AuthProvider = ({ children }) => {
       setUser(JSON.parse(savedUser));
       setRole(savedRole);
     } else {
-      const defaultPatient = mockPatients[0];
-      setUser(defaultPatient);
-      setRole("patient");
+      setUser(null);
+      setRole("guest");
     }
     setLoading(false);
   };
