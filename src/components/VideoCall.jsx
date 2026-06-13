@@ -148,9 +148,6 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
         const options = useCloud 
           ? {
               debug: 3,
-              host: "0.peerjs.com",
-              port: 443,
-              secure: true,
               config: {
                 iceServers: [
                   { urls: "stun:stun.l.google.com:19302" },
@@ -620,6 +617,9 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
             0%, 100% { opacity: 0.55; transform: scale(1); }
             50% { opacity: 1; transform: scale(1.08); }
           }
+          @keyframes spin {
+            to { transform: rotate(360deg); }
+          }
         `}</style>
         <div style={{ flex: 1, minHeight: 0, position: "relative", overflow: "hidden", animation: "fadeIn 0.3s ease-in-out" }}>
           {/* Main Remote Video */}
@@ -638,6 +638,33 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
               transition: "opacity 0.3s ease-in-out"
             }}
           />
+          
+          {/* Spinner and Status when remote stream is loading */}
+          {!remoteStream && (
+            <div style={{
+              position: "absolute",
+              inset: 0,
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              justifyContent: "center",
+              color: "white",
+              gap: "1rem",
+              backgroundColor: "#0f172a"
+            }}>
+              <div style={{
+                width: "40px",
+                height: "40px",
+                borderRadius: "50%",
+                border: "3px solid rgba(255,255,255,0.1)",
+                borderTopColor: "var(--primary)",
+                animation: "spin 1s linear infinite"
+              }}></div>
+              <p style={{ fontSize: "0.95rem", color: "#94a3b8" }}>
+                Connecting to {targetName || "peer"}...
+              </p>
+            </div>
+          )}
           
           {/* Target Name Badge */}
           <div style={{ position: "absolute", top: "20px", left: "20px", color: "white", fontSize: "1.2rem", background: "rgba(0,0,0,0.6)", padding: "0.5rem 1rem", borderRadius: "8px", display: "flex", alignItems: "center", gap: "0.5rem" }}>
