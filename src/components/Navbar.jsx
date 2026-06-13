@@ -49,7 +49,7 @@ export const Navbar = () => {
 
   return (
     <>
-      <nav className="navbar" style={{ position: "sticky", top: 0, zIndex: 100, backgroundColor: "var(--bg-primary)", borderBottom: "1px solid var(--border-color)", padding: "0 1.5rem" }}>
+      <nav className="navbar">
         <div className="align-center gap-3">
           {user && navLinks.length > 0 && (
             <button 
@@ -81,21 +81,12 @@ export const Navbar = () => {
 
         {/* Center top-level navigation links (Desktop) */}
         {user && navLinks.length > 0 && location.pathname !== "/" && (
-          <div className="desktop-nav" style={{ display: "flex", gap: "1rem" }}>
+          <div className="desktop-nav">
             {navLinks.map((link, idx) => (
               <Link
                 key={idx}
                 to={link.path}
                 className={`nav-item ${isLinkActive(link.path)}`}
-                style={{
-                  fontSize: "0.875rem",
-                  fontWeight: location.pathname === link.path ? "600" : "500",
-                  color: location.pathname === link.path ? "var(--primary)" : "var(--text-secondary)",
-                  padding: "0.5rem 0.75rem",
-                  borderRadius: "var(--radius-sm)",
-                  backgroundColor: location.pathname === link.path ? "var(--primary-light)" : "transparent",
-                  transition: "all var(--transition-fast)"
-                }}
               >
                 {link.label}
               </Link>
@@ -140,19 +131,7 @@ export const Navbar = () => {
 
                 {/* Notifications Dropdown */}
                 {showNotifications && (
-                  <div 
-                    className="card" 
-                    style={{
-                      position: "absolute",
-                      top: "48px",
-                      right: 0,
-                      width: "300px",
-                      zIndex: 150,
-                      padding: "1rem",
-                      boxShadow: "var(--shadow-lg)",
-                      backgroundColor: "var(--bg-primary)"
-                    }}
-                  >
+                  <div className="notifications-dropdown">
                     <div className="flex-between m-b-3" style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "0.5rem" }}>
                       <h4 style={{ margin: 0, fontSize: "0.875rem", fontWeight: "600" }}>Notifications</h4>
                       <button className="btn-text" style={{ fontSize: "0.75rem", padding: 0 }} onClick={() => setShowNotifications(false)}>Close</button>
@@ -240,33 +219,32 @@ export const Navbar = () => {
               </div>
 
               {/* User Avatar Click links to Profile settings directly */}
-              <div className="align-center gap-2" style={{ borderLeft: "1px solid var(--border-color)", paddingLeft: "0.75rem" }}>
+              <div style={{ borderLeft: "1px solid var(--border-color)", paddingLeft: "1.25rem", display: "flex", alignItems: "center" }}>
                 <Link 
                   to={role === "patient" ? "/patient/profile" : "/doctor/profile"}
-                  className="align-center gap-2"
-                  style={{ cursor: "pointer" }}
+                  className="user-profile-trigger"
                   title="View Profile Details"
                 >
                   <img 
                     src={user.avatar || user.image || "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?auto=format&fit=crop&q=80&w=150"} 
                     alt={user.name || "User"} 
-                    style={{ width: "32px", height: "32px", borderRadius: "50%", objectFit: "cover", border: location.pathname.includes("/profile") ? "2px solid var(--primary)" : "1px solid var(--border-color)" }}
+                    className={`user-profile-avatar ${location.pathname.includes("/profile") ? "active" : ""}`}
                   />
-                  <div style={{ display: "flex", flexDirection: "column" }} className="navbar-user-text">
-                    <span style={{ fontSize: "0.8rem", fontWeight: "600", color: "var(--text-primary)" }}>{user.name}</span>
-                    <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", textTransform: "capitalize" }}>{role}</span>
+                  <div className="user-profile-info navbar-user-text">
+                    <span className="user-profile-name">{user.name}</span>
+                    <span className="user-profile-role">{role}</span>
                   </div>
                 </Link>
                 
-                <button onClick={handleLogout} className="btn-icon" style={{ width: "32px", height: "32px", marginLeft: "0.25rem" }} title="Sign Out" aria-label="Sign Out">
+                <button onClick={handleLogout} className="btn-icon" style={{ width: "36px", height: "36px", marginLeft: "0.5rem" }} title="Sign Out" aria-label="Sign Out">
                   <LogOut size={14} />
                 </button>
               </div>
             </>
           ) : (
-            <div className="align-center gap-2">
-              <Link to="/patient/auth" className="btn btn-secondary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }}>Patient Login</Link>
-              <Link to="/doctor/auth" className="btn btn-primary" style={{ fontSize: "0.8rem", padding: "0.4rem 0.8rem" }}>Doctor Portal</Link>
+            <div className="navbar-btn-group">
+              <Link to="/patient/auth" className="btn btn-secondary">Patient Login</Link>
+              <Link to="/doctor/auth" className="btn btn-primary">Doctor Portal</Link>
             </div>
           )}
         </div>
@@ -274,20 +252,7 @@ export const Navbar = () => {
 
       {/* Mobile Drawer Navigation overlay */}
       {mobileMenuOpen && user && navLinks.length > 0 && (
-        <div 
-          style={{
-            position: "fixed",
-            top: "var(--navbar-height)",
-            left: 0,
-            right: 0,
-            backgroundColor: "var(--bg-primary)",
-            borderBottom: "1px solid var(--border-color)",
-            boxShadow: "var(--shadow-md)",
-            zIndex: 99,
-            padding: "1rem"
-          }}
-          className="mobile-nav-panel"
-        >
+        <div className="mobile-nav-panel" style={{ position: "fixed", top: "var(--navbar-height)", left: 0, right: 0, zIndex: 99 }}>
           <div className="flex-column gap-2">
             {navLinks.map((link, idx) => (
               <Link
@@ -295,16 +260,6 @@ export const Navbar = () => {
                 to={link.path}
                 onClick={() => setMobileMenuOpen(false)}
                 className={`subnav-tab ${location.pathname === link.path ? "active" : ""}`}
-                style={{
-                  padding: "0.75rem 1rem",
-                  fontSize: "0.9rem",
-                  fontWeight: location.pathname === link.path ? "600" : "500",
-                  borderRadius: "var(--radius-sm)",
-                  backgroundColor: location.pathname === link.path ? "var(--primary-light)" : "transparent",
-                  border: "none",
-                  display: "block",
-                  color: location.pathname === link.path ? "var(--primary)" : "var(--text-secondary)"
-                }}
               >
                 {link.label}
               </Link>
@@ -315,16 +270,6 @@ export const Navbar = () => {
               to={role === "patient" ? "/patient/profile" : "/doctor/profile"}
               onClick={() => setMobileMenuOpen(false)}
               className={`subnav-tab ${location.pathname.includes("/profile") ? "active" : ""}`}
-              style={{
-                padding: "0.75rem 1rem",
-                fontSize: "0.9rem",
-                fontWeight: location.pathname.includes("/profile") ? "600" : "500",
-                borderRadius: "var(--radius-sm)",
-                backgroundColor: location.pathname.includes("/profile") ? "var(--primary-light)" : "transparent",
-                border: "none",
-                display: "block",
-                color: location.pathname.includes("/profile") ? "var(--primary)" : "var(--text-secondary)"
-              }}
             >
               My Profile Details
             </Link>

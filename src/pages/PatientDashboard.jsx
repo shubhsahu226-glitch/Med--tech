@@ -8,9 +8,14 @@ import VideoCall from "../components/VideoCall";
 import { supabase } from "../config/supabase";
 
 export const PatientDashboard = () => {
-  const { user } = useAuth();
+  const { user, saveProfile, updateUserProfile } = useAuth();
   const { appointments, reminders, treatments, refreshAppointments, triggerEmergencyAlert } = useHealth();
   const navigate = useNavigate();
+
+  // DOB Confirmation Modal states
+  const [isDobModalOpen, setIsDobModalOpen] = useState(false);
+  const [tempDob, setTempDob] = useState("");
+  const [isSavingDob, setIsSavingDob] = useState(false);
 
   // Active Consultation Overlay states with sessionStorage persistence to survive page refreshes
   const [activeSessionApt, setActiveSessionAptState] = useState(() => {
@@ -144,6 +149,41 @@ export const PatientDashboard = () => {
       navigate("/patient/dashboard", { replace: true });
     }
   }, [appointments, nextAppointment, navigate]);
+
+  // Prompt patient to confirm DOB if it is not set or set to default (1990-01-01)
+  useEffect(() => {
+    if (user) {
+      const hasConfirmedThisSession = sessionStorage.getItem("virtualvaidya_dob_prompted");
+      if (!hasConfirmedThisSession && (!user.dob || user.dob === "1990-01-01")) {
+        setTempDob(user.dob || "1990-01-01");
+        setIsDobModalOpen(true);
+      }
+    }
+  }, [user]);
+
+  const handleSaveDob = async (e) => {
+    e.preventDefault();
+    if (!tempDob) return;
+    setIsSavingDob(true);
+    try {
+      if (isGuest) {
+        // Update mock user session state locally
+        updateUserProfile({ dob: tempDob });
+      } else {
+        // Save to Supabase
+        await saveProfile({
+          ...user,
+          dob: tempDob
+        });
+      }
+      sessionStorage.setItem("virtualvaidya_dob_prompted", "true");
+      setIsDobModalOpen(false);
+    } catch (err) {
+      console.error("Failed to save DOB:", err);
+    } finally {
+      setIsSavingDob(false);
+    }
+  };
 
   console.log("PatientDashboard debug:", { userId: user?.id, appointments, filtered: appointments.filter(apt => apt.patientId === user?.id) });
 
@@ -812,6 +852,100 @@ export const PatientDashboard = () => {
               </div>
             )}
 
+          </div>
+        </div>
+      )}
+
+      {/* DOB Confirmation Modal Overlay */}
+      {isDobModalOpen && (
+        <div 
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.65)",
+            backdropFilter: "blur(4px)",
+            zIndex: 99999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1.5rem"
+          }}
+        >
+          <div 
+            className="card flex-column gap-4" 
+            style={{ 
+              maxWidth: "420px", 
+              width: "100%", 
+              padding: "2rem", 
+              borderRadius: "1rem", 
+              backgroundColor: "var(--bg-primary)",
+              boxShadow: "var(--shadow-lg)",
+              animation: "slideDown var(--transition-fast) forwards"
+            }}
+          >
+            <div className="text-center">
+              <div 
+                style={{ 
+                  width: "56px", 
+                  height: "56px", 
+                  borderRadius: "50%", 
+                  backgroundColor: "var(--primary-light)", 
+                  color: "var(--primary)",
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center",
+                  margin: "0 auto 1rem auto"
+                }}
+              >
+                <Calendar size={28} />
+              </div>
+              <h3 style={{ fontSize: "1.25rem", fontWeight: "700", margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>
+                Confirm Your Date of Birth
+              </h3>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.4, margin: "0 0 1.5rem 0" }}>
+                Please confirm your correct Date of Birth so that your clinicians can see your accurate age in their files.
+              </p>
+            </div>
+
+            <form onSubmit={handleSaveDob} className="flex-column gap-4">
+              <div className="form-group" style={{ margin: 0 }}>
+                <label className="form-label" htmlFor="patient-dob-confirm" style={{ display: "block", marginBottom: "0.5rem", fontSize: "0.85rem", fontWeight: "600" }}>
+                  Date of Birth
+                </label>
+                <input 
+                  type="date" 
+                  id="patient-dob-confirm"
+                  className="form-input" 
+                  style={{ width: "100%" }}
+                  value={tempDob}
+                  max={new Date().toISOString().split("T")[0]}
+                  onChange={(e) => setTempDob(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div style={{ display: "flex", gap: "1rem", marginTop: "0.5rem" }}>
+                <button 
+                  type="button"
+                  onClick={() => {
+                    sessionStorage.setItem("virtualvaidya_dob_prompted", "true");
+                    setIsDobModalOpen(false);
+                  }} 
+                  className="btn btn-secondary flex-1"
+                  style={{ padding: "0.6rem" }}
+                >
+                  Skip
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn btn-primary flex-1"
+                  style={{ padding: "0.6rem" }}
+                  disabled={isSavingDob}
+                >
+                  {isSavingDob ? "Saving..." : "Confirm"}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

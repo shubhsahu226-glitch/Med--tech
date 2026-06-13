@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
-import { HeartPulse, ArrowLeft, Mail, Lock, User, Sparkles } from "lucide-react";
+import { HeartPulse, ArrowLeft, Mail, Lock, User, Sparkles, Calendar } from "lucide-react";
 import { Link } from "react-router-dom";
 import { supabase } from "../config/supabase";
 
@@ -22,6 +22,7 @@ export const PatientAuth = () => {
 
   const [isSignUp, setIsSignUp] = useState(false);
   const [name, setName] = useState("");
+  const [dob, setDob] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   
@@ -83,6 +84,12 @@ export const PatientAuth = () => {
       return;
     }
 
+    if (!dob) {
+      setError("Please select your Date of Birth.");
+      setIsLoading(false);
+      return;
+    }
+
     // Try to sign up the user
     const { data: signupData, error: signupError } = await signup(email, password, {
       options: {
@@ -119,7 +126,7 @@ export const PatientAuth = () => {
         id: signupData.user.id,
         name: name,
         mobile_number: "Not provided",
-        dob: "1990-01-01",
+        dob: dob,
         location: "Not provided",
         role: "patient"
       });
@@ -232,23 +239,44 @@ export const PatientAuth = () => {
 
           <form onSubmit={handleSubmit}>
             {isSignUp && (
-              <div className="form-group" style={{ marginBottom: "1.25rem" }}>
-                <label className="form-label" htmlFor="patient-name" style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", fontWeight: "500" }}>Full Name</label>
-                <div style={{ position: "relative" }}>
-                  <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", display: "flex" }}>
-                    <User size={18} />
-                  </span>
-                  <input 
-                    type="text" 
-                    id="patient-name" 
-                    className="form-input" 
-                    placeholder="Alex Mercer" 
-                    value={name} 
-                    onChange={(e) => setName(e.target.value)} 
-                    style={{ paddingLeft: "2.75rem", width: "100%" }}
-                  />
+              <>
+                <div className="form-group" style={{ marginBottom: "1.25rem" }}>
+                  <label className="form-label" htmlFor="patient-name" style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", fontWeight: "500" }}>Full Name</label>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", display: "flex" }}>
+                      <User size={18} />
+                    </span>
+                    <input 
+                      type="text" 
+                      id="patient-name" 
+                      className="form-input" 
+                      placeholder="Alex Mercer" 
+                      value={name} 
+                      onChange={(e) => setName(e.target.value)} 
+                      style={{ paddingLeft: "2.75rem", width: "100%" }}
+                    />
+                  </div>
                 </div>
-              </div>
+
+                <div className="form-group" style={{ marginBottom: "1.25rem" }}>
+                  <label className="form-label" htmlFor="patient-dob" style={{ display: "block", marginBottom: "0.375rem", fontSize: "0.875rem", fontWeight: "500" }}>Date of Birth</label>
+                  <div style={{ position: "relative" }}>
+                    <span style={{ position: "absolute", left: "1rem", top: "50%", transform: "translateY(-50%)", color: "var(--text-muted)", display: "flex" }}>
+                      <Calendar size={18} />
+                    </span>
+                    <input 
+                      type="date" 
+                      id="patient-dob" 
+                      className="form-input" 
+                      value={dob} 
+                      onChange={(e) => setDob(e.target.value)} 
+                      max={new Date().toISOString().split("T")[0]}
+                      style={{ paddingLeft: "2.75rem", width: "100%" }}
+                      required
+                    />
+                  </div>
+                </div>
+              </>
             )}
 
             <div className="form-group" style={{ marginBottom: "1.25rem" }}>

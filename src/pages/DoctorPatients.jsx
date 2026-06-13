@@ -62,6 +62,32 @@ export const DoctorPatients = () => {
 
       // Real Database logic
       try {
+        // First, fetch all patient_ids from appointments to ensure connections exist in DB (solves RLS policy limits)
+        const { data: dbApts, error: dbAptsErr } = await supabase
+          .from('appointments')
+          .select('patient_id')
+          .eq('doctor_id', user.id);
+
+        if (!dbAptsErr && dbApts && dbApts.length > 0) {
+          const uniquePatientIds = [...new Set(dbApts.map(a => a.patient_id).filter(Boolean))];
+          
+          if (uniquePatientIds.length > 0) {
+            const connectionInserts = uniquePatientIds.map(patId => ({
+              patient_id: patId,
+              doctor_id: user.id,
+              status: 'Active'
+            }));
+
+            const { error: upsertErr } = await supabase
+              .from('patient_doctor_connections')
+              .upsert(connectionInserts, { onConflict: 'patient_id,doctor_id' });
+
+            if (upsertErr) {
+              console.warn("Failed to auto-upsert patient-doctor connections:", upsertErr);
+            }
+          }
+        }
+
         // Query patient_doctor_connections for current doctor to find patient IDs
         const { data: aptsData, error: aptsErr } = await supabase
           .from('patient_doctor_connections')
@@ -351,7 +377,7 @@ export const DoctorPatients = () => {
               </div>
 
               {/* Chart Tabs */}
-              <div className="subnav-tabs" style={{ marginBottom: "-1rem" }}>
+              <div className="subnav-tabs" style={{ marginBottom: "1.5rem" }}>
                 <button 
                   onClick={() => setActiveTab("profile")} 
                   className={`subnav-tab ${activeTab === "profile" ? "active" : ""}`}
