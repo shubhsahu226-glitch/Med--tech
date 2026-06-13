@@ -57,3 +57,28 @@ export const fetchPatientAlerts = async (patientId) => {
     return [];
   }
 };
+
+/**
+ * Fetch AI generated simple explanation for a medical term.
+ * @param {string} term - The medical term.
+ * @returns {Promise<Object>} The explanation JSON object.
+ */
+export const fetchMedicalTermExplanation = async (term) => {
+  if (!term) return null;
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/medical-term-explanation`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ term })
+    });
+    if (!response.ok) {
+      throw new Error(`Failed to fetch term explanation: ${response.statusText}`);
+    }
+    return await response.json();
+  } catch (error) {
+    console.error("fetchMedicalTermExplanation error:", error);
+    return null;
+  }
+};

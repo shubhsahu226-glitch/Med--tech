@@ -107,6 +107,82 @@ def analyze_with_gemini(extracted_text, is_image=False, base64_image=None, mime_
         raise e
 
 
+def translate_medical_term_with_gemini(term):
+    """Translate a medical term to simple language using Google Gemini API."""
+    gemini_key = os.getenv("GEMINI_API_KEY")
+    if not gemini_key:
+        return None
+    gemini_key = gemini_key.strip()
+        
+    url = f"https://generativelanguage.googleapis.com/v1/models/gemini-3.1-flash-lite:generateContent?key={gemini_key}"
+    headers = {"Content-Type": "application/json"}
+    
+    system_prompt = (
+        "You are a patient education assistant for Virtual Vaidya.\n"
+        "Your job is to explain medical terms in extremely simple language for ordinary people with no medical background.\n"
+        "Rules:\n"
+        "- Explain as if talking to a 12-year-old child.\n"
+        "- Use simple everyday language.\n"
+        "- Avoid medical jargon.\n"
+        "- Keep each section under 50 words.\n"
+        "- Do not diagnose diseases.\n"
+        "- Do not create fear or panic.\n"
+        "- Be informative and reassuring.\n"
+        "- Explain how the parameter affects the body.\n"
+        "- Return only valid JSON.\n\n"
+        f"Medical Term: {term}\n\n"
+        "Return:\n"
+        "{\n"
+        "  \"term\": \"\",\n"
+        "  \"simpleMeaning\": \"\",\n"
+        "  \"whyItMatters\": \"\",\n"
+        "  \"bodyImpact\": \"\",\n"
+        "  \"easyExample\": \"\"\n"
+        "}\n\n"
+        "EXAMPLE RESPONSE:\n"
+        "{\n"
+        "  \"term\": \"Hemoglobin\",\n"
+        "  \"simpleMeaning\": \"Hemoglobin is a substance in your blood that carries oxygen to all parts of your body.\",\n"
+        "  \"whyItMatters\": \"It helps your organs and muscles get the oxygen they need to work properly.\",\n"
+        "  \"bodyImpact\": \"Low levels may make you feel tired, weak, dizzy, or short of breath. Very high levels can sometimes affect blood flow.\",\n"
+        "  \"easyExample\": \"Think of it like a delivery truck carrying oxygen around your body.\"\n"
+        "}"
+    )
+    
+    payload = {
+        "contents": [
+            {
+                "parts": [{"text": system_prompt}]
+            }
+        ]
+    }
+    
+    try:
+        with httpx.Client() as client:
+            response = client.post(url, json=payload, headers=headers, timeout=15.0)
+            response.raise_for_status()
+            res_json = response.json()
+            
+            candidates = res_json.get("candidates", [])
+            if candidates:
+                content = candidates[0].get("content", {})
+                res_parts = content.get("parts", [])
+                if res_parts:
+                    text_response = res_parts[0].get("text", "").strip()
+                    if text_response.startswith("```"):
+                        lines = text_response.splitlines()
+                        if lines[0].startswith("```"):
+                            lines = lines[1:]
+                        if lines[-1].startswith("```"):
+                            lines = lines[:-1]
+                        text_response = "\n".join(lines).strip()
+                    return json.loads(text_response)
+            return None
+    except Exception as e:
+        print(f"Gemini Translation API execution error: {e}")
+        return None
+
+
 # Initialize OpenAI Client
 try:
     openai_api_key = os.getenv("OPENAI_API_KEY")
@@ -728,6 +804,63 @@ def manual_entry():
         "status": "success",
         "report": new_report
     })
+
+
+@app.route("/api/medical-term-explanation", methods=["POST"])
+def get_medical_term_explanation():
+    data = request.json or {}
+    term = data.get("term", "").strip()
+    
+    if not term:
+        return jsonify({"error": "Term is required"}), 400
+
+    # Clean the term (e.g., lowercase, remove extra spaces) to optimize cache matching
+    clean_term = term.lower().strip()
+
+    # 1. Check Cache
+    if supabase:
+        try:
+            response = supabase.table("medical_terms_cache").select("*").ilike("term", clean_term).execute()
+            if response.data and len(response.data) > 0:
+                cached_data = response.data[0]
+                return jsonify({
+                    "term": cached_data.get("term", term).title(),
+                    "simpleMeaning": cached_data.get("simple_meaning", ""),
+                    "whyItMatters": cached_data.get("why_it_matters", ""),
+                    "bodyImpact": cached_data.get("body_impact", ""),
+                    "easyExample": cached_data.get("easy_example", "")
+                })
+        except Exception as e:
+            print(f"Supabase cache read error: {e}")
+
+    # 2. Call Gemini
+    explanation = translate_medical_term_with_gemini(term)
+    
+    if not explanation:
+        # Fallback if Gemini fails
+        explanation = {
+            "term": term,
+            "simpleMeaning": f"{term} is a clinical biomarker measured in laboratory reports.",
+            "whyItMatters": "It is an important indicator of your current health status.",
+            "bodyImpact": "Values outside the normal range can indicate underlying conditions.",
+            "easyExample": "Think of it like a gauge on your car's dashboard."
+        }
+
+    # 3. Save to Cache
+    if supabase and explanation.get("simpleMeaning"):
+        try:
+            # Note: handle potential unique constraint violation gracefully
+            supabase.table("medical_terms_cache").upsert({
+                "term": clean_term,
+                "simple_meaning": explanation.get("simpleMeaning", ""),
+                "why_it_matters": explanation.get("whyItMatters", ""),
+                "body_impact": explanation.get("bodyImpact", ""),
+                "easy_example": explanation.get("easyExample", "")
+            }, on_conflict="term").execute()
+        except Exception as e:
+            print(f"Supabase cache write error: {e}")
+
+    return jsonify(explanation)
 
 
 @app.route("/api/trigger-sos", methods=["POST"])
