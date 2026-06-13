@@ -55,6 +55,8 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
   const peerRef = useRef(null);
   const activeCallRef = useRef(null);
   const isMountedRef = useRef(true);
+  const retryCountRef = useRef(0);
+  const retryTimeoutRef = useRef(null);
 
   // Toggle debug panel display using URL query params (e.g., ?debug=true)
   const showDebugLogs = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "true";
@@ -148,6 +150,10 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
         const options = useCloud 
           ? {
               debug: 3,
+              host: "0.peerjs.com",
+              port: 443,
+              path: "/",
+              secure: true,
               config: {
                 iceServers: [
                   { urls: "stun:stun.l.google.com:19302" },
@@ -187,6 +193,31 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
         peer.on("error", (err) => {
           addLog(`PeerJS error (${useCloud ? "Cloud" : "Local"}): ${err.type} - ${err.message}`);
           
+          if (err.type === "unavailable-id") {
+            addLog(`ID ${myPeerId} is already taken on the signaling server. Retrying connection in 1.5 seconds...`);
+            try {
+              peer.destroy();
+            } catch (e) {}
+            setTimeout(() => {
+              initializePeer(useCloud);
+            }, 1500);
+            return;
+          }
+
+          if (err.type === "peer-unavailable") {
+            if (!isPatient && sessionTab === "video" && appointmentStatus === "In Session" && retryCountRef.current < 5) {
+              retryCountRef.current += 1;
+              addLog(`Target peer is unavailable. Retrying call (attempt ${retryCountRef.current}/5) in 2 seconds...`);
+              if (retryTimeoutRef.current) clearTimeout(retryTimeoutRef.current);
+              retryTimeoutRef.current = setTimeout(() => {
+                initiateCall();
+              }, 2000);
+            } else {
+              addLog("Target peer remains unavailable after maximum retries.");
+            }
+            return;
+          }
+
           // Only attempt fallback for connection failures to signaling server
           const isConnectionError = ["server-error", "socket-error", "socket-closed", "network"].includes(err.type);
           if (isConnectionError) {
@@ -392,62 +423,52 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
 
   const answerCall = () => {
     if (!incomingCall) return;
-    addLog("Answering incoming call. Requesting media permissions...");
+    addLog("Answering incoming call.");
     
     if (onIncomingCallAccepted) {
       onIncomingCallAccepted(incomingCall.peer);
     }
     
-    safeGetUserMedia()
-      .then((stream) => {
-        addLog("Permissions granted. Local stream retrieved.");
-        setLocalStream(stream);
-        
-        incomingCall.on("stream", (incomingRemoteStream) => {
-          addLog("Received remote stream track.");
-          setRemoteStream(incomingRemoteStream);
-        });
-
-        incomingCall.answer(stream);
-        activeCallRef.current = incomingCall;
-        setCallActive(true);
-        setIncomingCall(null);
-        
-        incomingCall.on("close", () => {
-          addLog("Call closed by remote peer.");
-          endCall();
-        });
-
-        incomingCall.on("error", (err) => {
-          addLog(`Call error from remote: ${err.message}`);
-          endCall();
-        });
-      })
-      .catch(err => {
-        addLog(`getUserMedia failed (${err.name || "Error"}: ${err.message || err}). Falling back to simulated stream...`);
-        const stream = createMockStream(isPatient ? "Patient Room Stream" : "Doctor Portal Stream");
-        setLocalStream(stream);
-        
-        incomingCall.on("stream", (incomingRemoteStream) => {
-          addLog("Received remote stream track.");
-          setRemoteStream(incomingRemoteStream);
-        });
-
-        incomingCall.answer(stream);
-        activeCallRef.current = incomingCall;
-        setCallActive(true);
-        setIncomingCall(null);
-        
-        incomingCall.on("close", () => {
-          addLog("Call closed by remote peer.");
-          endCall();
-        });
-
-        incomingCall.on("error", (err) => {
-          addLog(`Call error from remote: ${err.message}`);
-          endCall();
-        });
+    const handleAnswerStream = (stream) => {
+      incomingCall.on("stream", (incomingRemoteStream) => {
+        addLog("Received remote stream track.");
+        setRemoteStream(incomingRemoteStream);
       });
+
+      incomingCall.answer(stream);
+      activeCallRef.current = incomingCall;
+      setCallActive(true);
+      setIncomingCall(null);
+      
+      incomingCall.on("close", () => {
+        addLog("Call closed by remote peer.");
+        endCall();
+      });
+
+      incomingCall.on("error", (err) => {
+        addLog(`Call error from remote: ${err.message}`);
+        endCall();
+      });
+    };
+
+    if (localStream && localStream.active) {
+      addLog("Reusing existing active local stream.");
+      handleAnswerStream(localStream);
+    } else {
+      addLog("Requesting media permissions...");
+      safeGetUserMedia()
+        .then((stream) => {
+          addLog("Permissions granted. Local stream retrieved.");
+          setLocalStream(stream);
+          handleAnswerStream(stream);
+        })
+        .catch(err => {
+          addLog(`getUserMedia failed (${err.name || "Error"}: ${err.message || err}). Falling back to simulated stream...`);
+          const stream = createMockStream(isPatient ? "Patient Room Stream" : "Doctor Portal Stream");
+          setLocalStream(stream);
+          handleAnswerStream(stream);
+        });
+    }
   };
 
   const declineCall = () => {
@@ -463,74 +484,70 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
       addLog("Error: Target Peer ID is null.");
       return;
     }
-    addLog(`Initiating call to target: ${targetPeerId}. Requesting local media...`);
     
-    safeGetUserMedia()
-      .then((stream) => {
-        addLog("Permissions granted. Local stream retrieved.");
-        setLocalStream(stream);
-        setCallActive(true);
-        
-        if (peerRef.current) {
-          addLog(`Calling target peer: ${targetPeerId}...`);
-          const call = peerRef.current.call(targetPeerId, stream);
-          if (call) {
-            activeCallRef.current = call;
-            
-            call.on("stream", (incomingRemoteStream) => {
-              addLog("Received remote stream.");
-              setRemoteStream(incomingRemoteStream);
-            });
-            
-            call.on("close", () => {
-              addLog("Call closed by remote peer.");
-              endCall();
-            });
+    // Clear any previous active call timeout if doctor is manual-starting
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    
+    addLog(`Initiating call to target: ${targetPeerId}.`);
+    
+    const startPeerCall = (stream) => {
+      if (peerRef.current) {
+        addLog(`Calling target peer: ${targetPeerId}...`);
+        const call = peerRef.current.call(targetPeerId, stream);
+        if (call) {
+          activeCallRef.current = call;
+          
+          call.on("stream", (incomingRemoteStream) => {
+            addLog("Received remote stream.");
+            setRemoteStream(incomingRemoteStream);
+            retryCountRef.current = 0; // Reset retries on success!
+            if (retryTimeoutRef.current) {
+              clearTimeout(retryTimeoutRef.current);
+              retryTimeoutRef.current = null;
+            }
+          });
+          
+          call.on("close", () => {
+            addLog("Call closed by remote peer.");
+            endCall();
+          });
 
-            call.on("error", (err) => {
-              addLog(`Call connection error: ${err.message}`);
-              endCall();
-            });
-          } else {
-            addLog("Error: PeerJS failed to create call object.");
-          }
+          call.on("error", (err) => {
+            addLog(`Call connection error: ${err.message}`);
+            endCall();
+          });
         } else {
-          addLog("Error: PeerJS instance not ready.");
+          addLog("Error: PeerJS failed to create call object.");
         }
-      })
-      .catch(err => {
-        addLog(`getUserMedia failed (${err.name || "Error"}: ${err.message || err}). Falling back to simulated stream...`);
-        const stream = createMockStream(isPatient ? "Patient Room Stream" : "Doctor Portal Stream");
-        setLocalStream(stream);
-        setCallActive(true);
-        
-        if (peerRef.current) {
-          addLog(`Calling target peer: ${targetPeerId} using mock stream...`);
-          const call = peerRef.current.call(targetPeerId, stream);
-          if (call) {
-            activeCallRef.current = call;
-            
-            call.on("stream", (incomingRemoteStream) => {
-              addLog("Received remote stream.");
-              setRemoteStream(incomingRemoteStream);
-            });
-            
-            call.on("close", () => {
-              addLog("Call closed by remote peer.");
-              endCall();
-            });
+      } else {
+        addLog("Error: PeerJS instance not ready.");
+      }
+    };
 
-            call.on("error", (err) => {
-              addLog(`Call connection error: ${err.message}`);
-              endCall();
-            });
-          } else {
-            addLog("Error: PeerJS failed to create call object.");
-          }
-        } else {
-          addLog("Error: PeerJS instance not ready.");
-        }
-      });
+    if (localStream && localStream.active) {
+      addLog("Reusing existing active local stream.");
+      setCallActive(true);
+      startPeerCall(localStream);
+    } else {
+      addLog("Requesting local media...");
+      safeGetUserMedia()
+        .then((stream) => {
+          addLog("Permissions granted. Local stream retrieved.");
+          setLocalStream(stream);
+          setCallActive(true);
+          startPeerCall(stream);
+        })
+        .catch(err => {
+          addLog(`getUserMedia failed (${err.name || "Error"}: ${err.message || err}). Falling back to simulated stream...`);
+          const stream = createMockStream(isPatient ? "Patient Room Stream" : "Doctor Portal Stream");
+          setLocalStream(stream);
+          setCallActive(true);
+          startPeerCall(stream);
+        });
+    }
   };
 
   // Auto-initiate call for doctor when patient accepts (status becomes "In Session")
@@ -551,6 +568,11 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
 
   const endCall = () => {
     addLog("Ending video call...");
+    if (retryTimeoutRef.current) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
+    }
+    retryCountRef.current = 0;
     if (activeCallRef.current) {
       try {
         activeCallRef.current.close();
