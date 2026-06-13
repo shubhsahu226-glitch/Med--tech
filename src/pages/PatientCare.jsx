@@ -126,7 +126,7 @@ export const PatientCare = () => {
                   </div>
                   <h4 style={{ margin: 0, fontSize: "0.95rem", fontWeight: "600" }}>{careOverview.treatmentName}</h4>
                   
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginTop: "0.5rem" }}>
+                  <div className="mobile-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1.5rem", marginTop: "0.5rem" }}>
                     <div>
                       <span style={{ fontSize: "0.75rem", color: "var(--text-muted)", display: "block" }}>Overall Health Status</span>
                       <span style={{ fontSize: "0.9rem", fontWeight: "600", color: "var(--success)" }}>{careOverview.healthStatus}</span>
@@ -217,7 +217,7 @@ export const PatientCare = () => {
                       />
                     </div>
 
-                    <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                    <div className="mobile-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
                       <div className="form-group">
                         <label className="form-label" htmlFor="med-freq" style={{ fontSize: "0.75rem" }}>Frequency</label>
                         <select 
