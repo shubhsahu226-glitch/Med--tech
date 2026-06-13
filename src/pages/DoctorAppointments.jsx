@@ -432,7 +432,7 @@ export const DoctorAppointments = () => {
                     <div className="align-center gap-1"><Clock size={14} /> {apt.time}</div>
                   </div>
 
-                  <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                  <div className="mobile-action-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
                     <button 
                       onClick={() => handleAcceptAppointment(apt.id)}
                       className="btn btn-primary align-center gap-1 justify-content-center" 
@@ -500,6 +500,7 @@ export const DoctorAppointments = () => {
 
           {/* Header */}
           <div 
+            className="consult-room-header"
             style={{ 
               display: "flex", 
               justifyContent: "space-between", 
@@ -553,10 +554,11 @@ export const DoctorAppointments = () => {
           </div>
 
           {/* Tab Content */}
-          <div style={{ flex: 1, display: "flex", overflow: "hidden" }}>
+          <div className="consult-room-body" style={{ flex: 1, display: "flex", overflow: "hidden" }}>
             {sessionTab === "landing" ? (
               /* CHOICE SCREEN (LANDING) */
               <div 
+                className="consult-room-content"
                 style={{ 
                   flex: 1, 
                   display: "flex", 
@@ -676,7 +678,7 @@ export const DoctorAppointments = () => {
                 }}
               >
                 {/* Left side: Video or Chat */}
-                <div style={{ display: "flex", flexDirection: "column", gap: "1rem", overflow: "hidden" }}>
+                <div className="consult-room-panel" style={{ display: "flex", flexDirection: "column", gap: "1rem", overflow: "hidden" }}>
                   {sessionTab === "video" ? (
                     <div id="telehealth-video-slot" style={{ flex: 1, minHeight: "300px", position: "relative", display: "flex", flexDirection: "column", borderRadius: "12px", overflow: "hidden" }} />
                   ) : (
@@ -798,7 +800,7 @@ export const DoctorAppointments = () => {
                         />
                       </div>
 
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+                      <div className="mobile-action-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
                         <button type="submit" className="btn btn-primary align-center gap-1 justify-content-center" style={{ backgroundColor: "#ef4444", borderColor: "#ef4444" }}>
                           <Save size={14} /> Complete & Save
                         </button>

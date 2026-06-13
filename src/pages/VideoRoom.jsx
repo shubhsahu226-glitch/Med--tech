@@ -154,12 +154,12 @@ export const VideoRoom = () => {
   const targetName = isPatient ? appointment.doctorName : appointment.patientName;
 
   return (
-    <div style={{ display: "flex", height: "100vh", width: "100vw", backgroundColor: "var(--bg-tertiary)", color: "var(--text-primary)", overflow: "hidden" }}>
+    <div className="video-room-shell" style={{ display: "flex", height: "100vh", width: "100vw", backgroundColor: "var(--bg-tertiary)", color: "var(--text-primary)", overflow: "hidden" }}>
       {/* Left side: Video stream wrapper */}
-      <div style={{ flex: 1, display: "flex", flexDirection: "column", padding: "1.5rem", position: "relative" }}>
+      <div className="video-room-main" style={{ flex: 1, display: "flex", flexDirection: "column", padding: "1.5rem", position: "relative" }}>
         
         {/* Header bar */}
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", backgroundColor: "var(--bg-primary)", padding: "0.75rem 1.25rem", borderRadius: "12px", border: "1px solid var(--border-color)", boxShadow: "var(--shadow-sm)" }}>
+        <div className="video-room-header flex-between" style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem", backgroundColor: "var(--bg-primary)", padding: "0.75rem 1.25rem", borderRadius: "12px", border: "1px solid var(--border-color)", boxShadow: "var(--shadow-sm)" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <div style={{ width: "36px", height: "36px", borderRadius: "50%", backgroundColor: "var(--primary-light)", color: "var(--primary)", border: "1px solid rgba(225, 29, 72, 0.12)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", fontSize: "0.9rem" }}>
               {targetName ? targetName.charAt(0) : "U"}
@@ -171,7 +171,7 @@ export const VideoRoom = () => {
               </p>
             </div>
           </div>
-          <span style={{ fontSize: "0.75rem", backgroundColor: "var(--primary-light)", color: "var(--primary)", border: "1px solid rgba(225, 29, 72, 0.15)", padding: "0.25rem 0.75rem", borderRadius: "50px", fontWeight: "600" }}>
+          <span className="video-room-status" style={{ fontSize: "0.75rem", backgroundColor: "var(--primary-light)", color: "var(--primary)", border: "1px solid rgba(225, 29, 72, 0.15)", padding: "0.25rem 0.75rem", borderRadius: "50px", fontWeight: "600" }}>
             Status: {appointment.status}
           </span>
         </div>
@@ -187,7 +187,7 @@ export const VideoRoom = () => {
       </div>
 
       {/* Right side: Chat panel */}
-      <div style={{ width: "350px", backgroundColor: "var(--bg-primary)", borderLeft: "1px solid var(--border-color)", display: "flex", flexDirection: "column", height: "100%" }}>
+      <div className="video-room-chat" style={{ width: "350px", backgroundColor: "var(--bg-primary)", borderLeft: "1px solid var(--border-color)", display: "flex", flexDirection: "column", height: "100%" }}>
         
         {/* Chat Header */}
         <div style={{ padding: "1.25rem", borderBottom: "1px solid var(--border-color)", display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -224,7 +224,7 @@ export const VideoRoom = () => {
         </div>
 
         {/* Chat Form */}
-        <form onSubmit={handleSendMessage} style={{ padding: "1rem", borderTop: "1px solid var(--border-color)", display: "flex", gap: "0.5rem", backgroundColor: "var(--bg-secondary)" }}>
+        <form onSubmit={handleSendMessage} className="chat-form-mobile" style={{ padding: "1rem", borderTop: "1px solid var(--border-color)", display: "flex", gap: "0.5rem", backgroundColor: "var(--bg-secondary)" }}>
           <input 
             type="text" 
             className="form-input" 

@@ -339,7 +339,7 @@ export const PatientDoctors = () => {
 
                     <div className="form-group">
                       <label className="form-label">Consultation Channel</label>
-                      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                      <div className="mobile-action-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                         <button
                           type="button"
                           onClick={() => setMeetingType("Video")}
@@ -460,7 +460,7 @@ export const PatientDoctors = () => {
                   />
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
+                <div className="mobile-form-grid" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem" }}>
                   <div className="form-group">
                     <label className="form-label" style={{ fontSize: "0.75rem" }} htmlFor="card-exp">Expiry Date</label>
                     <input
@@ -490,7 +490,7 @@ export const PatientDoctors = () => {
                   </div>
                 </div>
 
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
+                <div className="mobile-action-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "1rem", marginTop: "1rem" }}>
                   <button type="button" className="btn btn-secondary" style={{ padding: "0.5rem" }} onClick={() => setShowPaymentModal(false)}>
                     Cancel
                   </button>

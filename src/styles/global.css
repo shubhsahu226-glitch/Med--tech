@@ -869,6 +869,162 @@ h4 { font-size: 1.05rem; }
   padding: 1.5rem !important;
 }
 
+/* Dashboard mobile responsiveness for pages outside the landing page */
+@media (max-width: 768px) {
+  :root {
+    --navbar-height: 70px;
+  }
+
+  .dashboard-layout {
+    min-height: calc(100svh - var(--navbar-height));
+  }
+
+  .main-content {
+    width: 100%;
+    max-width: 100%;
+    padding: 1.25rem 0.875rem 2rem !important;
+  }
+
+  .flex-between {
+    flex-wrap: wrap;
+    gap: 0.75rem;
+  }
+
+  .grid-2,
+  .grid-3,
+  .grid-4,
+  .mobile-stack,
+  .mobile-form-grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .mobile-stack,
+  .mobile-form-grid {
+    gap: 0.875rem !important;
+  }
+
+  .mobile-action-row {
+    display: grid !important;
+    grid-template-columns: 1fr !important;
+    width: 100%;
+  }
+
+  .mobile-action-row .btn,
+  .mobile-action-row button,
+  .mobile-full-width,
+  .mobile-full-width .btn {
+    width: 100% !important;
+  }
+
+  .subnav-tab {
+    padding: 0.75rem 0.9rem;
+    font-size: 0.85rem;
+  }
+
+  .form-input,
+  .btn {
+    min-width: 0;
+  }
+
+  .chart-container {
+    height: auto;
+    min-height: 260px;
+    overflow-x: auto;
+    padding-bottom: 0.25rem;
+  }
+
+  .chart-svg {
+    min-width: 520px;
+  }
+
+  .modal-overlay {
+    align-items: flex-start;
+    overflow-y: auto;
+    padding: 0.75rem;
+  }
+
+  .modal-content {
+    max-width: 100% !important;
+    margin: 0.5rem 0;
+  }
+
+  .video-room-shell {
+    flex-direction: column !important;
+    width: 100% !important;
+    height: 100svh !important;
+    overflow-y: auto !important;
+  }
+
+  .video-room-main {
+    flex: 0 0 auto !important;
+    min-height: 58svh;
+    padding: 0.75rem !important;
+  }
+
+  .video-room-header {
+    align-items: flex-start !important;
+    gap: 0.75rem;
+  }
+
+  .video-room-chat {
+    width: 100% !important;
+    min-height: 42svh;
+    border-left: none !important;
+    border-top: 1px solid var(--border-color);
+  }
+
+  .consult-room-header {
+    padding: 0.85rem 1rem !important;
+    gap: 0.75rem;
+  }
+
+  .consult-room-body {
+    overflow-y: auto !important;
+  }
+
+  .consult-room-content {
+    grid-template-columns: 1fr !important;
+    overflow-y: auto !important;
+    padding: 0.875rem !important;
+  }
+
+  .consult-room-panel {
+    min-height: 320px;
+  }
+}
+
+@media (max-width: 520px) {
+  .card {
+    border-radius: var(--radius-md);
+  }
+
+  .badge {
+    white-space: normal;
+  }
+
+  .subnav-tabs {
+    gap: 0.5rem;
+  }
+
+  .video-room-header {
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  .video-room-status {
+    width: 100%;
+    text-align: center;
+  }
+
+  .chat-form-mobile {
+    padding: 0.75rem !important;
+  }
+
+  .chat-form-mobile input {
+    min-width: 0;
+  }
+}
+
+
 .mobile-nav-panel .subnav-tab {
   padding: 0.85rem 1.25rem !important;
   font-size: 0.95rem !important;
