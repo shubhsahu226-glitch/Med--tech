@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
 import { createPortal } from "react-dom";
 import * as PeerModule from "peerjs";
-import { Video, VideoOff, PhoneOff, Mic, MicOff, PhoneCall } from "lucide-react";
+import { Video, VideoOff, PhoneOff, Mic, MicOff, PhoneCall, FileText } from "lucide-react";
 
-const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, sessionTab = "landing", onIncomingCallAccepted, onCallEnded }) => {
+const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, sessionTab = "landing", appointmentStatus, onIncomingCallAccepted, onCallEnded }) => {
   const [callActive, setCallActive] = useState(false);
   const [incomingCall, setIncomingCall] = useState(null);
   const [localStream, setLocalStream] = useState(null);
@@ -35,6 +35,8 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
   // Controls state
   const [isMuted, setIsMuted] = useState(false);
   const [isVideoOff, setIsVideoOff] = useState(false);
+  const [showLogs, setShowLogs] = useState(false);
+  const [isPeerOpen, setIsPeerOpen] = useState(false);
 
   // Diagnostic Logs state and ref
   const [logs, setLogs] = useState(() => {
@@ -177,6 +179,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
         
         peer.on("open", (id) => {
           addLog(`Peer registered successfully on ${useCloud ? "Cloud" : "Local"} server. ID: ${id}`);
+          setIsPeerOpen(true);
         });
 
         peer.on("call", (call) => {
@@ -216,6 +219,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
 
         peer.on("disconnected", () => {
           addLog("PeerJS server disconnected. Reconnecting...");
+          setIsPeerOpen(false);
           peer.reconnect();
         });
 
@@ -244,6 +248,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
         peerRef.current.destroy();
         peerRef.current = null;
       }
+      setIsPeerOpen(false);
       setCallActive(false);
       setIncomingCall(null);
       cleanupMedia();
@@ -318,26 +323,40 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
       ctx.fillText(`Timestamp: ${new Date().toLocaleTimeString()}`, canvas.width / 2, canvas.height / 2 + 130);
     }, 66); // ~15 FPS
     
-    const canvasStream = canvas.captureStream ? canvas.captureStream(15) : canvas.webkitCaptureStream(15);
+    let canvasStream = null;
+    try {
+      if (canvas.captureStream) {
+        canvasStream = canvas.captureStream(15);
+      } else if (canvas.webkitCaptureStream) {
+        canvasStream = canvas.webkitCaptureStream(15);
+      }
+    } catch (e) {
+      addLog(`Failed to capture canvas stream: ${e.message}`);
+    }
     
-    let audioTrack;
-    let audioContext;
+    let audioTrack = null;
+    let audioContext = null;
     try {
       const AudioCtx = window.AudioContext || window.webkitAudioContext;
-      audioContext = new AudioCtx();
-      const oscillator = audioContext.createOscillator();
-      const gainNode = audioContext.createGain();
-      gainNode.gain.setValueAtTime(0, audioContext.currentTime); // mute to avoid loud feedback/screeching
-      oscillator.connect(gainNode);
-      const destination = audioContext.createMediaStreamDestination();
-      gainNode.connect(destination);
-      oscillator.start();
-      audioTrack = destination.stream.getAudioTracks()[0];
+      if (AudioCtx) {
+        audioContext = new AudioCtx();
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        gainNode.gain.setValueAtTime(0, audioContext.currentTime); // mute to avoid loud feedback/screeching
+        oscillator.connect(gainNode);
+        const destination = audioContext.createMediaStreamDestination();
+        gainNode.connect(destination);
+        oscillator.start();
+        audioTrack = destination.stream.getAudioTracks()[0];
+      }
     } catch (e) {
       addLog(`Failed to create simulated audio track: ${e.message}`);
     }
     
-    const mockTracks = [...canvasStream.getVideoTracks()];
+    const mockTracks = [];
+    if (canvasStream) {
+      mockTracks.push(...canvasStream.getVideoTracks());
+    }
     if (audioTrack) {
       mockTracks.push(audioTrack);
     }
@@ -367,6 +386,13 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
     return stream;
   };
 
+  const safeGetUserMedia = async () => {
+    if (typeof navigator === "undefined" || !navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      throw new Error("MediaDevices or getUserMedia is not supported in this browser context (requires HTTPS or localhost)");
+    }
+    return navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+  };
+
   const answerCall = () => {
     if (!incomingCall) return;
     addLog("Answering incoming call. Requesting media permissions...");
@@ -375,7 +401,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
       onIncomingCallAccepted(incomingCall.peer);
     }
     
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    safeGetUserMedia()
       .then((stream) => {
         addLog("Permissions granted. Local stream retrieved.");
         setLocalStream(stream);
@@ -401,7 +427,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
         });
       })
       .catch(err => {
-        addLog(`getUserMedia failed (${err.name}: ${err.message}). Falling back to simulated stream...`);
+        addLog(`getUserMedia failed (${err.name || "Error"}: ${err.message || err}). Falling back to simulated stream...`);
         const stream = createMockStream(isPatient ? "Patient Room Stream" : "Doctor Portal Stream");
         setLocalStream(stream);
         
@@ -442,7 +468,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
     }
     addLog(`Initiating call to target: ${targetPeerId}. Requesting local media...`);
     
-    navigator.mediaDevices.getUserMedia({ video: true, audio: true })
+    safeGetUserMedia()
       .then((stream) => {
         addLog("Permissions granted. Local stream retrieved.");
         setLocalStream(stream);
@@ -476,7 +502,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
         }
       })
       .catch(err => {
-        addLog(`getUserMedia failed (${err.name}: ${err.message}). Falling back to simulated stream...`);
+        addLog(`getUserMedia failed (${err.name || "Error"}: ${err.message || err}). Falling back to simulated stream...`);
         const stream = createMockStream(isPatient ? "Patient Room Stream" : "Doctor Portal Stream");
         setLocalStream(stream);
         setCallActive(true);
@@ -509,6 +535,22 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
         }
       });
   };
+
+  // Auto-initiate call for doctor when patient accepts (status becomes "In Session")
+  useEffect(() => {
+    if (!isPatient && sessionTab === "video" && appointmentStatus === "In Session" && !callActive && !incomingCall && isPeerOpen) {
+      addLog("Patient accepted the call. Auto-initiating video stream connection...");
+      initiateCall();
+    }
+  }, [appointmentStatus, isPatient, sessionTab, callActive, incomingCall, isPeerOpen]);
+
+  // Auto-answer incoming PeerJS call for patient if they are in the video room and status is "In Session"
+  useEffect(() => {
+    if (isPatient && sessionTab === "video" && incomingCall && appointmentStatus === "In Session") {
+      addLog("Patient is in session. Auto-answering incoming PeerJS stream...");
+      answerCall();
+    }
+  }, [incomingCall, isPatient, sessionTab, appointmentStatus]);
 
   const endCall = () => {
     addLog("Ending video call...");
@@ -604,7 +646,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
           </div>
 
           {/* Floating Diagnostic Logs - Rendered conditionally */}
-          {showDebugLogs && (
+          {(showDebugLogs || showLogs) && (
             <div style={{
               position: "absolute",
               top: "20px",
@@ -738,6 +780,22 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
           >
             {isVideoOff ? <VideoOff size={24} /> : <Video size={24} />}
           </button>
+          
+          <button 
+            onClick={() => setShowLogs(!showLogs)}
+            style={{ 
+              width: "56px", height: "56px", borderRadius: "50%", 
+              backgroundColor: showLogs ? "var(--primary)" : "var(--bg-tertiary)", 
+              color: showLogs ? "white" : "var(--text-primary)", 
+              border: "1px solid var(--border-color)", 
+              cursor: "pointer",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              transition: "all 0.2s"
+            }}
+            title="Toggle Debug Logs"
+          >
+            <FileText size={24} />
+          </button>
         </div>
       </div>,
       document.body
@@ -779,6 +837,68 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
           </p>
         )}
       </div>
+
+      {/* Floating Diagnostic Logs in Idle View */}
+      {(showDebugLogs || showLogs) && (
+        <div style={{
+          position: "absolute",
+          top: "10px",
+          right: "10px",
+          width: "260px",
+          maxHeight: "150px",
+          overflowY: "auto",
+          backgroundColor: "rgba(0,0,0,0.85)",
+          border: "1px solid #22c55e",
+          borderRadius: "6px",
+          padding: "8px",
+          zIndex: 10,
+          fontFamily: "monospace",
+          fontSize: "10px",
+          color: "#22c55e",
+          textAlign: "left",
+          boxShadow: "0 4px 10px rgba(0,0,0,0.3)"
+        }}>
+          <div style={{ fontWeight: "bold", borderBottom: "1px solid #22c55e", paddingBottom: "2px", marginBottom: "4px", display: "flex", justifyContent: "space-between" }}>
+            <span>Logs</span>
+            <button 
+              onClick={() => {
+                try {
+                  sessionStorage.removeItem("videocall_debug_logs");
+                  setLogs([]);
+                } catch (e) {}
+              }}
+              style={{ background: "none", border: "none", color: "#ef4444", cursor: "pointer", fontSize: "9px" }}
+            >
+              Clear
+            </button>
+          </div>
+          <div style={{ display: "flex", flexDirection: "column", gap: "2px" }}>
+            {logs.map((log, index) => (
+              <div key={index} style={{ wordBreak: "break-all", whiteSpace: "pre-wrap" }}>{log}</div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Toggle Button in Idle View */}
+      <button 
+        onClick={() => setShowLogs(!showLogs)}
+        style={{ 
+          position: "absolute",
+          bottom: "10px",
+          right: "10px",
+          background: "none", 
+          border: "none", 
+          color: "var(--text-muted)", 
+          cursor: "pointer",
+          fontSize: "11px",
+          display: "flex",
+          alignItems: "center",
+          gap: "4px"
+        }}
+      >
+        <FileText size={12} /> Diagnostic Logs
+      </button>
       
       <style>{`
         @keyframes pulse {

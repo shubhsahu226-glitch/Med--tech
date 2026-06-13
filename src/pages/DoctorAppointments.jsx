@@ -14,7 +14,14 @@ export const DoctorAppointments = () => {
   const { appointments, addTreatmentNotes, updateAppointmentStatus, refreshAppointments } = useHealth();
   const navigate = useNavigate();
 
-  const handleExitRoom = () => {
+  const handleExitRoom = async () => {
+    if (selectedAptId) {
+      // Revert status to Confirmed if it was left as Calling or In Session
+      const apt = appointments.find(a => a.id === selectedAptId);
+      if (apt && (apt.status === "Calling" || apt.status === "In Session")) {
+        await updateAppointmentStatus(selectedAptId, "Confirmed");
+      }
+    }
     setActiveTab("list");
     setSelectedAptId("");
     navigate("/doctor/dashboard");
@@ -114,6 +121,23 @@ export const DoctorAppointments = () => {
     id: activeApt.patientId,
     name: activeApt.patientName || "Patient"
   } : null;
+
+  const wasCallingRef = useRef(false);
+
+  // Redirect doctor back if patient declines the call
+  useEffect(() => {
+    if (activeApt) {
+      if (activeApt.status === "Calling" || activeApt.status === "In Session") {
+        wasCallingRef.current = true;
+      } else if (activeApt.status === "Confirmed" && wasCallingRef.current && sessionTab === "video") {
+        wasCallingRef.current = false;
+        setSessionTab("landing");
+        alert("Call was declined or ended by patient.");
+      } else {
+        wasCallingRef.current = false;
+      }
+    }
+  }, [activeApt?.status, sessionTab]);
 
   // Handle Accept Appointment
   const handleAcceptAppointment = async (aptId) => {
@@ -495,7 +519,13 @@ export const DoctorAppointments = () => {
             targetName={selectedPatient?.name}
             hideIdleUI={sessionTab !== "video"}
             sessionTab={sessionTab}
-            onCallEnded={() => setSessionTab("chat")}
+            appointmentStatus={activeApt?.status}
+            onCallEnded={() => {
+              if (selectedAptId) {
+                updateAppointmentStatus(selectedAptId, "Confirmed");
+              }
+              setSessionTab("chat");
+            }}
           />
 
           {/* Header */}
@@ -591,7 +621,12 @@ export const DoctorAppointments = () => {
                 >
                   {/* Option 1: Video Call */}
                   <button
-                    onClick={() => setSessionTab("video")}
+                    onClick={() => {
+                      if (selectedAptId) {
+                        updateAppointmentStatus(selectedAptId, "Calling");
+                      }
+                      setSessionTab("video");
+                    }}
                     style={{
                       background: "#ffffff",
                       border: "1px solid var(--border-color)",

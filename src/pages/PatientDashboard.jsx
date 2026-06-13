@@ -9,7 +9,7 @@ import { supabase } from "../config/supabase";
 
 export const PatientDashboard = () => {
   const { user, saveProfile, updateUserProfile } = useAuth();
-  const { appointments, reminders, treatments, refreshAppointments, triggerEmergencyAlert } = useHealth();
+  const { appointments, reminders, treatments, refreshAppointments, triggerEmergencyAlert, updateAppointmentStatus } = useHealth();
   const navigate = useNavigate();
 
   // DOB Confirmation Modal states
@@ -128,9 +128,41 @@ export const PatientDashboard = () => {
   }, []);
 
   // Find next upcoming appointment
-  const nextAppointment = appointments
-    .filter(apt => apt.patientId === user?.id && (apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending" || apt.status === "Paid"))
-    .sort((a, b) => new Date(a.date) - new Date(b.date))[0];
+  const getLocalDateString = () => {
+    const d = new Date();
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+  const todayStr = getLocalDateString();
+
+  const parseDateTime = (dateStr, timeStr) => {
+    if (!dateStr) return new Date(0);
+    const date = new Date(dateStr);
+    if (!timeStr) return date;
+    
+    // Try to parse "09:00 AM" or similar
+    const match = timeStr.match(/^(\d+):(\d+)\s*(AM|PM)$/i);
+    if (match) {
+      let hours = parseInt(match[1], 10);
+      const minutes = parseInt(match[2], 10);
+      const ampm = match[3].toUpperCase();
+      if (ampm === "PM" && hours < 12) hours += 12;
+      if (ampm === "AM" && hours === 12) hours = 0;
+      date.setHours(hours, minutes, 0, 0);
+    }
+    return date;
+  };
+
+  // Find all upcoming appointments (today or in future)
+  const upcomingAppointments = appointments
+    .filter(apt => apt.patientId === user?.id && 
+                   (apt.status === "Upcoming" || apt.status === "Confirmed" || apt.status === "Pending" || apt.status === "Paid") &&
+                   apt.date >= todayStr)
+    .sort((a, b) => parseDateTime(a.date, a.time) - parseDateTime(b.date, b.time));
+
+  const nextAppointment = upcomingAppointments[0];
 
   // Handle auto-join from global background call receiver redirect
   useEffect(() => {
@@ -184,6 +216,47 @@ export const PatientDashboard = () => {
       setIsSavingDob(false);
     }
   };
+
+  // Database-driven incoming video call detection
+  const callingApt = appointments.find(
+    apt => apt.patientId === user?.id && apt.status === "Calling"
+  );
+
+  const handleAcceptCall = async (apt) => {
+    try {
+      await updateAppointmentStatus(apt.id, "In Session");
+      setActiveSessionApt({ ...apt, status: "In Session" });
+      setSessionTab("video");
+    } catch (err) {
+      console.error("Failed to accept call:", err);
+    }
+  };
+
+  const handleDeclineCall = async (apt) => {
+    try {
+      await updateAppointmentStatus(apt.id, "Confirmed");
+    } catch (err) {
+      console.error("Failed to decline call:", err);
+    }
+  };
+
+  const wasInSessionRef = useRef(false);
+
+  // Redirect patient back if doctor ends the call (status goes back to Confirmed or Completed)
+  useEffect(() => {
+    if (activeSessionApt) {
+      if (activeSessionApt.status === "In Session") {
+        wasInSessionRef.current = true;
+      } else if (wasInSessionRef.current && (activeSessionApt.status === "Confirmed" || activeSessionApt.status === "Completed")) {
+        wasInSessionRef.current = false;
+        if (sessionTab === "video") {
+          setSessionTab("chat");
+        }
+      }
+    } else {
+      wasInSessionRef.current = false;
+    }
+  }, [activeSessionApt?.status, sessionTab]);
 
   console.log("PatientDashboard debug:", { userId: user?.id, appointments, filtered: appointments.filter(apt => apt.patientId === user?.id) });
 
@@ -354,6 +427,7 @@ export const PatientDashboard = () => {
         targetName={activeSessionApt ? activeSessionApt.doctorName : ""}
         hideIdleUI={!activeSessionApt || sessionTab !== "video"}
         sessionTab={activeSessionApt ? sessionTab : "landing"}
+        appointmentStatus={activeSessionApt?.status}
         onIncomingCallAccepted={(callerPeerId) => {
           const docId = callerPeerId.replace("doc_", "");
           const matchingApt = appointments.find(a => a.doctorId === docId && (a.status === "Upcoming" || a.status === "Confirmed" || a.status === "Paid"));
@@ -366,9 +440,118 @@ export const PatientDashboard = () => {
           }
         }}
         onCallEnded={() => {
+          if (activeSessionApt) {
+            updateAppointmentStatus(activeSessionApt.id, "Confirmed");
+          }
           setSessionTab("chat");
         }}
       />
+
+      {/* DB-driven Incoming Video Call Modal */}
+      {callingApt && (
+        <div 
+          style={{
+            position: "fixed",
+            inset: 0,
+            backgroundColor: "rgba(15, 23, 42, 0.75)",
+            backdropFilter: "blur(6px)",
+            zIndex: 999999,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            padding: "1.5rem",
+            animation: "fadeIn 0.2s ease-out"
+          }}
+        >
+          <div 
+            className="card flex-column align-center gap-4 text-center"
+            style={{
+              maxWidth: "400px",
+              width: "100%",
+              padding: "2.5rem 2rem",
+              borderRadius: "1.25rem",
+              backgroundColor: "var(--bg-primary)",
+              border: "2px solid var(--primary)",
+              boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.2)",
+              animation: "slideDown 0.3s ease-out"
+            }}
+          >
+            <div 
+              style={{
+                width: "70px",
+                height: "70px",
+                borderRadius: "50%",
+                backgroundColor: "var(--primary-light)",
+                color: "var(--primary)",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                animation: "pulse-call 2s infinite"
+              }}
+            >
+              <Video size={36} />
+            </div>
+
+            <div>
+              <h3 style={{ fontSize: "1.4rem", fontWeight: "700", margin: "0 0 0.5rem 0", color: "var(--text-primary)" }}>
+                Incoming Video Call
+              </h3>
+              <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", lineHeight: 1.4, margin: "0" }}>
+                <strong>{callingApt.doctorName || "Your Doctor"}</strong> is calling you for your scheduled consultation.
+              </p>
+            </div>
+
+            <div style={{ display: "flex", gap: "1rem", width: "100%", marginTop: "1rem" }}>
+              <button 
+                onClick={() => handleDeclineCall(callingApt)}
+                className="btn btn-secondary flex-1"
+                style={{ 
+                  padding: "0.75rem", 
+                  borderColor: "var(--danger)", 
+                  color: "var(--danger)",
+                  fontWeight: "600",
+                  backgroundColor: "transparent"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "rgba(239, 68, 68, 0.05)"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "transparent"}
+              >
+                Decline
+              </button>
+              <button 
+                onClick={() => handleAcceptCall(callingApt)}
+                className="btn btn-primary flex-1"
+                style={{ 
+                  padding: "0.75rem", 
+                  backgroundColor: "var(--success)", 
+                  borderColor: "var(--success)",
+                  color: "white",
+                  fontWeight: "600"
+                }}
+                onMouseEnter={(e) => e.currentTarget.style.backgroundColor = "#15803d"}
+                onMouseLeave={(e) => e.currentTarget.style.backgroundColor = "var(--success)"}
+              >
+                Accept
+              </button>
+            </div>
+          </div>
+          <style>{`
+            @keyframes pulse-call {
+              0% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4);
+                transform: scale(1);
+              }
+              70% {
+                box-shadow: 0 0 0 15px rgba(239, 68, 68, 0);
+                transform: scale(1.05);
+              }
+              100% {
+                box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+                transform: scale(1);
+              }
+            }
+          `}</style>
+        </div>
+      )}
 
       {/* Greeting Header */}
       <div className="flex-between flex-wrap gap-4 animate-slide-up" style={{ paddingBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>
@@ -470,16 +653,20 @@ export const PatientDashboard = () => {
                 Manage Consults <ArrowRight size={14} />
               </Link>
             </div>
-            {nextAppointment ? (
-              <div className="list-item-interactive animate-slide-up delay-1">
-                <AppointmentCard 
-                  appointment={nextAppointment} 
-                  onStartConsultation={() => {
-                    setActiveSessionApt(nextAppointment);
-                    setSessionTab("chat");
-                  }} 
-                  isDoctor={false}
-                />
+            {upcomingAppointments.length > 0 ? (
+              <div className="flex-column gap-3" style={{ maxHeight: "350px", overflowY: "auto", paddingRight: "4px" }}>
+                {upcomingAppointments.map((apt) => (
+                  <div key={apt.id} className="list-item-interactive animate-slide-up delay-1">
+                    <AppointmentCard 
+                      appointment={apt} 
+                      onStartConsultation={() => {
+                        setActiveSessionApt(apt);
+                        setSessionTab("chat");
+                      }} 
+                      isDoctor={false}
+                    />
+                  </div>
+                ))}
               </div>
             ) : (
               <div className="card text-center" style={{ padding: "2.5rem 1.5rem" }}>
