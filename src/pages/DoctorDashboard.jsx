@@ -11,6 +11,7 @@ import {
   ShieldAlert, 
   Clock, 
   Video, 
+  MessageSquare,
   AlertTriangle, 
   Check, 
   CheckCircle2, 
@@ -365,13 +366,22 @@ export const DoctorDashboard = () => {
                       Review Booking Request
                     </Link>
                   ) : (
-                    <Link 
-                      to={`/doctor/appointments?consult=${apt.id}`}
-                      className="btn btn-primary w-full align-center gap-2 justify-content-center"
-                      style={{ padding: "0.5rem", fontSize: "0.8rem", fontWeight: "600" }}
-                    >
-                      <Video size={14} /> Start Consultation
-                    </Link>
+                    <div className="mobile-action-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                      <Link 
+                        to={`/doctor/appointments?consult=${apt.id}&mode=chat`}
+                        className="btn btn-secondary align-center gap-2 justify-content-center"
+                        style={{ padding: "0.5rem", fontSize: "0.8rem", fontWeight: "600" }}
+                      >
+                        <MessageSquare size={14} /> Chat
+                      </Link>
+                      <Link 
+                        to={`/doctor/appointments?consult=${apt.id}&mode=video`}
+                        className="btn btn-primary align-center gap-2 justify-content-center"
+                        style={{ padding: "0.5rem", fontSize: "0.8rem", fontWeight: "600" }}
+                      >
+                        <Video size={14} /> Video Call
+                      </Link>
+                    </div>
                   )}
                 </div>
               );

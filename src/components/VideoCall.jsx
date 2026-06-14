@@ -53,6 +53,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
   const peerRef = useRef(null);
   const activeCallRef = useRef(null);
   const isMountedRef = useRef(true);
+  const isAnsweringRef = useRef(false);
 
   // Toggle debug panel display using URL query params (e.g., ?debug=true)
   const showDebugLogs = typeof window !== "undefined" && new URLSearchParams(window.location.search).get("debug") === "true";
@@ -368,62 +369,49 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
   };
 
   const answerCall = () => {
-    if (!incomingCall) return;
+    if (!incomingCall || isAnsweringRef.current) return;
+    const callToAnswer = incomingCall;
+    isAnsweringRef.current = true;
     addLog("Answering incoming call. Requesting media permissions...");
-    
-    if (onIncomingCallAccepted) {
-      onIncomingCallAccepted(incomingCall.peer);
-    }
-    
+
+    const finishAnswer = (stream) => {
+      setLocalStream(stream);
+
+      callToAnswer.on("stream", (incomingRemoteStream) => {
+        addLog("Received remote stream track.");
+        setRemoteStream(incomingRemoteStream);
+      });
+
+      callToAnswer.answer(stream);
+      activeCallRef.current = callToAnswer;
+      setCallActive(true);
+      setIncomingCall(null);
+      isAnsweringRef.current = false;
+
+      if (onIncomingCallAccepted) {
+        window.setTimeout(() => onIncomingCallAccepted(callToAnswer.peer), 0);
+      }
+
+      callToAnswer.on("close", () => {
+        addLog("Call closed by remote peer.");
+        endCall();
+      });
+
+      callToAnswer.on("error", (err) => {
+        addLog(`Call error from remote: ${err.message}`);
+        endCall();
+      });
+    };
+
     navigator.mediaDevices.getUserMedia({ video: true, audio: true })
       .then((stream) => {
         addLog("Permissions granted. Local stream retrieved.");
-        setLocalStream(stream);
-        
-        incomingCall.on("stream", (incomingRemoteStream) => {
-          addLog("Received remote stream track.");
-          setRemoteStream(incomingRemoteStream);
-        });
-
-        incomingCall.answer(stream);
-        activeCallRef.current = incomingCall;
-        setCallActive(true);
-        setIncomingCall(null);
-        
-        incomingCall.on("close", () => {
-          addLog("Call closed by remote peer.");
-          endCall();
-        });
-
-        incomingCall.on("error", (err) => {
-          addLog(`Call error from remote: ${err.message}`);
-          endCall();
-        });
+        finishAnswer(stream);
       })
       .catch(err => {
         addLog(`getUserMedia failed (${err.name}: ${err.message}). Falling back to simulated stream...`);
         const stream = createMockStream(isPatient ? "Patient Room Stream" : "Doctor Portal Stream");
-        setLocalStream(stream);
-        
-        incomingCall.on("stream", (incomingRemoteStream) => {
-          addLog("Received remote stream track.");
-          setRemoteStream(incomingRemoteStream);
-        });
-
-        incomingCall.answer(stream);
-        activeCallRef.current = incomingCall;
-        setCallActive(true);
-        setIncomingCall(null);
-        
-        incomingCall.on("close", () => {
-          addLog("Call closed by remote peer.");
-          endCall();
-        });
-
-        incomingCall.on("error", (err) => {
-          addLog(`Call error from remote: ${err.message}`);
-          endCall();
-        });
+        finishAnswer(stream);
       });
   };
 
@@ -561,7 +549,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
           position: "fixed",
           inset: 0,
           backgroundColor: "#0f172a",
-          zIndex: 99999,
+          zIndex: 1000000,
           display: "flex",
           flexDirection: "column",
           transform: "translate3d(0,0,0)",
@@ -801,7 +789,7 @@ const VideoCall = ({ myPeerId, targetPeerId, targetName, hideIdleUI = false, ses
           bottom: "30px",
           left: "50%",
           transform: "translateX(-50%)",
-          zIndex: 999999,
+          zIndex: 1000001,
           width: "90%",
           maxWidth: "400px",
           backgroundColor: "var(--bg-primary)",

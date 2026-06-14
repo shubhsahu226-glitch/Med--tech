@@ -2,9 +2,8 @@ import React, { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
-import { Calendar, Clock, Activity, FileText, ArrowRight, Video, MessageSquare, X, Send, ShieldCheck, ArrowLeft, ShieldAlert } from "lucide-react";
+import { Calendar, Clock, Activity, FileText, ArrowRight, MessageSquare, X, Send, ShieldCheck, ArrowLeft, ShieldAlert } from "lucide-react";
 import { AppointmentCard, ReminderCard } from "../components/cards";
-import VideoCall from "../components/VideoCall";
 import { supabase } from "../config/supabase";
 
 export const PatientDashboard = () => {
@@ -306,29 +305,6 @@ export const PatientDashboard = () => {
           }
         }
       `}</style>
-
-      {/* Global Background VideoCall listener (always mounted when dashboard is open to receive calls) */}
-      <VideoCall 
-        myPeerId={user ? `pat_${user.id}` : ""}
-        targetPeerId={activeSessionApt ? `doc_${activeSessionApt.doctorId}` : ""}
-        targetName={activeSessionApt ? activeSessionApt.doctorName : ""}
-        hideIdleUI={!activeSessionApt || sessionTab !== "video"}
-        sessionTab={activeSessionApt ? sessionTab : "landing"}
-        onIncomingCallAccepted={(callerPeerId) => {
-          const docId = callerPeerId.replace("doc_", "");
-          const matchingApt = appointments.find(a => a.doctorId === docId && (a.status === "Upcoming" || a.status === "Confirmed" || a.status === "Paid"));
-          if (matchingApt) {
-            setActiveSessionApt(matchingApt);
-            setSessionTab("video");
-          } else if (nextAppointment) {
-            setActiveSessionApt(nextAppointment);
-            setSessionTab("video");
-          }
-        }}
-        onCallEnded={() => {
-          setSessionTab("chat");
-        }}
-      />
 
       {/* Greeting Header */}
       <div className="flex-between flex-wrap gap-4 animate-slide-up" style={{ paddingBottom: "1.5rem", borderBottom: "1px solid var(--border-color)" }}>

@@ -77,9 +77,13 @@ export const DoctorAppointments = () => {
     
     const params = new URLSearchParams(window.location.search);
     const consultAptId = params.get("consult");
+    const consultMode = params.get("mode");
     if (consultAptId) {
       setSelectedAptId(consultAptId);
       setActiveTab("consult");
+      if (consultMode === "chat" || consultMode === "video") {
+        window.setTimeout(() => setSessionTab(consultMode), 0);
+      }
     }
   }, [refreshAppointments]);
 
@@ -381,17 +385,30 @@ export const DoctorAppointments = () => {
                     Notes: "{apt.reason}"
                   </p>
 
-                  <button 
-                    onClick={() => {
-                      setSelectedAptId(apt.id);
-                      setActiveTab("consult");
-                      setSessionTab("landing");
-                    }}
-                    className="btn btn-primary w-full align-center gap-2 justify-content-center"
-                    style={{ padding: "0.5rem", fontSize: "0.8rem", fontWeight: "600" }}
-                  >
-                    <Video size={14} /> Start Consultation
-                  </button>
+                  <div className="mobile-action-row" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                    <button 
+                      onClick={() => {
+                        setSelectedAptId(apt.id);
+                        setActiveTab("consult");
+                        setSessionTab("chat");
+                      }}
+                      className="btn btn-secondary align-center gap-2 justify-content-center"
+                      style={{ padding: "0.5rem", fontSize: "0.8rem", fontWeight: "600" }}
+                    >
+                      <MessageSquare size={14} /> Chat
+                    </button>
+                    <button 
+                      onClick={() => {
+                        setSelectedAptId(apt.id);
+                        setActiveTab("consult");
+                        setSessionTab("video");
+                      }}
+                      className="btn btn-primary align-center gap-2 justify-content-center"
+                      style={{ padding: "0.5rem", fontSize: "0.8rem", fontWeight: "600" }}
+                    >
+                      <Video size={14} /> Video Call
+                    </button>
+                  </div>
                 </div>
               ))}
 

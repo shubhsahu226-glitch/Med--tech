@@ -1,18 +1,21 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { supabase } from "../config/supabase";
 import { useAuth } from "../context/AuthContext";
 import { useHealth } from "../context/HealthContext";
-import { User, ClipboardList, TrendingUp, ChevronRight, FileText, Save, ArrowLeft } from "lucide-react";
+import { User, ClipboardList, TrendingUp, ChevronRight, FileText, Save, ArrowLeft, Video, MessageSquare } from "lucide-react";
 import ReportSections from "../features/reports/components/ReportSections";
 import TrendGraphs from "../features/reports/components/TrendGraphs";
 
 export const DoctorPatients = () => {
   const { user } = useAuth();
-  const { patients } = useHealth();
+  const { patients, appointments, addAppointment, refreshAppointments } = useHealth();
+  const navigate = useNavigate();
 
   const [connectedPatients, setConnectedPatients] = useState([]);
   const [selectedPatientId, setSelectedPatientId] = useState("");
   const [isMobileListClosed, setIsMobileListClosed] = useState(false);
+  const [openingConsultType, setOpeningConsultType] = useState("");
   
   // Tab within details view: profile, reports, trends
   const [activeTab, setActiveTab] = useState("profile");
@@ -36,6 +39,48 @@ export const DoctorPatients = () => {
 
   const selectedPatient = connectedPatients.find(p => p.id === selectedPatientId) || null;
   const selectedReport = selectedReportId ? (patientReports.find(r => r.id === selectedReportId) || null) : null;
+
+  const openPatientConsult = async (channel) => {
+    if (!selectedPatient || !user?.id) return;
+
+    setOpeningConsultType(channel);
+
+    try {
+      let consultAppointment = appointments.find(apt => {
+        const isSameDoctor = apt.doctorId === user.id || apt.doctor_id === user.id;
+        const isSamePatient = apt.patientId === selectedPatient.id || apt.patient_id === selectedPatient.id;
+        const isOpen = !["Completed", "Rejected", "Cancelled"].includes(apt.status);
+        return isSameDoctor && isSamePatient && isOpen;
+      });
+
+      if (!consultAppointment) {
+        const now = new Date();
+        consultAppointment = await addAppointment({
+          patientId: selectedPatient.id,
+          doctorId: user.id,
+          patientName: selectedPatient.name,
+          doctorName: user.name || "Doctor",
+          date: now.toLocaleDateString("en-US", { year: "numeric", month: "short", day: "2-digit" }),
+          time: now.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+          reason: "Direct consultation from patient directory",
+          meetingType: channel === "video" ? "Video" : "Chat",
+          status: "Confirmed"
+        });
+
+        if (refreshAppointments) refreshAppointments();
+      }
+
+      sessionStorage.setItem("virtualvaidya_doc_active_tab", "consult");
+      sessionStorage.setItem("virtualvaidya_doc_selected_apt_id", consultAppointment.id);
+      sessionStorage.setItem("virtualvaidya_doc_session_tab", channel);
+      navigate(`/doctor/appointments?consult=${consultAppointment.id}&mode=${channel}`);
+    } catch (err) {
+      console.error("Failed to open patient consultation:", err);
+      alert("Could not open consultation room. Please try again.");
+    } finally {
+      setOpeningConsultType("");
+    }
+  };
 
   // 1. Fetch connected patients based on doctor appointments
   useEffect(() => {
@@ -339,6 +384,30 @@ export const DoctorPatients = () => {
                   </p>
                 </div>
                 <div className="align-center gap-4 flex-wrap">
+                  <div className="align-center gap-2" style={{ padding: "0.25rem", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)", background: "var(--bg-secondary)" }}>
+                    <button
+                      type="button"
+                      onClick={() => openPatientConsult("chat")}
+                      disabled={!!openingConsultType}
+                      title="Open chat"
+                      aria-label={`Open chat with ${selectedPatient.name}`}
+                      className="btn btn-secondary align-center justify-content-center"
+                      style={{ width: "38px", height: "38px", padding: 0, borderRadius: "8px" }}
+                    >
+                      <MessageSquare size={17} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => openPatientConsult("video")}
+                      disabled={!!openingConsultType}
+                      title="Start video call"
+                      aria-label={`Start video call with ${selectedPatient.name}`}
+                      className="btn btn-primary align-center justify-content-center"
+                      style={{ width: "38px", height: "38px", padding: 0, borderRadius: "8px" }}
+                    >
+                      <Video size={17} />
+                    </button>
+                  </div>
                   <div style={{ padding: "0.25rem 0.75rem", border: "1px solid var(--border-color)", borderRadius: "var(--radius-md)" }}>
                     <span style={{ fontSize: "0.65rem", color: "var(--text-muted)", display: "block" }}>Blood Group</span>
                     <span style={{ fontSize: "0.85rem", fontWeight: "700", color: "var(--primary)" }}>{selectedPatient.bloodGroup}</span>
