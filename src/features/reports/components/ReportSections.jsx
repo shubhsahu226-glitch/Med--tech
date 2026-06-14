@@ -1,5 +1,6 @@
 import React from "react";
 import { Droplet, Flame, Heart, ShieldAlert, FileText, CheckCircle2, AlertTriangle } from "lucide-react";
+import MedicalTermTooltip from "./MedicalTermTooltip";
 
 // Mini Sparkline Graph Preview Component
 const MiniSparkline = ({ data, color = "#3b82f6" }) => {
@@ -136,7 +137,7 @@ export const ReportSections = ({ report, trendsData = [] }) => {
         if (section.metrics.length === 0) return null;
 
         return (
-          <div key={key} className="card flex-column gap-4" style={{ padding: "1.25rem", border: "1px solid var(--border-color)", borderRadius: "var(--radius-lg)" }}>
+          <div key={key} className="card flex-column gap-4" style={{ padding: "1.25rem", border: "1px solid var(--border-color)", borderRadius: "var(--radius-lg)", overflow: "visible" }}>
             {/* Section Header */}
             <div className="flex-between" style={{ borderBottom: "1px solid var(--border-color)", paddingBottom: "0.75rem" }}>
               <div className="align-center gap-2">
@@ -180,15 +181,24 @@ export const ReportSections = ({ report, trendsData = [] }) => {
                 }
 
                 const paramHistory = getParamHistoryData(m.name);
+                
+                let statusMessage = `Your ${m.name} is within the healthy range.`;
+                if (isHigh) {
+                  statusMessage = `Your ${m.name} is higher than normal and may need monitoring.`;
+                } else if (isLow) {
+                  statusMessage = `Your ${m.name} is lower than normal and may need monitoring.`;
+                } else if (isAbnormal) {
+                  statusMessage = `Your ${m.name} is outside the normal range.`;
+                }
 
                 return (
-                  <div key={idx} className="flex-column gap-2" style={{ padding: "1rem", borderRadius: "var(--radius-md)", ...cardStyle, transition: "transform var(--transition-fast)" }}>
+                  <div key={idx} className="flex-column gap-2" style={{ padding: "1rem", borderRadius: "var(--radius-md)", overflow: "visible", ...cardStyle, transition: "transform var(--transition-fast)" }}>
                     <div className="flex-between">
-                      <span style={{ fontSize: "0.8rem", fontWeight: "600", color: isAbnormal ? valColor : "var(--text-secondary)" }}>
-                        {m.name}
+                      <span style={{ fontSize: "0.85rem", fontWeight: "600", color: isAbnormal ? valColor : "var(--text-secondary)" }}>
+                        <MedicalTermTooltip term={m.name} />
                       </span>
                       <span className={`badge ${badgeClass}`} style={{ fontSize: "0.6rem", padding: "0.2rem 0.5rem" }}>
-                        {m.status || "Normal"}
+                        {isHigh || isAbnormal ? "Needs Attention" : isLow ? "Slightly Outside Normal Range" : "Normal"}
                       </span>
                     </div>
 
@@ -204,15 +214,20 @@ export const ReportSections = ({ report, trendsData = [] }) => {
                       <MiniSparkline data={paramHistory} color={trendColor} />
                     </div>
 
-                    {(m.min !== undefined && m.max !== undefined && m.min !== null && m.max !== null) ? (
-                      <div className="text-muted-color" style={{ fontSize: "0.65rem", marginTop: "0.25rem" }}>
-                        Reference Range: {m.min} - {m.max} {m.unit}
-                      </div>
-                    ) : (
-                      <div className="text-muted-color" style={{ fontSize: "0.65rem", marginTop: "0.25rem" }}>
-                        Reference Range: Clinical discretion
-                      </div>
-                    )}
+                    <div style={{ marginTop: "0.25rem" }}>
+                      <p style={{ margin: "0 0 0.25rem 0", fontSize: "0.75rem", color: isAbnormal ? valColor : "var(--text-primary)" }}>
+                        {statusMessage}
+                      </p>
+                      {(m.min !== undefined && m.max !== undefined && m.min !== null && m.max !== null) ? (
+                        <div className="text-muted-color" style={{ fontSize: "0.65rem" }}>
+                          Ref: {m.min} - {m.max}
+                        </div>
+                      ) : (
+                        <div className="text-muted-color" style={{ fontSize: "0.65rem" }}>
+                          Ref: Clinical discretion
+                        </div>
+                      )}
+                    </div>
                   </div>
                 );
               })}

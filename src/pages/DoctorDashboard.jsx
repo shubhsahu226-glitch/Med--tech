@@ -76,8 +76,10 @@ export const DoctorDashboard = () => {
   };
 
   useEffect(() => {
-    const fetchAlerts = async () => {
-      setAlertsLoading(true);
+    const fetchAlerts = async (isInitial = false) => {
+      if (isInitial) {
+        setAlertsLoading(true);
+      }
       
       const localAlerts = [];
       try {
@@ -193,13 +195,13 @@ export const DoctorDashboard = () => {
       }
     };
 
-    fetchAlerts();
+    fetchAlerts(true);
 
     const handleStorage = () => {
-      fetchAlerts();
+      fetchAlerts(false);
     };
     window.addEventListener("storage", handleStorage);
-    const interval = setInterval(fetchAlerts, 3000);
+    const interval = setInterval(() => fetchAlerts(false), 3000);
 
     return () => {
       window.removeEventListener("storage", handleStorage);

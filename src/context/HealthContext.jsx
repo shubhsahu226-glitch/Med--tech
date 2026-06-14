@@ -454,6 +454,19 @@ export const HealthProvider = ({ children }) => {
         console.error("Supabase appointment insert failed:", error);
         throw error;
       }
+
+      // Automatically register the patient-doctor connection to satisfy RLS read permissions
+      const { error: connErr } = await supabase
+        .from('patient_doctor_connections')
+        .upsert({
+          patient_id: patientId,
+          doctor_id: doctorId,
+          status: 'Active'
+        }, { onConflict: 'patient_id,doctor_id' });
+
+      if (connErr) {
+        console.warn("Failed to automatically upsert patient-doctor connection:", connErr);
+      }
     }
 
     setAppointments(prev => [mappedApt, ...prev]);

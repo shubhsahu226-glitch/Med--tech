@@ -67,10 +67,10 @@ export default function ConnectivitySection() {
         </div>
 
         {/* stat badge */}
-        <div className="conn-stat-badge">
+        {/* <div className="conn-stat-badge">
           <span className="conn-stat-badge__num">2.4k+</span>
           <span className="conn-stat-badge__label">Active Consultations Today</span>
-        </div>
+        </div> */}
       </div>
     </section>
   );
